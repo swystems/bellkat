@@ -55,6 +55,8 @@ let
 in {
   imports = [ (modulesPath + "/virtualisation/amazon-image.nix") ];
 
+  nix.settings.trusted-users = [ "pschuprikov" ];
+
   users.users.pschuprikov = {
     isNormalUser = true;
 
@@ -65,6 +67,7 @@ in {
   };
 
   users.mutableUsers = false;
+
 
   security.sudo.extraRules = [{
     users = [ "pschuprikov" ];
@@ -86,6 +89,7 @@ in {
   services.jupyter.port = 8888;
   services.jupyter.group = "users";
   services.jupyter.user = "jupyter";
+  services.jupyter.notebookDir = "~/notebooks";
   services.jupyter.password =
     "'argon2:$argon2id$v=19$m=10240,t=10,p=8$DL6exbRkw6urXsqEq6YDgQ$P24kuNWNS02FMuh1THSBju6p6q1c0bynnyOUB/upbB8'";
 
@@ -96,4 +100,8 @@ in {
     c.NotebookApp.certfile = '/etc/secrets/jupyter/mycert.pem'
     c.NotebookApp.keyfile = '/etc/secrets/jupyter/mykey.key'
   '';
+
+  environment.systemPackages = with pkgs; [ git ];
+
+  system.stateVersion = "22.05";
 }
