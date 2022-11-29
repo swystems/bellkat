@@ -23,17 +23,18 @@ instance Show BellPair where
 instance Eq BellPair where
     l1 :~: l2 == l1' :~: l2' = (l1 , l2) == (l1', l2') || (l2, l1) == (l1', l2') 
 
+-- parallel composition is left-associative
 infixl <||>
 
--- | Define alg structure with `<>` inherited from `Semigroup` and new `<||>` for
--- parallel composition
+-- | Define alg structure `ParallelSemigroup` with `<>` inherited from 
+-- `Semigroup` and new `<||>` for parallel composition
 class Semigroup a => ParallelSemigroup a where
     (<||>) :: a -> a -> a
 
 -- | `Quantum` is a `ParallelSemigroup` with `BellPair` creation
 class (ParallelSemigroup a) => Quantum a where
-    -- | is function from `BellPair`, a sequence of `BellPair`s and `Maybe`
-    -- probability
+    -- | is function from `BellPair`, `[BellPair]` to `Maybe Double` Quantum;
+    -- | will be used in `meaning` of `Distill`
     tryCreateBellPairFrom :: BellPair -> [BellPair] -> Maybe Double -> a 
 
 -- | A deterministic version of `tryCreateBellPairFrom`
@@ -69,11 +70,14 @@ meaning (Parallel p q) = meaning p <||> meaning q
 
 -- * History of BellPairs
 
+-- | `History` is a forest of `BellPair`s
 newtype History = History { getForest :: Forest BellPair } 
     deriving newtype (Show, Semigroup, Monoid) 
 
 -- ** A few helper functions to operate on histories
 
+-- | Partitions the history into (first) tree whose root matches `p` and other
+-- trees
 findTreeRoot :: BellPair -> History -> Maybe (Tree BellPair, History)
 findTreeRoot p (History ts) =
     case partition ((== p) . rootLabel) ts of
@@ -101,6 +105,7 @@ data HistoryQuantum = HistoryQuantum
     , execute :: History -> [History] 
     }
         
+-- | executes on compatible roots and leaves the rest intact
 executePartial 
     :: HistoryQuantum -> History -> ([History], History)
 executePartial hq h = 
@@ -109,12 +114,14 @@ executePartial hq h =
         Just (hInput, hRest) -> (execute hq hInput, hRest)
 
 instance Semigroup HistoryQuantum where
+    -- | Definition of `<>` as sequential composition of `execute`
     hq <> hq' = HistoryQuantum 
         { requiredRoots = requiredRoots hq
         , execute = execute hq >=> execute hq'
         }
     
 instance ParallelSemigroup HistoryQuantum where
+    --- | Definition of `<||>` as parallel composition
     hq <||> hq' = HistoryQuantum
         { requiredRoots = requiredRoots hq <> requiredRoots hq'
         , execute = \h -> 
