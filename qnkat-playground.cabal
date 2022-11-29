@@ -1,0 +1,23 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.7.
+--
+-- see: https://github.com/sol/hpack
+
+name:           qnkat-playground
+version:        0.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      QNKAT.Drawing
+      QNKAT.Definitions
+  other-modules:
+      Paths_qnkat_playground
+  build-depends:
+      base
+    , containers
+    , diagrams-cairo
+    , diagrams-lib
+    , ihaskell-diagrams
+  default-language: Haskell2010

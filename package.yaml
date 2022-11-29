@@ -1,0 +1,13 @@
+name: qnkat-playground
+
+dependencies:
+  - base
+  - containers
+  - diagrams-lib
+  - ihaskell-diagrams
+  - diagrams-cairo
+
+library:
+  exposed-modules:
+    - QNKAT.Drawing
+    - QNKAT.Definitions
