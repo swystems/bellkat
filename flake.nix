@@ -13,6 +13,7 @@
       in {
         devShell = pkgs.mkShell {
           buildInputs = [
+            pkgs.entr
             ihaskell
             deploy-rs.defaultPackage.${system}
             pkgs.ghcid
