@@ -9,6 +9,7 @@ import Data.Bifunctor (first)
 import Data.List (partition)
 import Control.Monad ((>=>))
 import Data.Maybe (fromMaybe)
+import Test.QuickCheck
 
 -- * Type definitions
 
@@ -72,7 +73,7 @@ meaning (Parallel p q) = meaning p <||> meaning q
 
 -- | `History` is a forest of `BellPair`s
 newtype History = History { getForest :: Forest BellPair } 
-    deriving newtype (Show, Semigroup, Monoid) 
+    deriving newtype (Show, Semigroup, Monoid, Eq, Arbitrary) 
 
 -- ** A few helper functions to operate on histories
 
@@ -141,3 +142,30 @@ instance Quantum HistoryQuantum where
 
 applyPolicy :: Policy -> History -> [History]
 applyPolicy = execute . meaning
+
+-- * Testing definitions
+
+instance Arbitrary Location where
+    arbitrary = Location <$> growingElements [[c] | c <- ['A'..'Z']]
+
+instance Arbitrary Policy where
+    arbitrary = do
+        n <- getSize
+        if n == 0 then
+            resize 1 $ oneof [
+                Swap <$> arbitrary <*> arbitrary,
+                Create <$> arbitrary,
+                Transmit <$> arbitrary <*> arbitrary,
+                Distill <$> arbitrary
+            ]
+        else
+            resize (n - 1) $ oneof [
+                Sequence <$> arbitrary <*> arbitrary,
+                Sequence <$> arbitrary <*> arbitrary
+            ]
+    shrink (Sequence p q) = [p, q]
+    shrink (Parallel p q) = [p, q]
+    shrink _ = []
+
+instance Arbitrary BellPair where
+    arbitrary = (:~:) <$> arbitrary <*> arbitrary

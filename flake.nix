@@ -9,7 +9,7 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        ihaskell = pkgs.ihaskell.override { packages = ps: [ ps.semirings ]; };
+        ihaskell = pkgs.ihaskell.override { packages = ps: [ ps.semirings ps.QuickCheck ]; };
       in {
         devShell = pkgs.mkShell {
           buildInputs = [
