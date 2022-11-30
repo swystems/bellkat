@@ -7,7 +7,7 @@ let
     postBuild = ''
       wrapProgram $out/bin/ihaskell --prefix PATH : $out/bin
     '';
-  }) (ps: [ ps.ihaskell ps.ihaskell-blaze ps.ihaskell-diagrams ps.semirings ]);
+  }) (ps: [ ps.ihaskell ps.ihaskell-blaze ps.ihaskell-diagrams ps.semirings ps.QuickCheck ]);
 
   ihaskell-kernel = pkgs.runCommand "ihaskell-kernel" {
     buildInputs = [ ihaskell-env pkgs.python310Packages.notebook ];
@@ -56,6 +56,9 @@ in {
   imports = [ (modulesPath + "/virtualisation/amazon-image.nix") ];
 
   nix.settings.trusted-users = [ "pschuprikov" ];
+  nix.extraOptions = ''
+      experimental-features = nix-command flakes
+  '';
 
   users.users.pschuprikov = {
     isNormalUser = true;
@@ -101,7 +104,7 @@ in {
     c.NotebookApp.keyfile = '/etc/secrets/jupyter/mykey.key'
   '';
 
-  environment.systemPackages = with pkgs; [ git ];
+  environment.systemPackages = with pkgs; [ git vim tmux ];
 
   system.stateVersion = "22.05";
 }
