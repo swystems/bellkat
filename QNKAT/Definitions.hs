@@ -24,7 +24,7 @@ instance Eq BellPair where
     l1 :~: l2 == l1' :~: l2' = (l1 , l2) == (l1', l2') || (l2, l1) == (l1', l2') 
 
 -- parallel composition is left-associative
-infixl <||>
+infixl 5 <||>
 
 -- | Define alg structure `ParallelSemigroup` with `<>` inherited from 
 -- `Semigroup` and new `<||>` for parallel composition
