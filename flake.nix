@@ -8,23 +8,36 @@
   outputs = { self, nixpkgs, flake-utils, deploy-rs }:
     flake-utils.lib.eachDefaultSystem (system:
       let
+        lib = nixpkgs.lib;
         pkgs = nixpkgs.legacyPackages.${system};
-        ihaskell = pkgs.ihaskell.override { packages = ps: [ ps.semirings ps.QuickCheck ]; };
+        ihaskell = pkgs.ihaskell.override {
+          packages = ps: [ ps.semirings ps.QuickCheck ];
+        };
       in {
+        defaultPackage = pkgs.haskellPackages.callCabal2nix "qnkat-playground"
+          (lib.sourceFilesBySuffices ./. [ ".hs" ".yaml" ]) { };
         devShell = pkgs.mkShell {
           buildInputs = [
-            pkgs.entr
             ihaskell
             deploy-rs.defaultPackage.${system}
             pkgs.ghcid
             pkgs.cabal-install
+            pkgs.python3Packages.nbdime
           ];
         };
       }) // (let system = "x86_64-linux";
       in {
         nixosConfigurations.quantum-server = nixpkgs.lib.nixosSystem {
           inherit system;
-          modules = [ ./configuration.nix ];
+          modules = [
+            ./configuration.nix
+            (_: {
+              nixpkgs.config.packageOverrides = pkgs: {
+                haskellPackages = pkgs.haskellPackages.extend
+                  (_: _: { qnkat-playground = self.defaultPackage.${system}; });
+              };
+            })
+          ];
         };
         deploy = {
           sshUser = "pschuprikov";

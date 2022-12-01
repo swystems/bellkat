@@ -6,6 +6,7 @@ dependencies:
   - diagrams-lib
   - ihaskell-diagrams
   - diagrams-cairo
+  - QuickCheck
 
 library:
   exposed-modules:

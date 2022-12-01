@@ -7,7 +7,13 @@ let
     postBuild = ''
       wrapProgram $out/bin/ihaskell --prefix PATH : $out/bin
     '';
-  }) (ps: [ ps.ihaskell ps.ihaskell-blaze ps.ihaskell-diagrams ps.semirings ps.QuickCheck ]);
+  }) (ps: [
+    ps.ihaskell
+    ps.ihaskell-blaze
+    ps.ihaskell-diagrams
+    ps.semirings
+    ps.QuickCheck
+  ]);
 
   ihaskell-kernel = pkgs.runCommand "ihaskell-kernel" {
     buildInputs = [ ihaskell-env pkgs.python310Packages.notebook ];
@@ -53,11 +59,11 @@ let
     paths = [ pythonKernels ihaskell-kernel ];
   };
 in {
-  imports = [ (modulesPath + "/virtualisation/amazon-image.nix") ];
+  imports = [ (modulesPath + "/virtualisation/amazon-image.nix") ./hoogle_tls.nix ];
 
   nix.settings.trusted-users = [ "pschuprikov" ];
   nix.extraOptions = ''
-      experimental-features = nix-command flakes
+    experimental-features = nix-command flakes
   '';
 
   users.users.pschuprikov = {
@@ -71,7 +77,6 @@ in {
 
   users.mutableUsers = false;
 
-
   security.sudo.extraRules = [{
     users = [ "pschuprikov" ];
     groups = [ "ALL" ];
@@ -81,12 +86,18 @@ in {
     }];
   }];
 
-  networking.firewall.allowedTCPPorts = [ 22 8888 ];
+  networking.firewall.allowedTCPPorts =
+    [ 22 config.services.jupyter.port config.services.hoogle.port ];
 
   users.groups.jupyter = { };
   users.users.jupyter.group = "jupyter";
 
-  services.jupyter.package = pkgs.python310.withPackages (ps: [ ps.jupyter ps.notebook ]);
+  services.hoogle.enable = true;
+  services.hoogle.packages = ps: [ ps.qnkat-playground ];
+  services.hoogle.host = "0.0.0.0";
+
+  services.jupyter.package =
+    pkgs.python310.withPackages (ps: [ ps.jupyter ps.notebook ]);
   services.jupyter.enable = true;
   services.jupyter.ip = "*";
   services.jupyter.port = 8888;
