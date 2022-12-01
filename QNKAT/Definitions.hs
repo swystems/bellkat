@@ -134,10 +134,13 @@ instance ParallelSemigroup HistoryQuantum where
 instance Quantum HistoryQuantum where
     tryCreateBellPairFrom p bp prob = HistoryQuantum 
         { requiredRoots = bp
-        , execute = \h -> fromMaybe [dup h] $ findTreeRoots bp h >>= \(ts, h) -> return $
-            case prob of 
-                Nothing -> [dup h <> History [Node p ts]]
-                Just _ -> [dup h <> History [Node p ts], dup h]
+        , execute = \h -> 
+            case findTreeRoots bp h of
+                Nothing -> [dup h]
+                Just (ts, h) -> 
+                    case prob of 
+                        Nothing -> [dup h <> History [Node p ts]]
+                        Just _ -> [dup h <> History [Node p ts], dup h]
         }
 
 applyPolicy :: Policy -> History -> [History]
