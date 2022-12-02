@@ -5,10 +5,7 @@ module QNKAT.Definitions where
 
 import Data.String (IsString)
 import Data.Tree (Forest, Tree (Node), rootLabel)
-import Data.Bifunctor (first)
 import Data.List (partition)
-import Control.Monad ((>=>))
-import Data.Maybe (fromMaybe)
 import Test.QuickCheck
 
 -- * Type definitions
@@ -87,14 +84,24 @@ findTreeRoot p (History ts) =
 
 findTreeRoots :: [BellPair] -> History -> Maybe (Forest BellPair, History)
 findTreeRoots [] h = Just ([], h)
-findTreeRoots (p : ps) h = findTreeRoot p h >>= \(t, h) ->
-    findTreeRoots ps h >>= \(ts, h) -> return (t : ts, h)
+findTreeRoots (p : ps) h = 
+    case findTreeRoot p h of
+        Nothing -> Nothing                         
+        Just (t, h) -> case findTreeRoots ps h of 
+                         Nothing -> Nothing
+                         Just (ts, h) -> return (t : ts, h)
     
 findSubHistory :: [BellPair] -> History -> Maybe (History, History)
-findSubHistory ps h = first History <$> findTreeRoots ps h
+findSubHistory ps h = 
+    case findTreeRoots ps h of
+      Nothing -> Nothing
+      Just (ts, h) -> Just (History ts, h)
 
 findSubHistory' :: [BellPair] -> History -> (Maybe History, History)
-findSubHistory' ps h = maybe (Nothing, h) (first return) $ findSubHistory ps h
+findSubHistory' ps h =
+    case findSubHistory ps h of
+      Nothing -> (Nothing, h)
+      Just (h, hRest) -> (Just h, hRest)
 
 dup :: History -> History
 dup = History . map (\t -> Node (rootLabel t) [t]) . getForest
@@ -118,7 +125,7 @@ instance Semigroup HistoryQuantum where
     -- | Definition of `<>` as sequential composition of `execute`
     hq <> hq' = HistoryQuantum 
         { requiredRoots = requiredRoots hq
-        , execute = execute hq >=> execute hq'
+        , execute = \h -> [h'' | h' <- execute hq h, h'' <- execute hq' h']
         }
     
 instance ParallelSemigroup HistoryQuantum where
@@ -132,6 +139,7 @@ instance ParallelSemigroup HistoryQuantum where
         }
     
 instance Quantum HistoryQuantum where
+
     tryCreateBellPairFrom p bp prob = HistoryQuantum 
         { requiredRoots = bp
         , execute = \h -> 
