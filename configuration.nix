@@ -1,4 +1,4 @@
-{ config, pkgs, lib, modulesPath, ... }:
+{ config, pkgs, lib, modulesPath, qnkat, ... }:
 let
   matplotlibLatex = pkgs.texlive.combine {
     inherit (pkgs.texlive) scheme-basic type1cm cm-super underscore dvipng;
@@ -59,7 +59,11 @@ let
     paths = [ pythonKernels ihaskell-kernel ];
   };
 in {
-  imports = [ (modulesPath + "/virtualisation/amazon-image.nix") ./hoogle_tls.nix ];
+  imports =
+    [ (modulesPath + "/virtualisation/amazon-image.nix") ./hoogle_tls.nix ];
+
+  nixpkgs.overlays =
+    [ qnkat.overlays.ihaskell-diagrams-fix qnkat.overlays.default ];
 
   nix.settings.trusted-users = [ "pschuprikov" ];
   nix.extraOptions = ''
@@ -109,6 +113,8 @@ in {
 
   systemd.services.jupyter.environment.JUPYTER_PATH =
     pkgs.lib.mkForce (toString kernels);
+
+  systemd.services.amazon-init.enable = false;
 
   services.jupyter.notebookConfig = ''
     c.NotebookApp.certfile = '/etc/secrets/jupyter/mycert.pem'

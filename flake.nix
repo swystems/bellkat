@@ -9,36 +9,9 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         lib = nixpkgs.lib;
-        ihaskell-diagrams-fix = self: super: {
-          haskellPackages = super.haskellPackages.override {
-            overrides = hself: hsuper: {
-              ihaskell-diagrams = (super.haskell.lib.overrideSrc
-                (super.haskell.lib.markUnbroken hsuper.ihaskell-diagrams) {
-                  src = super.fetchFromGitHub {
-                    owner = "IHaskell";
-                    repo = "IHaskell";
-                    rev = "c466b4fa2ad1d19db2733dfda83e4cf552c64f03";
-                    sha256 = "K1uoUpzpOPN5WY/fNtlK2IOq4pW1jbAjosTob7fn9Og=";
-                  };
-                }).overrideAttrs (attrs:
-                  let
-                    script = ''
-                      s/T.Encoding.decodeUtf8 imgData/T.unpack (&)/
-                      /import qualified Data.Text/a \
-                      import qualified Data.Text as T
-                    '';
-                  in {
-                    patchPhase = ''
-                      sed -i '${script}' IHaskell/Display/Diagrams.hs
-                    '';
-                    sourceRoot = "source/ihaskell-display/ihaskell-diagrams";
-                  });
-            };
-          };
-        };
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [ ihaskell-diagrams-fix ];
+          overlays = [ self.overlays.ihaskell-diagrams-fix ];
         };
         ihaskell = pkgs.ihaskell.override {
           packages = ps: [ ps.semirings ps.QuickCheck ps.ihaskell-diagrams ];
@@ -58,18 +31,47 @@
         };
       }) // (let system = "x86_64-linux";
       in {
+        overlays = {
+          default = final: prev: {
+            haskellPackages = prev.haskellPackages.extend (hself: hsuper: {
+              qnkat-playground = hself.callCabal2nix "qnkat-playground"
+                (prev.lib.sourceFilesBySuffices ./. [ ".hs" ".yaml" ]) { };
+            });
+          };
+          ihaskell-diagrams-fix = final: prev: {
+            haskellPackages = prev.haskellPackages.override {
+              overrides = hself: hsuper: {
+                ihaskell-diagrams = (prev.haskell.lib.overrideSrc
+                  (prev.haskell.lib.markUnbroken hsuper.ihaskell-diagrams) {
+                    src = prev.fetchFromGitHub {
+                      owner = "IHaskell";
+                      repo = "IHaskell";
+                      rev = "c466b4fa2ad1d19db2733dfda83e4cf552c64f03";
+                      sha256 = "K1uoUpzpOPN5WY/fNtlK2IOq4pW1jbAjosTob7fn9Og=";
+                    };
+                  }).overrideAttrs (attrs:
+                    let
+                      script = ''
+                        s/T.Encoding.decodeUtf8 imgData/T.unpack (&)/
+                        /import qualified Data.Text/a \
+                        import qualified Data.Text as T
+                      '';
+                    in {
+                      patchPhase =
+                        "sed -i '${script}' IHaskell/Display/Diagrams.hs";
+                      sourceRoot = "source/ihaskell-display/ihaskell-diagrams";
+                    });
+              };
+            };
+          };
+        };
+
         nixosConfigurations.quantum-server = nixpkgs.lib.nixosSystem {
           inherit system;
-          modules = [
-            ./configuration.nix
-            (_: {
-              nixpkgs.config.packageOverrides = pkgs: {
-                haskellPackages = pkgs.haskellPackages.extend
-                  (_: _: { qnkat-playground = self.defaultPackage.${system}; });
-              };
-            })
-          ];
+          specialArgs = { qnkat = self; };
+          modules = [ ./configuration.nix ];
         };
+
         deploy = {
           sshUser = "pschuprikov";
           nodes.quantum-server = {
