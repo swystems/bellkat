@@ -15,7 +15,8 @@ library
   other-modules:
       Paths_qnkat_playground
   build-depends:
-      base
+      QuickCheck
+    , base
     , containers
     , diagrams-cairo
     , diagrams-lib
