@@ -17,7 +17,7 @@ data BellPair = Location :~: Location
 
 -- | how BPs are displayed
 instance Show BellPair where
-    show (l1 :~: l2) = name l1 <> "," <> name l2
+    show (l1 :~: l2) = name l1 <> "~" <> name l2
 instance Eq BellPair where
     l1 :~: l2 == l1' :~: l2' = (l1 , l2) == (l1', l2') || (l2, l1) == (l1', l2') 
 
@@ -32,7 +32,7 @@ class Semigroup a => ParallelSemigroup a where
 -- | `Quantum` is a `ParallelSemigroup` with `BellPair` creation
 class (ParallelSemigroup a) => Quantum a where
     -- | is function from `BellPair`, `[BellPair]` to `Maybe Double` Quantum;
-    -- | will be used in `meaning` of `Distill`
+    -- will be used in `meaning` of `Distill`
     tryCreateBellPairFrom :: BellPair -> [BellPair] -> Maybe Double -> a 
 
 -- | A deterministic version of `tryCreateBellPairFrom`
@@ -90,18 +90,25 @@ findTreeRoots (p : ps) h =
         Just (t, h) -> case findTreeRoots ps h of 
                          Nothing -> Nothing
                          Just (ts, h) -> return (t : ts, h)
-    
-findSubHistory :: [BellPair] -> History -> Maybe (History, History)
+
+data PartialHistory = PartialHistory { chosen :: History, rest :: History }
+
+findSubHistory :: [BellPair] -> History -> Maybe PartialHistory
 findSubHistory ps h = 
     case findTreeRoots ps h of
       Nothing -> Nothing
-      Just (ts, h) -> Just (History ts, h)
+      Just (ts, h) -> Just PartialHistory { chosen = History ts, rest = h }
 
-findSubHistory' :: [BellPair] -> History -> (Maybe History, History)
-findSubHistory' ps h =
+findSubHistoryAny :: [[BellPair]] -> History -> Maybe PartialHistory
+findSubHistoryAny [] h = Nothing
+findSubHistoryAny (ps : pss) h = 
     case findSubHistory ps h of
-      Nothing -> (Nothing, h)
-      Just (h, hRest) -> (Just h, hRest)
+      Nothing -> findSubHistoryAny pss h
+      Just PartialHistory { chosen = h, rest = hRest } -> 
+          case findSubHistoryAny pss hRest of
+            Nothing -> Just PartialHistory { chosen = h, rest = hRest }
+            Just PartialHistory { chosen = h', rest = hRest' } ->
+                Just PartialHistory { chosen = h <> h', rest = hRest' }
 
 dup :: History -> History
 dup = History . map (\t -> Node (rootLabel t) [t]) . getForest
@@ -109,7 +116,7 @@ dup = History . map (\t -> Node (rootLabel t) [t]) . getForest
 -- ** Quantum operations represented as functions over histories
 
 data HistoryQuantum = HistoryQuantum 
-    { requiredRoots :: [BellPair]
+    { requiredRoots :: [[BellPair]]
     , execute :: History -> [History] 
     }
         
@@ -117,9 +124,10 @@ data HistoryQuantum = HistoryQuantum
 executePartial 
     :: HistoryQuantum -> History -> ([History], History)
 executePartial hq h = 
-    case findSubHistory (requiredRoots hq) h of
+    case findSubHistoryAny (requiredRoots hq) h of
         Nothing -> ([History[]], h)
-        Just (hInput, hRest) -> (execute hq hInput, hRest)
+        Just PartialHistory { chosen = hInput, rest = hRest } -> 
+            (execute hq hInput, hRest)
 
 instance Semigroup HistoryQuantum where
     -- | Definition of `<>` as sequential composition of `execute`
@@ -139,9 +147,8 @@ instance ParallelSemigroup HistoryQuantum where
         }
     
 instance Quantum HistoryQuantum where
-
     tryCreateBellPairFrom p bp prob = HistoryQuantum 
-        { requiredRoots = bp
+        { requiredRoots = [bp]
         , execute = \h -> 
             case findTreeRoots bp h of
                 Nothing -> [dup h]
