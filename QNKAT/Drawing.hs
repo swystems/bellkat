@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE OverloadedLists #-}
 
 module QNKAT.Drawing where
@@ -20,13 +21,18 @@ treeToDiagram t =
     let childrenNames = [1..(length $ subForest t :: Int)]
         rootName = 0 :: Int
         subtrees = zipWith (.>>) childrenNames (map treeToDiagram $ subForest t)
-      in vsep 1 [pairToDiagram (rootLabel t) # named rootName, hsep 0.5 subtrees # centerX  ] 
-          # appEndo (mconcat $ map (\i -> Endo $ connectOutside (i .> rootName) rootName) childrenNames)
+        drawEdge = connectOutside' (with & lengths .~ global 0.5)
+      in vsep 1 [pairToDiagram (rootLabel t) # named rootName, hsep 0.5 subtrees # centerX] 
+          # appEndo (mconcat $ map (\i -> Endo $ drawEdge  (i .> rootName) rootName) childrenNames)
+
+frameDiagram d = let d' = d # frame 0.5 in d' <> boundingRect d'
 
 historyToDiagram (History ts) = hsep 0.5 . map treeToDiagram . toForest $ ts
 
+historiesToDiagram = vsep 1 . fmap (alignL . frameDiagram . historyToDiagram)
+
 drawPolicy :: Policy -> ManuallySized (Diagram B)
-drawPolicy p = withImgWidth 600 . vsep 1 . fmap historyToDiagram . Set.elems . applyPolicy p $ []
+drawPolicy p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPolicy p $ []
 
 drawHistoryText :: History -> String
 drawHistoryText = drawForest . (fmap . fmap) show . toForest . getForest
