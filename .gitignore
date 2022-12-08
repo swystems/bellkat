@@ -1,6 +1,9 @@
 # Created by https://www.toptal.com/developers/gitignore/api/haskell,direnv,python
 # Edit at https://www.toptal.com/developers/gitignore?templates=haskell,direnv,python
 
+### hpack ###
+*.cabal
+
 ### direnv ###
 .direnv
 .envrc
