@@ -24,7 +24,6 @@
             deploy-rs.defaultPackage.${system}
             pkgs.ghcid
             pkgs.cabal-install
-            pkgs.python3Packages.nbdime
             pkgs.haskellPackages.haskell-language-server
           ];
         };
