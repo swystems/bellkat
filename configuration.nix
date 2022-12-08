@@ -10,10 +10,7 @@ let
   }) (ps: [
     ps.ihaskell
     ps.ihaskell-blaze
-    ps.ihaskell-diagrams
-    ps.semirings
-    ps.QuickCheck
-  ]);
+  ] ++ ps.qnkat-playground.getCabalDeps.libraryHaskellDepends);
 
   ihaskell-kernel = pkgs.runCommand "ihaskell-kernel" {
     buildInputs = [ ihaskell-env pkgs.python310Packages.notebook ];
