@@ -7,10 +7,12 @@ module QNKAT.Definitions where
 
 import Data.String (IsString)
 import Data.List (partition, sort)
-import Test.QuickCheck
+import Test.QuickCheck hiding (choose)
 import QNKAT.UnorderedTree
 import qualified Data.Multiset as Mset
+import Data.Multiset (Multiset)
 import qualified Data.Set as Set
+import qualified Data.Map as Map
 import GHC.Exts (IsList, Item, fromList, toList)
 import Data.Set (Set)
 
@@ -91,41 +93,83 @@ instance IsList History where
 
 -- ** A few helper functions to operate on histories
 
+-- | Part that we have chosen and part that we have left out
+data Partial a = Partial { chosen :: a, rest :: a }
+
+chooseAll :: Monoid a => a -> Partial a
+chooseAll x = Partial { chosen = x, rest = mempty }
+
+chooseNoneOf :: Monoid a => a -> Partial a
+chooseNoneOf x = Partial { chosen = mempty, rest = x }
+
+instance Semigroup a => Semigroup (Partial a) where
+    p <> p' = Partial { chosen = chosen p <> chosen p', rest = rest p <> rest p' }
+
+instance Functor Partial where
+    fmap f p = Partial { chosen = f (chosen p), rest = f (rest p) }
+
 -- | Partitions the history into *first* tree whose root matches `p` and other
 -- trees
-findTreeRoot :: BellPair -> History -> Maybe (UTree BellPair, History)
-findTreeRoot p (History ts) =
+findTreeRoot :: BellPair -> UForest BellPair -> Maybe (UTree BellPair, UForest BellPair)
+findTreeRoot p ts =
     case Mset.elems . Mset.filter ((== p) . rootLabel) $ ts of
-      (t:_) -> Just (t, History $ Mset.remove t ts)
+      (t:_) -> Just (t, Mset.remove t ts)
       [] -> Nothing
 
-findTreeRoots :: [BellPair] -> History -> Maybe (UForest BellPair, History)
-findTreeRoots [] h = Just ([], h)
-findTreeRoots (p : ps) h = 
-    case findTreeRoot p h of
+findTreeRoots :: [BellPair] -> UForest BellPair -> Maybe (Partial (UForest BellPair))
+findTreeRoots [] ts = Just $ chooseNoneOf ts
+findTreeRoots (p : ps) ts = 
+    case findTreeRoot p ts of
         Nothing -> Nothing                         
-        Just (t, h) -> case findTreeRoots ps h of 
+        Just (t, ts) -> case findTreeRoots ps ts of 
                          Nothing -> Nothing
-                         Just (ts, h) -> Just (Mset.insert t ts, h)
+                         Just p -> Just $ chooseAll [t] <> p
 
-data PartialHistory = PartialHistory { chosen :: History, rest :: History }
-
-findSubHistory :: [BellPair] -> History -> Maybe PartialHistory
-findSubHistory ps h = 
-    case findTreeRoots ps h of
+findSubHistory :: [BellPair] -> History -> Maybe (Partial History)
+findSubHistory ps (History ts) = 
+    case findTreeRoots ps ts of
       Nothing -> Nothing
-      Just (ts, h) -> Just PartialHistory { chosen = History ts, rest = h }
+      Just p -> Just $ fmap History p
 
-findSubHistoryAny :: [[BellPair]] -> History -> Maybe PartialHistory
+findSubHistoryAny :: [[BellPair]] -> History -> Maybe (Partial History)
 findSubHistoryAny [] h = Nothing
 findSubHistoryAny (ps : pss) h = 
     case findSubHistory ps h of
       Nothing -> findSubHistoryAny pss h
-      Just PartialHistory { chosen = h, rest = hRest } -> 
-          case findSubHistoryAny pss hRest of
-            Nothing -> Just PartialHistory { chosen = h, rest = hRest }
-            Just PartialHistory { chosen = h', rest = hRest' } ->
-                Just PartialHistory { chosen = h <> h', rest = hRest' }
+      Just partialH -> 
+          case findSubHistoryAny pss (rest partialH) of
+            Nothing -> Just partialH
+            Just partialH' ->
+                Just partialH' { chosen = chosen partialH <> chosen partialH' }
+
+-- *** Non-deterministic versions
+
+choose :: (Ord a) => Int -> [a] -> [Partial [a]]
+choose 0 xs = [chooseNoneOf xs]
+choose n [] = []
+choose n (x:xs) = [chooseAll [x] <> p | p <- choose (n - 1) xs] ++ choose n xs
+
+findTreeRootsND :: [BellPair] -> UForest BellPair -> [Partial (UForest BellPair)]
+findTreeRootsND [] ts = [chooseNoneOf ts]
+findTreeRootsND bps@(bp:_) ts = 
+    let (curBps, restBps) = partition (== bp) bps
+        curTrees = Mset.filter ((== bp) . rootLabel) ts
+        restTrees = Mset.filter ((/= bp) . rootLabel) ts
+     in [fmap Mset.fromList ts <> ts' 
+            | ts <- choose (length curBps) (toList curTrees)
+            , ts' <- findTreeRootsND restBps restTrees]
+
+findSubHistoryND :: [BellPair] -> History -> [Partial History]
+findSubHistoryND ps (History ts) = [fmap History pts | pts <- findTreeRootsND ps ts]
+
+findSubHistoryAnyND :: [[BellPair]] -> History -> [Partial History]
+findSubHistoryAnyND [] h = []
+findSubHistoryAnyND (ps : pss) h = 
+    [partialH' { chosen = chosen partialH <> chosen partialH' } 
+      | partialH <- findSubHistoryND ps h <> [chooseNoneOf h]
+      , partialH' <- findSubHistoryAnyND pss (rest partialH)]
+
+-- *** Duplicating history
 
 dup :: History -> History
 dup = History . Mset.map (\t -> Node (rootLabel t) [t]) . getForest
@@ -143,8 +187,16 @@ executePartial
 executePartial hq h = 
     case findSubHistoryAny (requiredRoots hq) h of
         Nothing -> ([[]], h)
-        Just PartialHistory { chosen = hInput, rest = hRest } -> 
+        Just Partial { chosen = hInput, rest = hRest } -> 
             (execute hq hInput, hRest)
+
+-- | execute on _non-deterministically chosen_ compatible roots and leave the
+-- rest intact
+executePartialND 
+    :: HistoryQuantum -> History -> [(Set History, History)]
+executePartialND hq h = 
+    [ (execute hq (chosen partialH), rest partialH) 
+        | partialH <- findSubHistoryAnyND (requiredRoots hq) h <> [chooseNoneOf h]]
 
 instance Semigroup HistoryQuantum where
     -- | Definition of `<>` as sequential composition of `execute`
@@ -158,21 +210,25 @@ instance ParallelSemigroup HistoryQuantum where
     hq <||> hq' = HistoryQuantum
         { requiredRoots = requiredRoots hq <> requiredRoots hq'
         , execute = \h -> 
-            let (hs, hRest) = executePartial hq h
-                (hs', hRest') = executePartial hq' hRest
-            in Set.fromList [dup hRest' <> hNew <> hNew' | hNew <- Set.elems hs , hNew' <- Set.elems hs']
+            Set.fromList 
+                [ dup hRest' <> hNew <> hNew'
+                    | (hs, hRest) <- executePartialND hq h
+                    , (hs', hRest') <- executePartialND hq' hRest
+                    , hNew <- Set.elems hs
+                    , hNew' <- Set.elems hs'
+                ]
         }
     
 instance Quantum HistoryQuantum where
     tryCreateBellPairFrom p bp prob = HistoryQuantum 
         { requiredRoots = [bp]
-        , execute = \h -> 
-            case findTreeRoots bp h of
+        , execute = \h@(History ts) -> 
+            case findTreeRoots bp ts of
                 Nothing -> [dup h]
-                Just (ts, h) -> 
+                Just Partial { chosen = ts, rest = tsRest } -> 
                     case prob of 
-                        Nothing -> [dup h <> [Node p ts]]
-                        Just _ -> [dup h <> [Node p ts], dup h]
+                        Nothing -> [dup (History tsRest) <> [Node p ts]]
+                        Just _ -> [dup (History tsRest) <> [Node p ts], dup h]
         }
 
 applyPolicy :: Policy -> History -> Set History
