@@ -3,6 +3,7 @@ name: qnkat-playground
 dependencies:
   - base
   - containers
+  - more-containers
   - diagrams-lib
   - ihaskell-diagrams
   - diagrams-cairo

@@ -1,16 +1,22 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module QNKAT.Definitions where 
 
 import Data.String (IsString)
-import Data.Tree (Forest, Tree (Node), rootLabel)
-import Data.List (partition)
+import Data.List (partition, sort)
 import Test.QuickCheck
+import QNKAT.UnorderedTree
+import qualified Data.Multiset as Mset
+import qualified Data.Set as Set
+import GHC.Exts (IsList, Item, fromList, toList)
+import Data.Set (Set)
 
 -- * Type definitions
 
-newtype Location = Location { name :: String } deriving newtype (Eq, Show, IsString)
+newtype Location = Location { name :: String } deriving newtype (Eq, Show, Ord, IsString)
 
 -- | `:~:` is our symbol for entangled pair
 data BellPair = Location :~: Location
@@ -19,7 +25,10 @@ data BellPair = Location :~: Location
 instance Show BellPair where
     show (l1 :~: l2) = name l1 <> "~" <> name l2
 instance Eq BellPair where
-    l1 :~: l2 == l1' :~: l2' = (l1 , l2) == (l1', l2') || (l2, l1) == (l1', l2') 
+    l1 :~: l2 == l1' :~: l2' = sort [l1, l2] == sort [l2, l1]
+
+instance Ord BellPair where
+    compare (l1 :~: l2) (l1' :~: l2') = compare (sort [l1, l2]) (sort [l1', l2'])
 
 -- parallel composition is left-associative
 infixl 5 <||>
@@ -69,27 +78,35 @@ meaning (Parallel p q) = meaning p <||> meaning q
 -- * History of BellPairs
 
 -- | `History` is a forest of `BellPair`s
-newtype History = History { getForest :: Forest BellPair } 
-    deriving newtype (Show, Semigroup, Monoid, Eq, Arbitrary) 
+newtype History = History { getForest :: UForest BellPair } 
+    deriving newtype (Semigroup, Monoid, Eq, Ord, Arbitrary) 
+
+instance Show History where
+    show = show . toList
+
+instance IsList History where
+    type Item History = UTree BellPair
+    fromList = History . fromList
+    toList = toList . getForest 
 
 -- ** A few helper functions to operate on histories
 
--- | Partitions the history into (first) tree whose root matches `p` and other
+-- | Partitions the history into *first* tree whose root matches `p` and other
 -- trees
-findTreeRoot :: BellPair -> History -> Maybe (Tree BellPair, History)
+findTreeRoot :: BellPair -> History -> Maybe (UTree BellPair, History)
 findTreeRoot p (History ts) =
-    case partition ((== p) . rootLabel) ts of
-        (t:ts, ts') -> Just (t, History (ts <> ts'))
-        _ -> Nothing
+    case Mset.elems . Mset.filter ((== p) . rootLabel) $ ts of
+      (t:_) -> Just (t, History $ Mset.remove t ts)
+      [] -> Nothing
 
-findTreeRoots :: [BellPair] -> History -> Maybe (Forest BellPair, History)
+findTreeRoots :: [BellPair] -> History -> Maybe (UForest BellPair, History)
 findTreeRoots [] h = Just ([], h)
 findTreeRoots (p : ps) h = 
     case findTreeRoot p h of
         Nothing -> Nothing                         
         Just (t, h) -> case findTreeRoots ps h of 
                          Nothing -> Nothing
-                         Just (ts, h) -> return (t : ts, h)
+                         Just (ts, h) -> Just (Mset.insert t ts, h)
 
 data PartialHistory = PartialHistory { chosen :: History, rest :: History }
 
@@ -111,21 +128,21 @@ findSubHistoryAny (ps : pss) h =
                 Just PartialHistory { chosen = h <> h', rest = hRest' }
 
 dup :: History -> History
-dup = History . map (\t -> Node (rootLabel t) [t]) . getForest
+dup = History . Mset.map (\t -> Node (rootLabel t) [t]) . getForest
 
 -- ** Quantum operations represented as functions over histories
 
 data HistoryQuantum = HistoryQuantum 
     { requiredRoots :: [[BellPair]]
-    , execute :: History -> [History] 
+    , execute :: History -> Set History
     }
         
 -- | executes on compatible roots and leaves the rest intact
 executePartial 
-    :: HistoryQuantum -> History -> ([History], History)
+    :: HistoryQuantum -> History -> (Set History, History)
 executePartial hq h = 
     case findSubHistoryAny (requiredRoots hq) h of
-        Nothing -> ([History[]], h)
+        Nothing -> ([[]], h)
         Just PartialHistory { chosen = hInput, rest = hRest } -> 
             (execute hq hInput, hRest)
 
@@ -133,7 +150,7 @@ instance Semigroup HistoryQuantum where
     -- | Definition of `<>` as sequential composition of `execute`
     hq <> hq' = HistoryQuantum 
         { requiredRoots = requiredRoots hq
-        , execute = \h -> [h'' | h' <- execute hq h, h'' <- execute hq' h']
+        , execute = \h -> Set.fromList [h'' | h' <- Set.elems $ execute hq h,  h'' <- Set.elems $ execute hq' h']
         }
     
 instance ParallelSemigroup HistoryQuantum where
@@ -143,7 +160,7 @@ instance ParallelSemigroup HistoryQuantum where
         , execute = \h -> 
             let (hs, hRest) = executePartial hq h
                 (hs', hRest') = executePartial hq' hRest
-            in [dup hRest' <> hNew <> hNew' | hNew <- hs , hNew' <- hs']
+            in Set.fromList [dup hRest' <> hNew <> hNew' | hNew <- Set.elems hs , hNew' <- Set.elems hs']
         }
     
 instance Quantum HistoryQuantum where
@@ -154,11 +171,11 @@ instance Quantum HistoryQuantum where
                 Nothing -> [dup h]
                 Just (ts, h) -> 
                     case prob of 
-                        Nothing -> [dup h <> History [Node p ts]]
-                        Just _ -> [dup h <> History [Node p ts], dup h]
+                        Nothing -> [dup h <> [Node p ts]]
+                        Just _ -> [dup h <> [Node p ts], dup h]
         }
 
-applyPolicy :: Policy -> History -> [History]
+applyPolicy :: Policy -> History -> Set History
 applyPolicy = execute . meaning
 
 -- * Testing definitions
