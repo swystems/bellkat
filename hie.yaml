@@ -1,4 +1,4 @@
 cradle:
     cabal:
-        - path: "./QNKAT"
+        - path: "src"
           component: "lib:qnkat-playground"

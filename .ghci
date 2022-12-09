@@ -1,2 +1,5 @@
+:set -isrc
+:set -XOverloadedStrings -XFlexibleContexts -XOverloadedLists
 :load QNKAT.Definitions
 :load QNKAT.Drawing
+:load QNKAT.Test
