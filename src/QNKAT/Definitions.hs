@@ -151,7 +151,7 @@ findSubHistoryAny (ps : pss) h =
 choose :: (Ord a) => Int -> [a] -> [Partial [a]]
 choose 0 xs = [chooseNoneOf xs]
 choose n [] = []
-choose n (x:xs) = [chooseAll [x] <> p | p <- choose (n - 1) xs] ++ choose n xs
+choose n (x:xs) = [chooseAll [x] <> p | p <- choose (n - 1) xs] ++ [chooseNoneOf [x] <> p | p <- choose n xs]
 
 findTreeRootsND :: [BellPair] -> UForest BellPair -> [Partial (UForest BellPair)]
 findTreeRootsND [] ts = [chooseNoneOf ts]
