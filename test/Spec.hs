@@ -38,10 +38,7 @@ main = hspec $ do
         it "A~B /= B~C" $
             ("A" :~: "B") `shouldNotBe` ("B" :~: "C")
     describe "parallel" $ do 
-        qnkatProp "should be commutative" parallelCompositionIsCommutative
-        qnkatProp "should be associative" parallelCompositionIsAssociative
+        prop "should be commutative" parallelCompositionIsCommutative
+        prop "should be associative" parallelCompositionIsAssociative
     describe "sequential" $ do
-        qnkatProp "should be associative" sequentialCompositionIsAssociative
-
-            
-qnkatProp text = modifyMaxSuccess (const 1000) . modifyMaxSize (const 4) . prop text
+        prop "should be associative" sequentialCompositionIsAssociative
