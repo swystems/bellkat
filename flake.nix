@@ -35,8 +35,10 @@
         overlays = {
           default = final: prev: {
             haskellPackages = prev.haskellPackages.extend (hself: hsuper: {
-              qnkat-playground = hself.callCabal2nix "qnkat-playground"
-                (prev.lib.sourceFilesBySuffices ./. [ ".hs" ".yaml" ]) { };
+              qnkat-playground = prev.haskell.lib.overrideCabal (hself.callCabal2nix "qnkat-playground"
+                (prev.lib.sourceFilesBySuffices ./. [ ".hs" ".yaml" ])  {}) (attrs: { 
+                  testFlags = ["--skip" "parallel/should be commutative"];
+                });
             });
           };
           ihaskell-diagrams-fix = final: prev: {
