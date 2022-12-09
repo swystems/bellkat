@@ -2,3 +2,6 @@ cradle:
     cabal:
         - path: "src"
           component: "lib:qnkat-playground"
+        - path: "test"
+          component: "test:spec"
+

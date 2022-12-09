@@ -89,7 +89,7 @@ instance Show History where
 instance IsList History where
     type Item History = UTree BellPair
     fromList = History . fromList
-    toList = toList . getForest 
+    toList = toList . getForest
 
 -- ** A few helper functions to operate on histories
 
@@ -108,11 +108,14 @@ instance Semigroup a => Semigroup (Partial a) where
 instance Functor Partial where
     fmap f p = Partial { chosen = f (chosen p), rest = f (rest p) }
 
+hasRoot :: BellPair -> UTree BellPair -> Bool
+hasRoot p = (== p) . rootLabel
+
 -- | Partitions the history into *first* tree whose root matches `p` and other
 -- trees
 findTreeRoot :: BellPair -> UForest BellPair -> Maybe (UTree BellPair, UForest BellPair)
 findTreeRoot p ts =
-    case Mset.elems . Mset.filter ((== p) . rootLabel) $ ts of
+    case Mset.elems . Mset.filter (hasRoot p) $ ts of
       (t:_) -> Just (t, Mset.remove t ts)
       [] -> Nothing
 
@@ -153,8 +156,8 @@ findTreeRootsND :: [BellPair] -> UForest BellPair -> [Partial (UForest BellPair)
 findTreeRootsND [] ts = [chooseNoneOf ts]
 findTreeRootsND bps@(bp:_) ts = 
     let (curBps, restBps) = partition (== bp) bps
-        curTrees = Mset.filter ((== bp) . rootLabel) ts
-        restTrees = Mset.filter ((/= bp) . rootLabel) ts
+        curTrees = Mset.filter (hasRoot bp) ts
+        restTrees = Mset.filter (not . hasRoot bp) ts
      in [fmap Mset.fromList ts <> ts' 
             | ts <- choose (length curBps) (toList curTrees)
             , ts' <- findTreeRootsND restBps restTrees]
@@ -228,7 +231,7 @@ instance Quantum HistoryQuantum where
                 Just Partial { chosen = ts, rest = tsRest } -> 
                     case prob of 
                         Nothing -> [dup (History tsRest) <> [Node p ts]]
-                        Just _ -> [dup (History tsRest) <> [Node p ts], dup h]
+                        Just _ -> [dup (History tsRest) <> [Node p ts], dup (History tsRest)]
         }
 
 applyPolicy :: Policy -> History -> Set History

@@ -16,3 +16,12 @@ library:
     - QNKAT.Definitions
     - QNKAT.UnorderedTree
     - QNKAT.Test
+
+tests:
+  spec: 
+    main: Spec
+    source-dirs: 
+      - test
+      - src
+    dependencies: 
+      - hspec

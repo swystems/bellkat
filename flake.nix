@@ -11,10 +11,13 @@
         lib = nixpkgs.lib;
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [ self.overlays.ihaskell-diagrams-fix self.overlays.default ];
+          overlays =
+            [ self.overlays.ihaskell-diagrams-fix self.overlays.default ];
         };
         ihaskell = pkgs.ihaskell.override {
-          packages = _: self.defaultPackage.${system}.getCabalDeps.libraryHaskellDepends;
+          packages = _:
+            self.defaultPackage.${system}.getCabalDeps.libraryHaskellDepends
+            ++ self.defaultPackage.${system}.getCabalDeps.testHaskellDepends;
         };
       in {
         defaultPackage = pkgs.haskellPackages.qnkat-playground;
