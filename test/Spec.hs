@@ -9,6 +9,7 @@ import QNKAT.Test
 
 import Test.Hspec
 import Test.Hspec.QuickCheck
+import Test.QuickCheck (expectFailure)
 
 main :: IO ()
 main = hspec $ do
@@ -42,3 +43,6 @@ main = hspec $ do
         prop "should be associative" parallelCompositionIsAssociative
     describe "sequential" $ do
         prop "should be associative" sequentialCompositionIsAssociative
+    describe "chooseHistories" $ do
+        prop "should not be commutative" $ expectFailure $
+            \x y h -> chooseHistories x y h == chooseHistories y x h

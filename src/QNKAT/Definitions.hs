@@ -189,22 +189,12 @@ data HistoryQuantum = HistoryQuantum
     , execute :: History -> Set History
     }
         
--- | executes on compatible roots and leaves the rest intact
-executePartial 
-    :: HistoryQuantum -> History -> (Set History, History)
-executePartial hq h = 
-    case findSubHistoryAny (requiredRoots hq) h of
-        Nothing -> ([[]], h)
-        Just Partial { chosen = hInput, rest = hRest } -> 
-            (execute hq hInput, hRest)
-
--- | execute on _non-deterministically chosen_ compatible roots and leave the
--- rest intact
-executePartialND 
-    :: HistoryQuantum -> History -> [(Set History, History)]
-executePartialND hq h = 
-    [ (execute hq (chosen partialH), rest partialH) 
-        | partialH <- findSubHistoryAnyND (requiredRoots hq) h]
+-- | choose two subhistory _non_deterministically_
+chooseHistories :: [[BellPair]] -> [[BellPair]] -> History -> [(History, History, History)]
+chooseHistories reqRoots reqRoots' h = 
+    [ (chosen partialH, chosen partialH', rest partialH') 
+        | partialH <- findSubHistoryAnyND reqRoots h
+        , partialH' <- findSubHistoryAnyND reqRoots' (rest partialH)]
 
 instance Semigroup HistoryQuantum where
     -- | Definition of `<>` as sequential composition of `execute`
@@ -219,11 +209,10 @@ instance ParallelSemigroup HistoryQuantum where
         { requiredRoots = requiredRoots hq <> requiredRoots hq'
         , execute = \h -> 
             Set.fromList 
-                [ dup hRest' <> hNew <> hNew'
-                    | (hs, hRest) <- executePartialND hq h
-                    , (hs', hRest') <- executePartialND hq' hRest
-                    , hNew <- Set.elems hs
-                    , hNew' <- Set.elems hs'
+                [ dup hRest <> hNew <> hNew'
+                    | (hs, hs', hRest) <- chooseHistories (requiredRoots hq) (requiredRoots hq') h
+                    , hNew <- Set.elems $ execute hq hs
+                    , hNew' <- Set.elems $ execute hq' hs'
                 ]
         }
     
