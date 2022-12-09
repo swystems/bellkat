@@ -44,4 +44,4 @@ main = hspec $ do
         qnkatProp "should be associative" sequentialCompositionIsAssociative
 
             
-qnkatProp text = modifyMaxSize (const 4) . prop text
+qnkatProp text = modifyMaxSuccess (const 1000) . modifyMaxSize (const 4) . prop text

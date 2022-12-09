@@ -170,7 +170,9 @@ findSubHistoryAnyND :: [[BellPair]] -> History -> [Partial History]
 findSubHistoryAnyND [] h = [chooseNoneOf h]
 findSubHistoryAnyND (ps : pss) h = 
     [partialH' { chosen = chosen partialH <> chosen partialH' } 
-      | partialH <- findSubHistoryND ps h <> [chooseNoneOf h]
+      | partialH <- case findSubHistoryND ps h of 
+                      [] -> [chooseNoneOf h]
+                      xs -> xs
       , partialH' <- findSubHistoryAnyND pss (rest partialH)]
 
 -- *** Duplicating history
