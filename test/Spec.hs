@@ -5,7 +5,10 @@ module Spec where
 
 import QNKAT.Definitions
 import QNKAT.UnorderedTree
+import QNKAT.Test
+
 import Test.Hspec
+import Test.Hspec.QuickCheck
 
 main :: IO ()
 main = hspec $ do
@@ -34,4 +37,11 @@ main = hspec $ do
             ("A" :~: "B") `shouldBe` ("B" :~: "A")
         it "A~B /= B~C" $
             ("A" :~: "B") `shouldNotBe` ("B" :~: "C")
+    describe "parallel" $ do 
+        qnkatProp "should be commutative" parallelCompositionIsCommutative
+        qnkatProp "should be associative" parallelCompositionIsAssociative
+    describe "sequential" $ do
+        qnkatProp "should be associative" sequentialCompositionIsAssociative
 
+            
+qnkatProp text = modifyMaxSize (const 4) . prop text
