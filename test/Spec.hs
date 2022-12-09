@@ -17,6 +17,18 @@ main = hspec $ do
         it "should transmit" $
             applyPolicy (Transmit "A" ("A", "R[AB]")) [Node ("A" :~: "A") []]
                 `shouldSatisfy` any (any (hasRoot ("A" :~: "R[AB]")) . getForest)
+        it "should transmit two" $
+            applyPolicy 
+                    (Transmit "A" ("A", "R[AB]") <||> Transmit "B" ("B", "R[AB]")) 
+                    [Node ("A" :~: "A") [], Node ("B" :~: "B") []]
+                `shouldSatisfy` any (any (hasRoot ("A" :~: "R[AB]")) . getForest)
+    describe "choose" $ do
+        it "should choose nothing" $
+            choose 0 ["A"] `shouldBe` [chooseNoneOf ["A"]]
+        it "should choose one" $
+            choose 1 ["A"] `shouldBe` [chooseAll ["A"]]
+        it "should choose two" $
+            choose 2 ["A" ,"B"] `shouldBe` [chooseAll ["A", "B"]]
     describe "bell pair" $ do
         it "A~B == B~A" $
             ("A" :~: "B") `shouldBe` ("B" :~: "A")

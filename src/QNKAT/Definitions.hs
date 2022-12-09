@@ -95,6 +95,7 @@ instance IsList History where
 
 -- | Part that we have chosen and part that we have left out
 data Partial a = Partial { chosen :: a, rest :: a }
+    deriving stock (Show, Eq)
 
 chooseAll :: Monoid a => a -> Partial a
 chooseAll x = Partial { chosen = x, rest = mempty }
@@ -166,7 +167,7 @@ findSubHistoryND :: [BellPair] -> History -> [Partial History]
 findSubHistoryND ps (History ts) = [fmap History pts | pts <- findTreeRootsND ps ts]
 
 findSubHistoryAnyND :: [[BellPair]] -> History -> [Partial History]
-findSubHistoryAnyND [] h = []
+findSubHistoryAnyND [] h = [chooseNoneOf h]
 findSubHistoryAnyND (ps : pss) h = 
     [partialH' { chosen = chosen partialH <> chosen partialH' } 
       | partialH <- findSubHistoryND ps h <> [chooseNoneOf h]
