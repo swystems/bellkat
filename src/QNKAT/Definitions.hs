@@ -166,13 +166,15 @@ findTreeRootsND bps@(bp:_) ts =
 findSubHistoryND :: [BellPair] -> History -> [Partial History]
 findSubHistoryND ps (History ts) = [fmap History pts | pts <- findTreeRootsND ps ts]
 
+chooseNoneOfIfEmpty :: (Monoid a) => a -> [Partial a] -> [Partial a]
+chooseNoneOfIfEmpty x [] = [chooseNoneOf x]
+chooseNoneOfIfEmpty _ xs = xs
+
 findSubHistoryAnyND :: [[BellPair]] -> History -> [Partial History]
 findSubHistoryAnyND [] h = [chooseNoneOf h]
 findSubHistoryAnyND (ps : pss) h = 
     [partialH' { chosen = chosen partialH <> chosen partialH' } 
-      | partialH <- case findSubHistoryND ps h of 
-                      [] -> [chooseNoneOf h]
-                      xs -> xs
+      | partialH <- chooseNoneOfIfEmpty h $ findSubHistoryND ps h 
       , partialH' <- findSubHistoryAnyND pss (rest partialH)]
 
 -- *** Duplicating history
@@ -202,7 +204,7 @@ executePartialND
     :: HistoryQuantum -> History -> [(Set History, History)]
 executePartialND hq h = 
     [ (execute hq (chosen partialH), rest partialH) 
-        | partialH <- findSubHistoryAnyND (requiredRoots hq) h <> [chooseNoneOf h]]
+        | partialH <- findSubHistoryAnyND (requiredRoots hq) h]
 
 instance Semigroup HistoryQuantum where
     -- | Definition of `<>` as sequential composition of `execute`
