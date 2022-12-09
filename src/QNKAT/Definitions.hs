@@ -27,7 +27,7 @@ data BellPair = Location :~: Location
 instance Show BellPair where
     show (l1 :~: l2) = name l1 <> "~" <> name l2
 instance Eq BellPair where
-    l1 :~: l2 == l1' :~: l2' = sort [l1, l2] == sort [l2, l1]
+    l1 :~: l2 == l1' :~: l2' = sort [l1, l2] == sort [l2', l1']
 
 instance Ord BellPair where
     compare (l1 :~: l2) (l1' :~: l2') = compare (sort [l1, l2]) (sort [l1', l2'])
