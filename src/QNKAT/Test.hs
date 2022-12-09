@@ -14,19 +14,10 @@ import Debug.Trace
     let hsP = applyPolicy p h
         hsQ = applyPolicy q h
 
-        removeFinalEOL x
-            | not (null x) && last x == '\n' = removeFinalEOL (init x)
-            | otherwise =  x
         counterexampleText = intercalate "\n" $ 
-               ["========="]
-            <> intersperse "---------" 
-                (map (removeFinalEOL . drawHistoryText) . Set.elems $ hsP)
-            <> ["========="]
+               [drawHistoriesText hsP]
             <> ["   =/=   "]
-            <> ["========="]
-            <> intersperse "---------" 
-                (map (removeFinalEOL . drawHistoryText) . Set.elems $ hsQ)
-            <> ["========="]
+            <> [drawHistoriesText hsP]
      in counterexample counterexampleText (hsP == hsQ)
 
 sequentialCompositionIsAssociative p q s = ((p <> q) <> s) ~ (p <> (q <> s))

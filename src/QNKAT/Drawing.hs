@@ -11,6 +11,8 @@ import Diagrams.Backend.Cairo (B)
 
 import Data.Tree (subForest, rootLabel, drawForest)
 import qualified Data.Set as Set
+import Data.Set (Set)
+import Data.List (intercalate, intersperse)
 
 import QNKAT.UnorderedTree (toTree, toForest) 
 import QNKAT.Definitions
@@ -36,3 +38,17 @@ drawPolicy p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPolicy p
 
 drawHistoryText :: History -> String
 drawHistoryText = drawForest . (fmap . fmap) show . toForest . getForest
+
+drawHistoriesText :: Set History -> String
+drawHistoriesText hs = 
+    intercalate "\n" $ 
+           ["========="]
+        <> intersperse "---------" 
+            (map (removeFinalEOL . drawHistoryText) . Set.elems $ hs)
+        <> ["========="]
+
+
+removeFinalEOL :: String -> String
+removeFinalEOL x
+    | not (null x) && last x == '\n' = removeFinalEOL (init x)
+    | otherwise =  x
