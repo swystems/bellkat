@@ -92,10 +92,8 @@ instance GHC.Exts.IsList History where
     toList = toList . getForest
     fromList = History . GHC.Exts.fromList
 
-
 instance Show History where
     show = show . GHC.Exts.toList
-
 
 -- ** A few helper functions to operate on histories
 
@@ -118,40 +116,6 @@ instance Functor Partial where
 hasRoot :: BellPair -> UTree BellPair -> Bool
 hasRoot p = (== p) . rootLabel
 
--- | Partitions the history into *first* tree whose root matches `p` and other
--- trees
-findTreeRoot :: BellPair -> UForest BellPair -> Maybe (UTree BellPair, UForest BellPair)
-findTreeRoot p ts =
-    case Mset.elems . Mset.filter (hasRoot p) $ ts of
-      (t:_) -> Just (t, Mset.remove t ts)
-      [] -> Nothing
-
-findTreeRoots :: [BellPair] -> UForest BellPair -> Maybe (Partial (UForest BellPair))
-findTreeRoots [] ts = Just $ chooseNoneOf ts
-findTreeRoots (p : ps) ts = 
-    case findTreeRoot p ts of
-        Nothing -> Nothing                         
-        Just (t, ts) -> case findTreeRoots ps ts of 
-                         Nothing -> Nothing
-                         Just p -> Just $ chooseAll [t] <> p
-
-findSubHistory :: [BellPair] -> History -> Maybe (Partial History)
-findSubHistory ps (History ts) = 
-    case findTreeRoots ps ts of
-      Nothing -> Nothing
-      Just p -> Just $ fmap History p
-
-findSubHistoryAny :: [[BellPair]] -> History -> Maybe (Partial History)
-findSubHistoryAny [] h = Nothing
-findSubHistoryAny (ps : pss) h = 
-    case findSubHistory ps h of
-      Nothing -> findSubHistoryAny pss h
-      Just partialH -> 
-          case findSubHistoryAny pss (rest partialH) of
-            Nothing -> Just partialH
-            Just partialH' ->
-                Just partialH' { chosen = chosen partialH <> chosen partialH' }
-
 -- *** Non-deterministic versions
 
 choose :: (Ord a) => Int -> [a] -> [Partial [a]]
@@ -169,6 +133,8 @@ findTreeRootsND bps@(bp:_) ts =
             | ts <- choose (length curBps) (toList curTrees)
             , ts' <- findTreeRootsND restBps restTrees]
 
+-- | Partitions a `History` non-deterministically into `[History]` whose root
+-- match `ps` and remaining history
 findSubHistoryND :: [BellPair] -> History -> [Partial History]
 findSubHistoryND ps (History ts) = [fmap History pts | pts <- findTreeRootsND ps ts]
 
