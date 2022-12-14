@@ -17,7 +17,7 @@ import Debug.Trace
         counterexampleText = intercalate "\n" $ 
                [drawHistoriesText hsP]
             <> ["   =/=   "]
-            <> [drawHistoriesText hsP]
+            <> [drawHistoriesText hsQ]
      in counterexample counterexampleText (hsP == hsQ)
 
 sequentialCompositionIsAssociative p q s = ((p <> q) <> s) ~ (p <> (q <> s))

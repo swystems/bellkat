@@ -1,19 +1,23 @@
+{-# LANGUAGE StrictData #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module QNKAT.Definitions where 
 
 import Data.String (IsString)
-import Data.List (partition, sort)
+import Data.List (partition, sort, permutations, elemIndex)
 import Test.QuickCheck hiding (choose)
 import QNKAT.UnorderedTree
 import qualified Data.Multiset as Mset
 import Data.Multiset (Multiset)
 import qualified Data.Set as Set
 import qualified Data.Map as Map
-import GHC.Exts (IsList, Item, fromList, toList)
+import qualified GHC.Exts (IsList, Item, toList, fromList)
+import Data.Maybe (fromJust)
+import Data.Foldable (toList)
 import Data.Set (Set)
 
 -- * Type definitions
@@ -83,13 +87,15 @@ meaning (Parallel p q) = meaning p <||> meaning q
 newtype History = History { getForest :: UForest BellPair } 
     deriving newtype (Semigroup, Monoid, Eq, Ord, Arbitrary) 
 
-instance Show History where
-    show = show . toList
-
-instance IsList History where
+instance GHC.Exts.IsList History where
     type Item History = UTree BellPair
-    fromList = History . fromList
     toList = toList . getForest
+    fromList = History . GHC.Exts.fromList
+
+
+instance Show History where
+    show = show . GHC.Exts.toList
+
 
 -- ** A few helper functions to operate on histories
 
@@ -188,13 +194,37 @@ data HistoryQuantum = HistoryQuantum
     { requiredRoots :: [[BellPair]]
     , execute :: History -> Set History
     }
+
+chooseHistoriesSequential :: [[BellPair]] -> History -> Set [Maybe History]
+chooseHistoriesSequential [] _ = [[]]
+chooseHistoriesSequential (ps:pss) h = mconcat
+    [ Set.map (Just here:) $ chooseHistoriesSequential pss there 
+      | Partial { chosen = here, rest = there } <- findSubHistoryND ps h 
+    ] <> Set.map (Nothing:) (chooseHistoriesSequential pss h)
+
+inversePermutation :: [Int] -> [Int]
+inversePermutation ixs = [ fromJust $ elemIndex i ixs  | i <- [0..length ixs - 1]]
+
+-- | choose subhistories _non_deterministically_
+chooseHistories :: [[BellPair]] -> History -> Set [Maybe History]
+chooseHistories pss h = mconcat 
+    [ Set.map (\mhs -> map (mhs !!) $ inversePermutation ixs) $ chooseHistoriesSequential (map (pss !!) ixs) h 
+        | ixs <- permutations [0..length pss - 1]]
+
         
 -- | choose two subhistory _non_deterministically_
-chooseHistories :: [[BellPair]] -> [[BellPair]] -> History -> [(History, History, History)]
-chooseHistories reqRoots reqRoots' h = 
-    [ (chosen partialH, chosen partialH', rest partialH') 
-        | partialH <- findSubHistoryAnyND reqRoots h
-        , partialH' <- findSubHistoryAnyND reqRoots' (rest partialH)]
+chooseTwoHistories :: [[BellPair]] -> [[BellPair]] -> History -> Set (History, History, History)
+chooseTwoHistories reqRoots1 reqRoots2 h@(History ts) = 
+    let n1 = length reqRoots1
+        n2 = length reqRoots2
+        combine mbhs = mconcat $ concatMap toList mbhs
+        split mbhs = 
+            let h1@(History ts1) = combine (take n1 mbhs)
+                h2@(History ts2) = combine (take n2 . drop n1 $ mbhs)
+             in (h1, h2, History $ ts `Mset.difference` ts1 `Mset.difference` ts2)
+     in Set.fromList [ split partition 
+        | partition <- Set.toList $ chooseHistories (reqRoots1 <> reqRoots2) h 
+        ]
 
 instance Semigroup HistoryQuantum where
     -- | Definition of `<>` as sequential composition of `execute`
@@ -210,7 +240,8 @@ instance ParallelSemigroup HistoryQuantum where
         , execute = \h -> 
             Set.fromList 
                 [ dup hRest <> hNew <> hNew'
-                    | (hs, hs', hRest) <- chooseHistories (requiredRoots hq) (requiredRoots hq') h
+                    | (hs, hs', hRest) <- toList $ 
+                        chooseTwoHistories (requiredRoots hq) (requiredRoots hq') h
                     , hNew <- Set.elems $ execute hq hs
                     , hNew' <- Set.elems $ execute hq' hs'
                 ]
@@ -219,13 +250,15 @@ instance ParallelSemigroup HistoryQuantum where
 instance Quantum HistoryQuantum where
     tryCreateBellPairFrom p bp prob = HistoryQuantum 
         { requiredRoots = [bp]
-        , execute = \h@(History ts) -> 
-            case findTreeRoots bp ts of
-                Nothing -> [dup h]
-                Just Partial { chosen = ts, rest = tsRest } -> 
-                    case prob of 
-                        Nothing -> [dup (History tsRest) <> [Node p ts]]
-                        Just _ -> [dup (History tsRest) <> [Node p ts], dup (History tsRest)]
+        , execute = \h@(History ts) ->
+            case findTreeRootsND bp ts of
+                [] -> [dup h]
+                partialTsNews -> mconcat
+                    [ case prob of 
+                        Nothing -> [dup (History tsRest) <> [Node p tsNew]]
+                        Just _ -> [dup (History tsRest) <> [Node p tsNew], dup (History tsRest)]
+                    | Partial { chosen = tsNew, rest = tsRest } <- partialTsNews
+                    ]
         }
 
 applyPolicy :: Policy -> History -> Set History

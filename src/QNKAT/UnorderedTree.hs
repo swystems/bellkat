@@ -1,3 +1,4 @@
+{-# LANGUAGE StrictData #-}
 module QNKAT.UnorderedTree where
 
 import qualified Data.Multiset as Mset 
@@ -25,6 +26,8 @@ toForest = map toTree . Mset.elems
 
 instance (Arbitrary a, Ord a) => Arbitrary (Multiset a) where
     arbitrary = Mset.fromList <$> arbitrary
+    shrink = fmap Mset.fromList . shrink . Mset.elems
 
 instance (Arbitrary a, Ord a) => Arbitrary (UTree a) where
     arbitrary = fromTree <$> arbitrary
+    shrink (Node a as) = fmap (Node a) (shrink as) ++ concatMap shrink as

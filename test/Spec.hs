@@ -10,13 +10,14 @@ import QNKAT.Test
 import QNKAT.Drawing
 
 import Data.Set (Set)
+import qualified Data.Set as Set
 import Data.Monoid (Sum(..))
 import Control.Monad (unless)
 import GHC.Exts
 
 import Test.Hspec
 import Test.Hspec.QuickCheck
-import Test.QuickCheck (expectFailure)
+import Test.QuickCheck (expectFailure, (===))
 
 main :: IO ()
 main = hspec $ do
@@ -62,9 +63,9 @@ main = hspec $ do
         prop "should be associative" parallelCompositionIsAssociative
     describe "sequential" $ do
         prop "should be associative" sequentialCompositionIsAssociative
-    describe "chooseHistories" $ do
-        prop "should not be commutative" $ expectFailure $
-            \x y h -> chooseHistories x y h == chooseHistories y x h
+    describe "chooseTwoHistories" $ do
+        prop "should be \"commutative\"" $
+            \x y h -> chooseTwoHistories x y h === Set.map (\(x, y, z) -> (y, x, z)) (chooseTwoHistories y x h)
     describe "findSubHistoryND" $ do
         prop "should return partial" $ 
             \ps h -> all (isPartial h) (findSubHistoryND ps h)
