@@ -28,12 +28,17 @@ main = hspec $ do
     describe "transmit" $ do
         it "should transmit" $
             applyPolicy (Transmit "A" ("A", "R[AB]")) [Node ("A" :~: "A") []]
-                `historiesShouldSatisfy` any (any (hasRoot ("A" :~: "R[AB]")) . getForest)
+                `historiesShouldSatisfy` all (all (hasRoot ("A" :~: "R[AB]")) . getForest)
         it "should transmit two" $
             applyPolicy 
                     (Transmit "A" ("A", "R[AB]") <||> Transmit "B" ("B", "R[AB]")) 
                     [Node ("A" :~: "A") [], Node ("B" :~: "B") []]
                 `historiesShouldSatisfy` any (any (hasRoot ("A" :~: "R[AB]")) . getForest)
+        it "should transmit both" $
+            applyPolicy 
+                    (Transmit "A" ("A", "B") <||> Transmit "A" ("A", "B")) 
+                    [Node ("A" :~: "A") [], Node ("A" :~: "A") []]
+                `historiesShouldSatisfy` all (all (hasRoot ("A" :~: "B")) . getForest)
         it "should transmit one out of two" $
             applyPolicy
                    (Transmit "A" ("A", "R[AB]")) 
@@ -58,6 +63,10 @@ main = hspec $ do
             ("A" :~: "B") `shouldBe` ("B" :~: "A")
         it "A~B /= B~C" $
             ("A" :~: "B") `shouldNotBe` ("B" :~: "C")
+    describe "chooseHistories" $ do
+        it "should take two if able" $
+            chooseHistories [["A":~:"A"], ["A":~:"A"]] [Node ("A" :~: "A") [], Node ("A" :~: "A") []]
+                `shouldBe` [[Just [Node ("A" :~: "A") []], Just [Node ("A" :~: "A") []]]]
     describe "parallel" $ do 
         prop "should be commutative" parallelCompositionIsCommutative
         prop "should be associative" parallelCompositionIsAssociative

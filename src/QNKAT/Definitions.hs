@@ -197,10 +197,13 @@ data HistoryQuantum = HistoryQuantum
 
 chooseHistoriesSequential :: [[BellPair]] -> History -> Set [Maybe History]
 chooseHistoriesSequential [] _ = [[]]
-chooseHistoriesSequential (ps:pss) h = mconcat
-    [ Set.map (Just here:) $ chooseHistoriesSequential pss there 
-      | Partial { chosen = here, rest = there } <- findSubHistoryND ps h 
-    ] <> Set.map (Nothing:) (chooseHistoriesSequential pss h)
+chooseHistoriesSequential (ps:pss) h = 
+    case findSubHistoryND ps h  of 
+      [] -> Set.map (Nothing:) (chooseHistoriesSequential pss h)
+      hs -> mconcat
+        [ Set.map (Just here:) $ chooseHistoriesSequential pss there 
+          | Partial { chosen = here, rest = there } <- hs 
+        ]
 
 inversePermutation :: [Int] -> [Int]
 inversePermutation ixs = [ fromJust $ elemIndex i ixs  | i <- [0..length ixs - 1]]
