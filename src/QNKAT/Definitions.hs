@@ -108,17 +108,6 @@ data HistoryQuantum = HistoryQuantum
     , execute :: History -> Set History
     }
 
--- | choose subhistories _non_deterministically_ and _one by one_
-chooseHistoriesSequential :: [[BellPair]] -> History -> Set [Maybe History]
-chooseHistoriesSequential pss (History ts) 
-  = Set.map (fmap . fmap $ History) $ chooseTreesSequentialND pss ts
-
--- | choose subhistories _non_deterministically_
-chooseHistories :: [[BellPair]] -> History -> Set [Maybe History]
-chooseHistories pss (History ts) 
-  = Set.map (fmap . fmap $ History) $ chooseTreesND pss ts
-
-        
 -- | choose two subhistory _non_deterministically_
 chooseTwoHistories :: [[BellPair]] -> [[BellPair]] -> History -> Set (History, History, History)
 chooseTwoHistories reqRoots1 reqRoots2 (History ts) 
