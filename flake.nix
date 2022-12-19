@@ -37,7 +37,7 @@
             haskellPackages = prev.haskellPackages.extend (hself: hsuper: {
               qnkat-playground = prev.haskell.lib.overrideCabal (hself.callCabal2nix "qnkat-playground"
                 (prev.lib.sourceFilesBySuffices ./. [ ".hs" ".yaml" ])  {}) (attrs: { 
-                  testFlags = ["--skip" "parallel/should be commutative" "--qc-max-size" "4" "--qc-max-success" "10000"];
+                  testFlags = ["--qc-max-size" "4" "--qc-max-success" "10000"];
                 });
             });
           };

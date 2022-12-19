@@ -1,5 +1,11 @@
 name: qnkat-playground
 
+ghc-options:
+  - -Wall
+  - -Werror
+  - -fwarn-incomplete-uni-patterns
+  - -fwarn-missing-deriving-strategies
+
 dependencies:
   - base
   - containers

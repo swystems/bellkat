@@ -1,25 +1,23 @@
-{-# LANGUAGE StrictData #-}
-{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE OverloadedLists #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedLists            #-}
+{-# LANGUAGE StrictData                 #-}
+{-# LANGUAGE TypeFamilies               #-}
 
-module QNKAT.Definitions where 
+module QNKAT.Definitions where
 
-import Data.String (IsString)
-import Data.List (partition, sort, permutations, elemIndex)
-import Test.QuickCheck hiding (choose)
-import qualified Data.Multiset as Mset
-import Data.Multiset (Multiset)
-import qualified Data.Set as Set
-import qualified Data.Map as Map
-import qualified GHC.Exts (IsList, Item, toList, fromList)
-import Data.Foldable (toList)
-import Data.Set (Set)
+import           Data.Foldable         (toList)
+import           Data.List             (sort)
+import qualified Data.Multiset         as Mset
+import           Data.Set              (Set)
+import qualified Data.Set              as Set
+import           Data.String           (IsString)
+import qualified GHC.Exts              (IsList, Item, fromList, toList)
+import           Test.QuickCheck       hiding (choose)
 
-import QNKAT.UnorderedTree
-import QNKAT.ChoiceUtilities
+import           QNKAT.ChoiceUtilities
+import           QNKAT.UnorderedTree
 
 -- * Type definitions
 
@@ -40,7 +38,7 @@ instance Ord BellPair where
 -- parallel composition is left-associative
 infixl 5 <||>
 
--- | Define alg structure `ParallelSemigroup` with `<>` inherited from 
+-- | Define alg structure `ParallelSemigroup` with `<>` inherited from
 -- `Semigroup` and new `<||>` for parallel composition
 class Semigroup a => ParallelSemigroup a where
     (<||>) :: a -> a -> a
@@ -49,7 +47,7 @@ class Semigroup a => ParallelSemigroup a where
 class (ParallelSemigroup a) => Quantum a where
     -- | is function from `BellPair`, `[BellPair]` to `Maybe Double` Quantum;
     -- will be used in `meaning` of `Distill`
-    tryCreateBellPairFrom :: BellPair -> [BellPair] -> Maybe Double -> a 
+    tryCreateBellPairFrom :: BellPair -> [BellPair] -> Maybe Double -> a
 
 -- | A deterministic version of `tryCreateBellPairFrom`
 createBellPairFrom :: (Quantum a) => BellPair -> [BellPair] -> a
@@ -64,7 +62,7 @@ data Policy
     | Distill (Location, Location)
     | Sequence Policy Policy
     | Parallel Policy Policy
-    | Create Location 
+    | Create Location
     deriving stock (Show)
 
 instance Semigroup Policy where
@@ -85,8 +83,8 @@ meaning (Parallel p q) = meaning p <||> meaning q
 -- * History of BellPairs
 
 -- | `History` is a forest of `BellPair`s
-newtype History = History { getForest :: UForest BellPair } 
-    deriving newtype (Semigroup, Monoid, Eq, Ord, Arbitrary) 
+newtype History = History { getForest :: UForest BellPair }
+    deriving newtype (Semigroup, Monoid, Eq, Ord, Arbitrary)
 
 instance GHC.Exts.IsList History where
     type Item History = UTree BellPair
@@ -103,32 +101,32 @@ dup = History . Mset.map (\t -> Node (rootLabel t) [t]) . getForest
 
 -- ** Quantum operations represented as functions over histories
 
-data HistoryQuantum = HistoryQuantum 
+data HistoryQuantum = HistoryQuantum
     { requiredRoots :: [[BellPair]]
-    , execute :: History -> Set History
+    , execute       :: History -> Set History
     }
 
 -- | choose two subhistory _non_deterministically_
 chooseTwoHistories :: [[BellPair]] -> [[BellPair]] -> History -> Set (History, History, History)
-chooseTwoHistories reqRoots1 reqRoots2 (History ts) 
+chooseTwoHistories reqRoots1 reqRoots2 (History ts)
   = Set.map (\(a, b, c) -> (History a, History b, History c))
   $ chooseTwoSubforests reqRoots1 reqRoots2 ts
 
 instance Semigroup HistoryQuantum where
     -- | Definition of `<>` as sequential composition of `execute`
-    hq <> hq' = HistoryQuantum 
+    hq <> hq' = HistoryQuantum
         { requiredRoots = requiredRoots hq
         , execute = \h -> Set.fromList [h'' | h' <- Set.elems $ execute hq h,  h'' <- Set.elems $ execute hq' h']
         }
-    
+
 instance ParallelSemigroup HistoryQuantum where
     --- | Definition of `<||>` as parallel composition
     hq <||> hq' = HistoryQuantum
         { requiredRoots = requiredRoots hq <> requiredRoots hq'
-        , execute = \h -> 
-            Set.fromList 
+        , execute = \h ->
+            Set.fromList
                 [ dup hRest <> hNew <> hNew'
-                    | (hs, hs', hRest) <- toList $ 
+                    | (hs, hs', hRest) <- toList $
                         chooseTwoHistories (requiredRoots hq) (requiredRoots hq') h
                     , hNew <- Set.elems $ execute hq hs
                     , hNew' <- Set.elems $ execute hq' hs'
@@ -136,13 +134,13 @@ instance ParallelSemigroup HistoryQuantum where
         }
 
 instance Quantum HistoryQuantum where
-    tryCreateBellPairFrom p bp prob = HistoryQuantum 
+    tryCreateBellPairFrom p bp prob = HistoryQuantum
         { requiredRoots = [bp]
         , execute = \h@(History ts) ->
             case findTreeRootsND bp ts of
                 [] -> [dup h]
                 partialTsNews -> mconcat
-                    [ case prob of 
+                    [ case prob of
                         Nothing -> [dup (History tsRest) <> [Node p tsNew]]
                         Just _ -> [dup (History tsRest) <> [Node p tsNew], dup (History tsRest)]
                     | Partial { chosen = tsNew, rest = tsRest } <- partialTsNews
@@ -175,7 +173,7 @@ instance Arbitrary Policy where
 
     shrink (Sequence p q) = [p, q]
     shrink (Parallel p q) = [p, q]
-    shrink _ = []
+    shrink _              = []
 
 instance Arbitrary BellPair where
     arbitrary = (:~:) <$> arbitrary <*> arbitrary

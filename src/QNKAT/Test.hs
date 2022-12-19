@@ -1,20 +1,20 @@
+{-# OPTIONS_GHC -Wno-missing-signatures #-}
+
 module QNKAT.Test where
 
-import Test.QuickCheck
+import           Test.QuickCheck
 
-import Data.List (intercalate, intersperse)
-import qualified Data.Set as Set
+import           Data.List         (intercalate)
 
-import QNKAT.Definitions
-import QNKAT.Drawing
-import Debug.Trace
+import           QNKAT.Definitions
+import           QNKAT.Drawing
 
 (~) :: Policy -> Policy -> History -> Property
 (~) p q h =
     let hsP = applyPolicy p h
         hsQ = applyPolicy q h
 
-        counterexampleText = intercalate "\n" $ 
+        counterexampleText = intercalate "\n" $
                [drawHistoriesText hsP]
             <> ["   =/=   "]
             <> [drawHistoriesText hsQ]

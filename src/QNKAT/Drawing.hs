@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-missing-signatures #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE OverloadedLists #-}
@@ -14,7 +15,7 @@ import qualified Data.Set as Set
 import Data.Set (Set)
 import Data.List (intercalate, intersperse)
 
-import QNKAT.UnorderedTree (toTree, toForest) 
+import QNKAT.UnorderedTree (toForest) 
 import QNKAT.Definitions
 
 pairToDiagram bp = (text (show bp) <> rect 4 1) # fontSize (local 0.5) 

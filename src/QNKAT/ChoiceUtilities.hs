@@ -36,7 +36,7 @@ instance Functor Partial where
 -- | choose k items non-deterministically
 choose :: (Ord a) => Int -> [a] -> [Partial [a]]
 choose 0 xs = [chooseNoneOf xs]
-choose n [] = []
+choose _ [] = []
 choose n (x:xs) = [chooseAll [x] <> p | p <- choose (n - 1) xs] ++ [chooseNoneOf [x] <> p | p <- choose n xs]
 
 -- | choose subforest with the given roots
@@ -46,9 +46,9 @@ findTreeRootsND bps@(bp:_) ts =
     let (curBps, restBps) = partition (== bp) bps
         curTrees = Mset.filter (hasRoot bp) ts
         restTrees = Mset.filter (not . hasRoot bp) ts
-     in [fmap Mset.fromList ts <> ts'
-            | ts <- choose (length curBps) (toList curTrees)
-            , ts' <- findTreeRootsND restBps restTrees]
+     in [fmap Mset.fromList ts' <> ts''
+            | ts' <- choose (length curBps) (toList curTrees)
+            , ts'' <- findTreeRootsND restBps restTrees]
 
 -- | choose a separate subforest for each set of roots
 findTreeRootsAnyND :: (Ord a) => [[a]] -> UForest a -> [Partial (UForest a)]
@@ -65,9 +65,9 @@ chooseTreesSequentialND [] _ = [[]]
 chooseTreesSequentialND (ps:pss) ts =
     case findTreeRootsND ps ts  of
       [] -> Set.map (Nothing:) (chooseTreesSequentialND pss ts)
-      ts -> mconcat
+      ts' -> mconcat
         [ Set.map (Just here:) $ chooseTreesSequentialND pss there
-          | Partial { chosen = here, rest = there } <- ts
+          | Partial { chosen = here, rest = there } <- ts'
         ]
 
 -- | _non-deterministically_ _try_ to choose a separate subforest for each set of roots
@@ -91,8 +91,8 @@ chooseTwoSubforests reqRoots1 reqRoots2 ts =
                 ts2 = combine (take n2 . drop n1 $ mbhs)
              in (ts1, ts2, ts `Mset.difference` ts1 `Mset.difference` ts2)
      in Set.fromList
-        [ split partition
-        | partition <- Set.toList $ chooseTreesND (reqRoots1 <> reqRoots2) ts
+        [ split p
+        | p <- Set.toList $ chooseTreesND (reqRoots1 <> reqRoots2) ts
         ]
 
 -- | Apply a permutation to a list

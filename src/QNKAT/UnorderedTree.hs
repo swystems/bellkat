@@ -1,14 +1,16 @@
-{-# LANGUAGE StrictData #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE StrictData         #-}
 module QNKAT.UnorderedTree where
 
-import qualified Data.Multiset as Mset 
-import Data.Multiset (Multiset)
-import Test.QuickCheck
-import qualified Data.Tree as OrdTree
-import Data.Tree (Tree, Forest)
+import           Data.Multiset   (Multiset)
+import qualified Data.Multiset   as Mset
+import           Data.Tree       (Forest, Tree)
+import qualified Data.Tree       as OrdTree
+import           Test.QuickCheck
 
 data UTree a = Node { rootLabel :: a, subForest :: Multiset (UTree a) }
-    deriving (Eq, Ord)
+    deriving stock (Eq, Ord)
 
 instance Show a => Show (UTree a) where
     show = show . toTree
