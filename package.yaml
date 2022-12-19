@@ -15,6 +15,7 @@ library:
     - QNKAT.Drawing
     - QNKAT.Definitions
     - QNKAT.UnorderedTree
+    - QNKAT.ChoiceUtilities
     - QNKAT.Test
 
 tests:

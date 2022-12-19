@@ -10,15 +10,16 @@ module QNKAT.Definitions where
 import Data.String (IsString)
 import Data.List (partition, sort, permutations, elemIndex)
 import Test.QuickCheck hiding (choose)
-import QNKAT.UnorderedTree
 import qualified Data.Multiset as Mset
 import Data.Multiset (Multiset)
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 import qualified GHC.Exts (IsList, Item, toList, fromList)
-import Data.Maybe (fromJust)
 import Data.Foldable (toList)
 import Data.Set (Set)
+
+import QNKAT.UnorderedTree
+import QNKAT.ChoiceUtilities
 
 -- * Type definitions
 
@@ -95,61 +96,7 @@ instance GHC.Exts.IsList History where
 instance Show History where
     show = show . GHC.Exts.toList
 
--- ** A few helper functions to operate on histories
-
--- | Part that we have chosen and part that we have left out
-data Partial a = Partial { chosen :: a, rest :: a }
-    deriving stock (Show, Eq)
-
-chooseAll :: Monoid a => a -> Partial a
-chooseAll x = Partial { chosen = x, rest = mempty }
-
-chooseNoneOf :: Monoid a => a -> Partial a
-chooseNoneOf x = Partial { chosen = mempty, rest = x }
-
-instance Semigroup a => Semigroup (Partial a) where
-    p <> p' = Partial { chosen = chosen p <> chosen p', rest = rest p <> rest p' }
-
-instance Functor Partial where
-    fmap f p = Partial { chosen = f (chosen p), rest = f (rest p) }
-
-hasRoot :: BellPair -> UTree BellPair -> Bool
-hasRoot p = (== p) . rootLabel
-
--- *** Non-deterministic versions
-
-choose :: (Ord a) => Int -> [a] -> [Partial [a]]
-choose 0 xs = [chooseNoneOf xs]
-choose n [] = []
-choose n (x:xs) = [chooseAll [x] <> p | p <- choose (n - 1) xs] ++ [chooseNoneOf [x] <> p | p <- choose n xs]
-
-findTreeRootsND :: [BellPair] -> UForest BellPair -> [Partial (UForest BellPair)]
-findTreeRootsND [] ts = [chooseNoneOf ts]
-findTreeRootsND bps@(bp:_) ts = 
-    let (curBps, restBps) = partition (== bp) bps
-        curTrees = Mset.filter (hasRoot bp) ts
-        restTrees = Mset.filter (not . hasRoot bp) ts
-     in [fmap Mset.fromList ts <> ts' 
-            | ts <- choose (length curBps) (toList curTrees)
-            , ts' <- findTreeRootsND restBps restTrees]
-
--- | Partitions a `History` non-deterministically into `[History]` whose root
--- match `ps` and remaining history
-findSubHistoryND :: [BellPair] -> History -> [Partial History]
-findSubHistoryND ps (History ts) = [fmap History pts | pts <- findTreeRootsND ps ts]
-
-chooseNoneOfIfEmpty :: (Monoid a) => a -> [Partial a] -> [Partial a]
-chooseNoneOfIfEmpty x [] = [chooseNoneOf x]
-chooseNoneOfIfEmpty _ xs = xs
-
-findSubHistoryAnyND :: [[BellPair]] -> History -> [Partial History]
-findSubHistoryAnyND [] h = [chooseNoneOf h]
-findSubHistoryAnyND (ps : pss) h = 
-    [partialH' { chosen = chosen partialH <> chosen partialH' } 
-      | partialH <- chooseNoneOfIfEmpty h $ findSubHistoryND ps h 
-      , partialH' <- findSubHistoryAnyND pss (rest partialH)]
-
--- *** Duplicating history
+-- ** Duplicating history
 
 dup :: History -> History
 dup = History . Mset.map (\t -> Node (rootLabel t) [t]) . getForest
@@ -161,39 +108,22 @@ data HistoryQuantum = HistoryQuantum
     , execute :: History -> Set History
     }
 
+-- | choose subhistories _non_deterministically_ and _one by one_
 chooseHistoriesSequential :: [[BellPair]] -> History -> Set [Maybe History]
-chooseHistoriesSequential [] _ = [[]]
-chooseHistoriesSequential (ps:pss) h = 
-    case findSubHistoryND ps h  of 
-      [] -> Set.map (Nothing:) (chooseHistoriesSequential pss h)
-      hs -> mconcat
-        [ Set.map (Just here:) $ chooseHistoriesSequential pss there 
-          | Partial { chosen = here, rest = there } <- hs 
-        ]
-
-inversePermutation :: [Int] -> [Int]
-inversePermutation ixs = [ fromJust $ elemIndex i ixs  | i <- [0..length ixs - 1]]
+chooseHistoriesSequential pss (History ts) 
+  = Set.map (fmap . fmap $ History) $ chooseTreesSequentialND pss ts
 
 -- | choose subhistories _non_deterministically_
 chooseHistories :: [[BellPair]] -> History -> Set [Maybe History]
-chooseHistories pss h = mconcat 
-    [ Set.map (\mhs -> map (mhs !!) $ inversePermutation ixs) $ chooseHistoriesSequential (map (pss !!) ixs) h 
-        | ixs <- permutations [0..length pss - 1]]
+chooseHistories pss (History ts) 
+  = Set.map (fmap . fmap $ History) $ chooseTreesND pss ts
 
         
 -- | choose two subhistory _non_deterministically_
 chooseTwoHistories :: [[BellPair]] -> [[BellPair]] -> History -> Set (History, History, History)
-chooseTwoHistories reqRoots1 reqRoots2 h@(History ts) = 
-    let n1 = length reqRoots1
-        n2 = length reqRoots2
-        combine mbhs = mconcat $ concatMap toList mbhs
-        split mbhs = 
-            let h1@(History ts1) = combine (take n1 mbhs)
-                h2@(History ts2) = combine (take n2 . drop n1 $ mbhs)
-             in (h1, h2, History $ ts `Mset.difference` ts1 `Mset.difference` ts2)
-     in Set.fromList [ split partition 
-        | partition <- Set.toList $ chooseHistories (reqRoots1 <> reqRoots2) h 
-        ]
+chooseTwoHistories reqRoots1 reqRoots2 (History ts) 
+  = Set.map (\(a, b, c) -> (History a, History b, History c))
+  $ chooseTwoSubforests reqRoots1 reqRoots2 ts
 
 instance Semigroup HistoryQuantum where
     -- | Definition of `<>` as sequential composition of `execute`
@@ -215,7 +145,7 @@ instance ParallelSemigroup HistoryQuantum where
                     , hNew' <- Set.elems $ execute hq' hs'
                 ]
         }
-    
+
 instance Quantum HistoryQuantum where
     tryCreateBellPairFrom p bp prob = HistoryQuantum 
         { requiredRoots = [bp]
@@ -253,6 +183,7 @@ instance Arbitrary Policy where
                 Sequence <$> arbitrary <*> arbitrary,
                 Sequence <$> arbitrary <*> arbitrary
             ]
+
     shrink (Sequence p q) = [p, q]
     shrink (Parallel p q) = [p, q]
     shrink _ = []

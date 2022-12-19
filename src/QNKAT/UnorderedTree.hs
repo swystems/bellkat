@@ -24,6 +24,9 @@ toTree (Node x xs) = OrdTree.Node x (map toTree $ Mset.elems xs)
 toForest :: UForest a -> Forest a
 toForest = map toTree . Mset.elems
 
+hasRoot :: (Eq a) => a -> UTree a -> Bool
+hasRoot p = (== p) . rootLabel
+
 instance (Arbitrary a, Ord a) => Arbitrary (Multiset a) where
     arbitrary = Mset.fromList <$> arbitrary
     shrink = fmap Mset.fromList . shrink . Mset.elems
