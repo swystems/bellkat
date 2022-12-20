@@ -26,6 +26,8 @@ newtype Location = Location { name :: String } deriving newtype (Eq, Show, Ord, 
 -- | `:~:` is our symbol for entangled pair
 data BellPair = Location :~: Location
 
+infix 9 :~:
+
 -- | how BPs are displayed
 instance Show BellPair where
     show (l1 :~: l2) = name l1 <> "~" <> name l2
@@ -49,9 +51,17 @@ class (ParallelSemigroup a) => Quantum a where
     -- will be used in `meaning` of `Distill`
     tryCreateBellPairFrom :: BellPair -> [BellPair] -> Maybe Double -> a
 
--- | A deterministic version of `tryCreateBellPairFrom`
-createBellPairFrom :: (Quantum a) => BellPair -> [BellPair] -> a
-createBellPairFrom bp bps = tryCreateBellPairFrom bp bps Nothing
+-- | Notation for deterministic `tryCreateBellPairFrom`
+(<~) :: (Quantum a) => BellPair -> [BellPair] -> a
+bp <~ bps = tryCreateBellPairFrom bp bps Nothing
+
+-- | Notation for probabilistic `tryCreateBellPairFrom` (part I)
+(<~%) :: BellPair -> Double -> (BellPair, Double)
+bp <~% prob = (bp, prob)
+
+-- | Notation for probabilistic `tryCreateBellPairFrom` (part II)
+(%~) :: (Quantum a) => (BellPair, Double) -> [BellPair] -> a
+(bp, prob) %~ bps = tryCreateBellPairFrom bp bps (Just prob)
 
 -- * Main policy definitions
 
@@ -73,10 +83,10 @@ instance ParallelSemigroup Policy where
 
 -- | methods
 meaning :: (Quantum a) => Policy -> a
-meaning (Swap l (l1, l2)) = createBellPairFrom (l1 :~: l2) [l :~: l1, l :~: l2]
-meaning (Transmit l (l1, l2)) = createBellPairFrom (l1 :~: l2) [l :~: l]
-meaning (Create l) = createBellPairFrom (l :~: l) []
-meaning (Distill (l1, l2)) = tryCreateBellPairFrom (l1 :~: l2) [l1 :~: l2, l1 :~: l2] (Just 0.5)
+meaning (Swap l (l1, l2)) = (l1 :~: l2) <~ [l :~: l1, l :~: l2]
+meaning (Transmit l (l1, l2)) = (l1 :~: l2) <~ [l :~: l]
+meaning (Create l) = (l :~: l) <~ []
+meaning (Distill (l1, l2)) = (l1 :~: l2) <~% 0.5 %~ [l1 :~: l2, l1 :~: l2]
 meaning (Sequence p q) = meaning p <> meaning q
 meaning (Parallel p q) = meaning p <||> meaning q
 
