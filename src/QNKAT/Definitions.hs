@@ -51,6 +51,7 @@ class (ParallelSemigroup a) => Quantum a where
     -- | is function from `BellPair`, `[BellPair]` to `Maybe Double` Quantum;
     -- will be used in `meaning` of `Distill`
     tryCreateBellPairFrom :: BellPair -> [BellPair] -> Maybe Double -> a
+    dup :: a
 
 -- | Notation for deterministic `tryCreateBellPairFrom`
 (<~) :: (Quantum a) => BellPair -> [BellPair] -> a
@@ -74,6 +75,7 @@ data Policy
     | Sequence Policy Policy
     | Parallel Policy Policy
     | Create Location
+    | Dup
     deriving stock (Show)
 
 instance Semigroup Policy where
@@ -90,6 +92,7 @@ meaning (Create l) = (l :~: l) <~ []
 meaning (Distill (l1, l2)) = (l1 :~: l2) <~% 0.5 %~ [l1 :~: l2, l1 :~: l2]
 meaning (Sequence p q) = meaning p <> meaning q
 meaning (Parallel p q) = meaning p <||> meaning q
+meaning Dup = dup
 
 -- * History of BellPairs
 
@@ -106,12 +109,12 @@ instance Show History where
     show = show . GHC.Exts.toList
 
 -- | Duplicating history
-dup :: History -> History
-dup = History . Mset.map (\t -> Node (rootLabel t) [t]) . getForest
+dupHistory :: History -> History
+dupHistory = History . Mset.map (\t -> Node (rootLabel t) [t]) . getForest
 
 -- | Duplicating history
-dupn :: Int -> History -> History
-dupn n = appEndo . mconcat . replicate n $ Endo dup
+dupHistoryN :: Int -> History -> History
+dupHistoryN n = appEndo . mconcat . replicate n $ Endo dupHistory
 
 -- | choose two subhistory _non_deterministically_
 chooseTwoHistories :: [[BellPair]] -> [[BellPair]] -> History -> Set (History, History, History)
@@ -139,7 +142,7 @@ instance ParallelSemigroup HistoryQuantum where
         { requiredRoots = requiredRoots hq <> requiredRoots hq'
         , execute = \h ->
             Set.fromList
-                [ dup hRest <> hNew <> hNew'
+                [ hRest <> hNew <> hNew'
                     | (hs, hs', hRest) <- toList $
                         chooseTwoHistories (requiredRoots hq) (requiredRoots hq') h
                     , hNew <- Set.elems $ execute hq hs
@@ -152,14 +155,17 @@ instance Quantum HistoryQuantum where
         { requiredRoots = [bp]
         , execute = \h@(History ts) ->
             case findTreeRootsND bp ts of
-                [] -> [dup h]
-                partialTsNews -> mconcat
+                [] -> [h]
+                partialTsNews -> 
+                    mconcat
                     [ case prob of
-                        Nothing -> [dup (History tsRest) <> [Node p tsNew]]
-                        Just _ -> [dup (History tsRest) <> [Node p tsNew], dup (History tsRest)]
+                        Nothing -> [History tsRest <> [Node p . foldMap subForest . toList $ tsNew]]
+                        Just _ -> [History tsRest <> [Node p . foldMap subForest . toList $ tsNew], History tsRest]
                     | Partial { chosen = tsNew, rest = tsRest } <- partialTsNews
                     ]
         }
+
+    dup = HistoryQuantum { requiredRoots = [], execute = \h -> [dupHistory h] }
 
 applyPolicy :: Policy -> History -> Set History
 applyPolicy = execute . meaning
@@ -190,8 +196,8 @@ instance ParallelSemigroup TimelyHistoryQuantum where
         { requiredRootsTimely = requiredRootsTimely hq <> requiredRootsTimely hq'
         , executeTimely = \h ->
             Set.fromList
-                [ (dupn (max t t') hRest 
-                    <> dupn (max t t' - t) hNew <> dupn (max t t' - t') hNew'
+                [ (dupHistoryN (max t t') hRest 
+                    <> dupHistoryN (max t t' - t) hNew <> dupHistoryN (max t t' - t') hNew'
                   , max t t')
                 | (hs, hs', hRest) <- toList $
                     chooseTwoHistories (requiredRootsTimely hq) (requiredRootsTimely hq') h
@@ -205,14 +211,17 @@ instance Quantum TimelyHistoryQuantum where
         { requiredRootsTimely = [bp]
         , executeTimely = \h@(History ts) ->
             case findTreeRootsND bp ts of
-                [] -> [(dup h, 1)]
+                [] -> [(dupHistory h, 1)]
                 partialTsNews -> mconcat
                     [ case prob of
-                        Nothing -> [(dup (History tsRest) <> [Node p tsNew], 1)]
-                        Just _ -> [(dup (History tsRest) <> [Node p tsNew], 1), (dup (History tsRest), 1)]
+                        Nothing -> [(dupHistory (History tsRest) <> [Node p tsNew], 1)]
+                        Just _ -> [ (dupHistory (History tsRest) <> [Node p tsNew], 1)
+                                  , (dupHistory (History tsRest), 1)]
                     | Partial { chosen = tsNew, rest = tsRest } <- partialTsNews
                     ]
         }
+
+    dup = TimelyHistoryQuantum { requiredRootsTimely = [], executeTimely = \h -> [(h, 0)] }
 
 applyPolicyTimely :: Policy -> History -> Set History
 applyPolicyTimely p = Set.map fst . executeTimely (meaning p)
