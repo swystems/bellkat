@@ -37,6 +37,9 @@ historiesToDiagram = vsep 1 . fmap (alignL . frameDiagram . historyToDiagram)
 drawPolicy :: Policy -> ManuallySized (Diagram B)
 drawPolicy p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPolicy p $ []
 
+drawPolicyTimely :: Policy -> ManuallySized (Diagram B)
+drawPolicyTimely p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPolicyTimely p $ []
+
 drawHistoryText :: History -> String
 drawHistoryText = drawForest . (fmap . fmap) show . toForest . getForest
 

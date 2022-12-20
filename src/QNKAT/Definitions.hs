@@ -12,6 +12,7 @@ import           Data.List             (sort)
 import qualified Data.Multiset         as Mset
 import           Data.Set              (Set)
 import qualified Data.Set              as Set
+import           Data.Monoid
 import           Data.String           (IsString)
 import qualified GHC.Exts              (IsList, Item, fromList, toList)
 import           Test.QuickCheck       hiding (choose)
@@ -104,10 +105,19 @@ instance GHC.Exts.IsList History where
 instance Show History where
     show = show . GHC.Exts.toList
 
--- ** Duplicating history
-
+-- | Duplicating history
 dup :: History -> History
 dup = History . Mset.map (\t -> Node (rootLabel t) [t]) . getForest
+
+-- | Duplicating history
+dupn :: Int -> History -> History
+dupn n = appEndo . mconcat . replicate n $ Endo dup
+
+-- | choose two subhistory _non_deterministically_
+chooseTwoHistories :: [[BellPair]] -> [[BellPair]] -> History -> Set (History, History, History)
+chooseTwoHistories reqRoots1 reqRoots2 (History ts)
+  = Set.map (\(a, b, c) -> (History a, History b, History c))
+  $ chooseTwoSubforests reqRoots1 reqRoots2 ts
 
 -- ** Quantum operations represented as functions over histories
 
@@ -115,12 +125,6 @@ data HistoryQuantum = HistoryQuantum
     { requiredRoots :: [[BellPair]]
     , execute       :: History -> Set History
     }
-
--- | choose two subhistory _non_deterministically_
-chooseTwoHistories :: [[BellPair]] -> [[BellPair]] -> History -> Set (History, History, History)
-chooseTwoHistories reqRoots1 reqRoots2 (History ts)
-  = Set.map (\(a, b, c) -> (History a, History b, History c))
-  $ chooseTwoSubforests reqRoots1 reqRoots2 ts
 
 instance Semigroup HistoryQuantum where
     -- | Definition of `<>` as sequential composition of `execute`
@@ -159,6 +163,59 @@ instance Quantum HistoryQuantum where
 
 applyPolicy :: Policy -> History -> Set History
 applyPolicy = execute . meaning
+
+-- ** Quantum operations represented as functions over histories recorded in a
+-- _timely_ manner
+
+type Time = Int
+
+data TimelyHistoryQuantum = TimelyHistoryQuantum
+    { requiredRootsTimely :: [[BellPair]]
+    , executeTimely       :: History -> Set (History, Time)
+    }
+
+instance Semigroup TimelyHistoryQuantum where
+    -- | Definition of `<>` as sequential composition of `execute`
+    hq <> hq' = TimelyHistoryQuantum
+        { requiredRootsTimely = requiredRootsTimely hq
+        , executeTimely = \h -> Set.fromList 
+            [(h'', t' + t'')
+            | (h', t') <- Set.elems $ executeTimely hq h
+            ,  (h'', t'') <- Set.elems $ executeTimely hq' h']
+        }
+
+instance ParallelSemigroup TimelyHistoryQuantum where
+    --- | Definition of `<||>` as parallel composition
+    hq <||> hq' = TimelyHistoryQuantum
+        { requiredRootsTimely = requiredRootsTimely hq <> requiredRootsTimely hq'
+        , executeTimely = \h ->
+            Set.fromList
+                [ (dupn (max t t') hRest 
+                    <> dupn (max t t' - t) hNew <> dupn (max t t' - t') hNew'
+                  , max t t')
+                | (hs, hs', hRest) <- toList $
+                    chooseTwoHistories (requiredRootsTimely hq) (requiredRootsTimely hq') h
+                , (hNew, t) <- Set.elems $ executeTimely hq hs
+                , (hNew', t') <- Set.elems $ executeTimely hq' hs'
+                ]
+        }
+
+instance Quantum TimelyHistoryQuantum where
+    tryCreateBellPairFrom p bp prob = TimelyHistoryQuantum
+        { requiredRootsTimely = [bp]
+        , executeTimely = \h@(History ts) ->
+            case findTreeRootsND bp ts of
+                [] -> [(dup h, 1)]
+                partialTsNews -> mconcat
+                    [ case prob of
+                        Nothing -> [(dup (History tsRest) <> [Node p tsNew], 1)]
+                        Just _ -> [(dup (History tsRest) <> [Node p tsNew], 1), (dup (History tsRest), 1)]
+                    | Partial { chosen = tsNew, rest = tsRest } <- partialTsNews
+                    ]
+        }
+
+applyPolicyTimely :: Policy -> History -> Set History
+applyPolicyTimely p = Set.map fst . executeTimely (meaning p)
 
 -- * Testing definitions
 
