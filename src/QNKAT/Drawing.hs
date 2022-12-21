@@ -30,7 +30,8 @@ treeToDiagram t =
 
 frameDiagram d = let d' = d # frame 0.5 in d' <> boundingRect d'
 
-historyToDiagram (History ts) = hsep 0.5 . map treeToDiagram . toForest $ ts
+historyToDiagram (History []) = rect 4 0
+historyToDiagram (History ts) = hsep 0.5 . map treeToDiagram  . toForest $ ts
 
 historiesToDiagram = vsep 1 . fmap (alignL . frameDiagram . historyToDiagram)
 
