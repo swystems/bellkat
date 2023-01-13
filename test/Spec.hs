@@ -78,6 +78,11 @@ main = hspec $ do
         prop "should be associative" timelyParallelCompositionIsAssociative
     describe "sequential (timely)" $ do
         prop "should be associative" timelySequentialCompositionIsAssociative
+    describe "sequential (steps)" $ do
+        prop "should be associative" stepsSequentialCompositionIsAssociative
+    describe "parallel (steps)" $ do
+        prop "should be commutative" stepsParallelCompositionIsCommutative
+        prop "should be associative" stepsParallelCompositionIsAssociative
     describe "chooseTwoHistories" $ do
         prop "should be \"commutative\"" $
             \x y h -> chooseTwoHistories x y h === Set.map (\(x1, x2, x3) -> (x2, x1, x3)) (chooseTwoHistories y x h)

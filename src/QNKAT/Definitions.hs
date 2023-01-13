@@ -2,17 +2,19 @@
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedLists            #-}
+{-# LANGUAGE ParallelListComp           #-}
 {-# LANGUAGE StrictData                 #-}
 {-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeApplications           #-}
 
 module QNKAT.Definitions where
 
 import           Data.Foldable         (toList)
-import           Data.List             (sort)
+import           Data.List             (sort, foldl')
+import           Data.Monoid
 import qualified Data.Multiset         as Mset
 import           Data.Set              (Set)
 import qualified Data.Set              as Set
-import           Data.Monoid
 import           Data.String           (IsString)
 import qualified GHC.Exts              (IsList, Item, fromList, toList)
 import           Test.QuickCheck       hiding (choose)
@@ -86,13 +88,13 @@ instance ParallelSemigroup Policy where
 
 -- | methods
 meaning :: (Quantum a) => Policy -> a
-meaning (Swap l (l1, l2)) = (l1 :~: l2) <~ [l :~: l1, l :~: l2]
+meaning (Swap l (l1, l2))     = (l1 :~: l2) <~ [l :~: l1, l :~: l2]
 meaning (Transmit l (l1, l2)) = (l1 :~: l2) <~ [l :~: l]
-meaning (Create l) = (l :~: l) <~ []
-meaning (Distill (l1, l2)) = (l1 :~: l2) <~% 0.5 %~ [l1 :~: l2, l1 :~: l2]
-meaning (Sequence p q) = meaning p <> meaning q
-meaning (Parallel p q) = meaning p <||> meaning q
-meaning Dup = dup
+meaning (Create l)            = (l :~: l) <~ []
+meaning (Distill (l1, l2))    = (l1 :~: l2) <~% 0.5 %~ [l1 :~: l2, l1 :~: l2]
+meaning (Sequence p q)        = meaning p <> meaning q
+meaning (Parallel p q)        = meaning p <||> meaning q
+meaning Dup                   = dup
 
 -- * History of BellPairs
 
@@ -156,7 +158,7 @@ instance Quantum HistoryQuantum where
         , execute = \h@(History ts) ->
             case findTreeRootsND bp ts of
                 [] -> [h]
-                partialTsNews -> 
+                partialTsNews ->
                     mconcat
                     [ case prob of
                         Nothing -> [History tsRest <> [Node p . foldMap subForest . toList $ tsNew]]
@@ -184,7 +186,7 @@ instance Semigroup TimelyHistoryQuantum where
     -- | Definition of `<>` as sequential composition of `execute`
     hq <> hq' = TimelyHistoryQuantum
         { requiredRootsTimely = requiredRootsTimely hq
-        , executeTimely = \h -> Set.fromList 
+        , executeTimely = \h -> Set.fromList
             [(h'', t' + t'')
             | (h', t') <- Set.elems $ executeTimely hq h
             ,  (h'', t'') <- Set.elems $ executeTimely hq' h']
@@ -196,7 +198,7 @@ instance ParallelSemigroup TimelyHistoryQuantum where
         { requiredRootsTimely = requiredRootsTimely hq <> requiredRootsTimely hq'
         , executeTimely = \h ->
             Set.fromList
-                [ (dupHistoryN (max t t') hRest 
+                [ (dupHistoryN (max t t') hRest
                     <> dupHistoryN (max t t' - t) hNew <> dupHistoryN (max t t' - t') hNew'
                   , max t t')
                 | (hs, hs', hRest) <- toList $
@@ -215,8 +217,8 @@ instance Quantum TimelyHistoryQuantum where
                 partialTsNews -> mconcat
                     [ case prob of
                         Nothing -> [(dupHistory (History tsRest) <> [Node p tsNew], 1)]
-                        Just _ -> [ (dupHistory (History tsRest) <> [Node p tsNew], 1)
-                                  , (dupHistory (History tsRest), 1)]
+                        Just _ ->  [(dupHistory (History tsRest) <> [Node p tsNew], 1)
+                                   ,(dupHistory (History tsRest), 1)]
                     | Partial { chosen = tsNew, rest = tsRest } <- partialTsNews
                     ]
         }
@@ -225,6 +227,31 @@ instance Quantum TimelyHistoryQuantum where
 
 applyPolicyTimely :: Policy -> History -> Set History
 applyPolicyTimely p = Set.map fst . executeTimely (meaning p)
+
+-- ** Quantum operations represented as a sequence of primitive actions
+
+newtype StepHistoryQuantum = StepHistoryQuantum
+    { getSteps :: [TimelyHistoryQuantum]
+    } deriving newtype (Semigroup)
+
+instance ParallelSemigroup StepHistoryQuantum where
+    shq <||> shq' = StepHistoryQuantum $
+        let shortestLength = minimum @[] $ length . getSteps <$> [shq, shq']
+            commonSteps = take shortestLength . getSteps
+            restSteps = drop shortestLength . getSteps
+         in [hq <||> hq' | hq <- commonSteps shq | hq' <- commonSteps shq'] 
+                ++ restSteps shq ++ restSteps shq'
+
+instance Quantum StepHistoryQuantum where
+    tryCreateBellPairFrom p bp prob = StepHistoryQuantum
+        [tryCreateBellPairFrom p bp prob]
+
+    dup = StepHistoryQuantum []
+
+applyPolicySteps :: Policy -> History -> Set History
+applyPolicySteps p h = foldl' 
+    (\hs hq -> Set.unions (Set.map (Set.map fst . executeTimely hq) hs)) 
+    (Set.singleton h) (getSteps $ meaning p)
 
 -- * Testing definitions
 

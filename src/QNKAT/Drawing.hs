@@ -41,6 +41,9 @@ drawPolicy p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPolicy p
 drawPolicyTimely :: Policy -> ManuallySized (Diagram B)
 drawPolicyTimely p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPolicyTimely p $ []
 
+drawPolicySteps :: Policy -> ManuallySized (Diagram B)
+drawPolicySteps p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPolicySteps p $ []
+
 drawHistoryText :: History -> String
 drawHistoryText = drawForest . (fmap . fmap) show . toForest . getForest
 
