@@ -22,6 +22,7 @@ library:
     - QNKAT.Definitions
     - QNKAT.UnorderedTree
     - QNKAT.ChoiceUtilities
+    - QNKAT.DSL
     - QNKAT.Test
 
 tests:

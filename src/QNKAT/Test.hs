@@ -10,8 +10,12 @@ import           Data.Set          (Set)
 import           QNKAT.Definitions
 import           QNKAT.Drawing
 
-testEquality :: (Policy -> History -> Set History) 
-             -> Policy -> Policy -> History -> Property
+type Tag = Maybe Int
+
+testEquality 
+    :: (Show t, Eq t)
+    => (Policy t -> History t -> Set (History t))
+    -> Policy t -> Policy t -> History t -> Property
 testEquality apply p q h =
     let hsP = apply p h
         hsQ = apply q h
@@ -23,7 +27,7 @@ testEquality apply p q h =
      in counterexample counterexampleText (hsP == hsQ)
 
 
-(~) :: Policy -> Policy -> History -> Property
+(~) :: Policy Tag -> Policy Tag -> History Tag -> Property
 (~) = testEquality applyPolicy
 
 isAssociative :: (a -> a -> p) -> (a -> a -> a) -> a -> a -> a -> p
@@ -40,7 +44,7 @@ parallelCompositionIsAssociative = isAssociative (~) (<||>)
 parallelCompositionIsCommutative = isCommutative (~) (<||>)
 sequentialCompositionDistributes = distributesOver (~) (<>) (<||>)
 
-(~~) :: Policy -> Policy -> History -> Property
+(~~) :: Policy Tag -> Policy Tag -> History Tag -> Property
 (~~) = testEquality applyPolicyTimely
 
 timelySequentialCompositionIsAssociative = isAssociative (~~) (<>)
@@ -48,7 +52,7 @@ timelyParallelCompositionIsAssociative = isAssociative (~~) (<||>)
 timelyParallelCompositionIsCommutative = isCommutative (~~) (<||>)
 timelySequentialCompositionDistributes = distributesOver (~~) (<>) (<||>)
 
-(~~~) :: Policy -> Policy -> History -> Property
+(~~~) :: Policy Tag -> Policy Tag -> History Tag -> Property
 (~~~) = testEquality applyPolicySteps
 
 stepsSequentialCompositionIsAssociative = isAssociative (~~~) (<>)

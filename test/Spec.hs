@@ -1,55 +1,67 @@
 {-# LANGUAGE OverloadedLists     #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications    #-}
 
 module Spec where
 
 import           QNKAT.ChoiceUtilities
 import           QNKAT.Definitions
 import           QNKAT.Drawing
+import           QNKAT.DSL
 import           QNKAT.Test
 import           QNKAT.UnorderedTree
 
-import           Control.Monad         (unless)
-import           Data.Monoid           (Sum (..))
-import           Data.Set              (Set)
-import qualified Data.Set              as Set
+import           Control.Monad              (unless)
+import           Data.Functor.Contravariant (Predicate (..))
+import           Data.Monoid                (Sum (..))
+import           Data.Set                   (Set)
+import qualified Data.Set                   as Set
 import           GHC.Exts
 
 import           Test.Hspec
 import           Test.Hspec.QuickCheck
-import           Test.QuickCheck       ((===))
+import           Test.QuickCheck            ((===))
 
 main :: IO ()
 main = hspec $ do
     describe "distill" $ do
         it "should drop sometimes" $
-            applyPolicy (Distill ("A", "B")) [Node ("A" :~: "B") [], Node ("A" :~: "B") []]
+            applyPolicy @Tag (distill ("A", "B")) [node ("A" :~: "B"), node ("A" :~: "B")]
                 `historiesShouldSatisfy` any (null . getForest)
     describe "transmit" $ do
         it "should transmit" $
-            applyPolicy (Transmit "A" ("A", "R[AB]")) [Node ("A" :~: "A") []]
-                `historiesShouldSatisfy` all (all (hasRoot ("A" :~: "R[AB]")) . getForest)
+            applyPolicy @Tag (trans "A" ("A", "R[AB]")) [node ("A" :~: "A")]
+                `historiesShouldSatisfy` all (all (hasBellPair ("A" :~: "R[AB]")) . getForest)
         it "should transmit two" $
-            applyPolicy
-                    (Transmit "A" ("A", "R[AB]") <||> Transmit "B" ("B", "R[AB]"))
-                    [Node ("A" :~: "A") [], Node ("B" :~: "B") []]
-                `historiesShouldSatisfy` any (any (hasRoot ("A" :~: "R[AB]")) . getForest)
+            applyPolicy @Tag
+                    (trans "A" ("A", "R[AB]") <||> trans "B" ("B", "R[AB]"))
+                    [node ("A" :~: "A"), node ("B" :~: "B")]
+                `historiesShouldSatisfy` any (any (hasBellPair ("A" :~: "R[AB]")) . getForest)
         it "should transmit both" $
-            applyPolicy
-                    (Transmit "A" ("A", "B") <||> Transmit "A" ("A", "B"))
-                    [Node ("A" :~: "A") [], Node ("A" :~: "A") []]
-                `historiesShouldSatisfy` all (all (hasRoot ("A" :~: "B")) . getForest)
+            applyPolicy @Tag
+                    (trans "A" ("A", "B") <||> trans "A" ("A", "B"))
+                    [node ("A" :~: "A"), node ("A" :~: "A")]
+                `historiesShouldSatisfy` all (all (hasBellPair ("A" :~: "B")) . getForest)
         it "should transmit one out of two" $
-            applyPolicy
-                   (Transmit "A" ("A", "R[AB]"))
-                    [Node ("A" :~: "A") [], Node ("A" :~: "A") []]
+            applyPolicy @Tag
+                   (trans "A" ("A", "R[AB]"))
+                    [node ("A" :~: "A"), node ("A" :~: "A")]
                 `historiesShouldSatisfy` all ((== 2) . length . getForest)
         it "should transmit two out of three" $
-            applyPolicy
-                   (Transmit "A" ("A", "R[AB]") <||> Transmit "A" ("A", "R[AB]"))
-                   (fromList . replicate 3 $ Node ("A" :~: "A") [])
+            applyPolicy @Tag
+                   (trans "A" ("A", "R[AB]") <||> trans "A" ("A", "R[AB]"))
+                   (fromList . replicate 3 $ node ("A" :~: "A"))
                 `historiesShouldSatisfy` all ((== 3) . length . getForest)
+        it "should not transmit if wrong tag" $
+            applyPolicy @Tag (tags [1] ?~ trans "A" ("A", "B"))
+                    [node ("A" :~: "A") .~ 2]
+                `historiesShouldSatisfy` all (all (hasBellPair ("A" :~: "A")) . getForest)
+        it "should not transmit if wrong tag but should if the right" $
+            applyPolicy @Tag 
+                (tags [1] ?~ trans "A" ("A", "B") <||> tags [1] ?~ trans "A" ("A", "B"))
+                [node ("A" :~: "A") .~ 2, node ("A" :~: "A") .~ 1]
+                `historiesShouldSatisfy` all (any (hasBellPair ("A" :~: "A")) . getForest)
     describe "choose" $ do
         it "should choose nothing" $
             choose 0 (["A"] :: [String]) `shouldBe` [chooseNoneOf ["A"]]
@@ -85,15 +97,24 @@ main = hspec $ do
         prop "should be associative" stepsParallelCompositionIsAssociative
     describe "chooseTwoHistories" $ do
         prop "should be \"commutative\"" $
-            \x y h -> chooseTwoHistories x y h === Set.map (\(x1, x2, x3) -> (x2, x1, x3)) (chooseTwoHistories y x h)
+            let setToPredicate (x, y) = (x, Predicate (`Set.member` y))
+                swapTuples = Set.map (\(x1, x2, x3) -> (x2, x1, x3))
+             in \x y h ->
+                 chooseTwoHistories @Tag (setToPredicate <$> x) (setToPredicate <$> y) h
+                    === swapTuples  (chooseTwoHistories @Tag (setToPredicate <$> y) (setToPredicate <$> x) h)
     describe "findTreeRootsND" $ do
         prop "should return partial" $
             \ps (h :: UForest BellPair) -> all (isPartial h) (findTreeRootsND ps h)
 
+tags :: [Int] -> [Int]
+tags = id
+
+hasBellPair :: BellPair -> UTree (TaggedBellPair a) -> Bool
+hasBellPair bp = (== bp) . fst . rootLabel
+
 isPartial :: (Eq a, Semigroup a) => a -> Partial a -> Bool
 isPartial x partialX = x == (chosen partialX <> rest partialX)
 
-historiesShouldSatisfy :: Set History -> (Set History -> Bool) -> Expectation
+historiesShouldSatisfy :: Show t => Set (History t) -> (Set (History t) -> Bool) -> Expectation
 historiesShouldSatisfy h f =
     unless (f h) $ expectationFailure $ "nope:\n" <> drawHistoriesText h
-

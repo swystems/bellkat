@@ -30,24 +30,26 @@ treeToDiagram t =
 
 frameDiagram d = let d' = d # frame 0.5 in d' <> boundingRect d'
 
+historyToDiagram :: (Ord t, Show t) => History t -> Diagram B
 historyToDiagram (History []) = rect 4 0
 historyToDiagram (History ts) = hsep 0.5 . map treeToDiagram  . toForest $ ts
 
+historiesToDiagram :: (Ord t, Show t) => [History t] -> Diagram B
 historiesToDiagram = vsep 1 . fmap (alignL . frameDiagram . historyToDiagram)
 
-drawPolicy :: Policy -> ManuallySized (Diagram B)
+drawPolicy :: (Ord t, Show t) => Policy t -> ManuallySized (Diagram B)
 drawPolicy p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPolicy p $ []
 
-drawPolicyTimely :: Policy -> ManuallySized (Diagram B)
+drawPolicyTimely :: (Ord t, Show t) => Policy t -> ManuallySized (Diagram B)
 drawPolicyTimely p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPolicyTimely p $ []
 
-drawPolicySteps :: Policy -> ManuallySized (Diagram B)
+drawPolicySteps :: (Ord t, Show t) => Policy t -> ManuallySized (Diagram B)
 drawPolicySteps p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPolicySteps p $ []
 
-drawHistoryText :: History -> String
+drawHistoryText :: Show t => History t -> String
 drawHistoryText = drawForest . (fmap . fmap) show . toForest . getForest
 
-drawHistoriesText :: Set History -> String
+drawHistoriesText :: Show t => Set (History t) -> String
 drawHistoriesText hs = 
     intercalate "\n" $ 
            ["========="]
