@@ -18,6 +18,11 @@ distill locs = defaultTagged $ Distill locs
 trans :: Location -> (Location, Location) -> Policy (Maybe t)
 trans loc locs = defaultTagged $ Transmit loc locs
 
+swap :: Location -> (Location, Location) -> Policy (Maybe t)
+swap loc locs = defaultTagged $ Swap loc locs
+
+create :: Location -> Policy (Maybe t)
+create loc = defaultTagged $ Create loc
 
 class PredicateLike p t where
     toPredicate :: p -> t -> Bool

@@ -18,7 +18,11 @@ import Data.List (intercalate, intersperse)
 import QNKAT.UnorderedTree (toForest) 
 import QNKAT.Definitions
 
-pairToDiagram bp = (text (show bp) <> rect 4 1) # fontSize (local 0.5) 
+pairToDiagram :: (Show t, Eq t) => TaggedBellPair (Maybe t) -> Diagram B
+pairToDiagram (bp, Nothing) 
+  = (text (show bp) <> rect 4 1) # fontSize (local 0.5) 
+pairToDiagram (bp, Just t) 
+  = (text (show bp <> "[" <> show t <> "]") <> rect 4 1) # fontSize (local 0.5) 
 
 treeToDiagram t = 
     let childrenNames = [1..(length $ subForest t :: Int)]
@@ -30,20 +34,20 @@ treeToDiagram t =
 
 frameDiagram d = let d' = d # frame 0.5 in d' <> boundingRect d'
 
-historyToDiagram :: (Ord t, Show t) => History t -> Diagram B
+historyToDiagram :: (Ord t, Show t) => History (Maybe t) -> Diagram B
 historyToDiagram (History []) = rect 4 0
 historyToDiagram (History ts) = hsep 0.5 . map treeToDiagram  . toForest $ ts
 
-historiesToDiagram :: (Ord t, Show t) => [History t] -> Diagram B
+historiesToDiagram :: (Ord t, Show t) => [History (Maybe t)] -> Diagram B
 historiesToDiagram = vsep 1 . fmap (alignL . frameDiagram . historyToDiagram)
 
-drawPolicy :: (Ord t, Show t) => Policy t -> ManuallySized (Diagram B)
+drawPolicy :: (Ord t, Show t) => Policy (Maybe t) -> ManuallySized (Diagram B)
 drawPolicy p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPolicy p $ []
 
-drawPolicyTimely :: (Ord t, Show t) => Policy t -> ManuallySized (Diagram B)
+drawPolicyTimely :: (Ord t, Show t) => Policy (Maybe t) -> ManuallySized (Diagram B)
 drawPolicyTimely p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPolicyTimely p $ []
 
-drawPolicySteps :: (Ord t, Show t) => Policy t -> ManuallySized (Diagram B)
+drawPolicySteps :: (Ord t, Show t) => Policy (Maybe t) -> ManuallySized (Diagram B)
 drawPolicySteps p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPolicySteps p $ []
 
 drawHistoryText :: Show t => History t -> String
