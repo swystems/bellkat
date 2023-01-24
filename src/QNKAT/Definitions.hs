@@ -52,6 +52,9 @@ infixl 5 <||>
 class Semigroup a => ParallelSemigroup a where
     (<||>) :: a -> a -> a
 
+newtype DupKind = DupKind { shouldDup :: Bool }
+    deriving newtype Arbitrary
+
 -- | `Quantum` is a `ParallelSemigroup` with `BellPair` creation
 class (ParallelSemigroup a) => Quantum a t | a -> t where
     -- | is function from `BellPair`, `[BellPair]` to `Maybe Double` Quantum;
@@ -62,6 +65,7 @@ class (ParallelSemigroup a) => Quantum a t | a -> t where
         -> [BellPair] 
         -> Maybe Double 
         -> t -- | new tag
+        -> DupKind
         -> a
 
 -- | Notation for predicate
@@ -69,16 +73,16 @@ subjectTo :: Quantum a t => Predicate t -> (Predicate t -> a) -> a
 subjectTo pt f = f pt
 
 -- | Notation for deterministic `tryCreateBellPairFrom`
-(<~) :: (Quantum a t) => BellPair -> [BellPair] -> t -> Predicate t -> a
-bp <~ bps = \t pt -> tryCreateBellPairFrom pt bp bps Nothing t
+(<~) :: (Quantum a t) => BellPair -> [BellPair] -> t -> DupKind -> Predicate t -> a
+bp <~ bps = \t dk pt -> tryCreateBellPairFrom pt bp bps Nothing t dk
 
 -- | Notation for probabilistic `tryCreateBellPairFrom` (part I)
 (<~%) :: BellPair -> Double -> (BellPair, Double)
 bp <~% prob = (bp, prob)
 
 -- | Notation for probabilistic `tryCreateBellPairFrom` (part II)
-(%~) :: Quantum a t => (BellPair, Double) -> [BellPair] -> t -> Predicate t -> a
-(bp, prob) %~ bps = \t pt -> tryCreateBellPairFrom pt bp bps (Just prob) t
+(%~) :: Quantum a t => (BellPair, Double) -> [BellPair] -> t -> DupKind -> Predicate t -> a
+(bp, prob) %~ bps = \t dk pt -> tryCreateBellPairFrom pt bp bps (Just prob) t dk
 
 -- * Main policy definitions
 
@@ -91,13 +95,14 @@ data Action
     deriving stock (Show)
 
 data TaggedAction t = TaggedAction
-    { tagPredicate :: Predicate t
-    , action :: Action
-    , tag :: t
+    { taTagPredicate :: Predicate t
+    , taAction :: Action
+    , taTag :: t
+    , taDup :: DupKind
     }
 
 instance Show t => Show (TaggedAction t) where
-    show ta = "_:" <> show (action ta) <> ":" <> show (tag ta)
+    show ta = "_:" <> show (taAction ta) <> ":" <> show (taTag ta)
 
 -- | Define policy
 data Policy t
@@ -114,11 +119,15 @@ instance ParallelSemigroup (Policy t) where
 
 -- | methods
 meaning :: Quantum a t => Policy t -> a
-meaning (Atomic ta) = case action ta of
-    (Swap l (l1, l2))     -> subjectTo (tagPredicate ta) $ (l1 :~: l2) <~ [l :~: l1, l :~: l2] $ tag ta
-    (Transmit l (l1, l2)) -> subjectTo (tagPredicate ta) $ (l1 :~: l2) <~ [l :~: l] $ tag ta
-    (Create l)            -> subjectTo (tagPredicate ta) $ (l :~: l) <~ [] $ tag ta
-    (Distill (l1, l2))    -> subjectTo (tagPredicate ta) $ (l1 :~: l2) <~% 0.5 %~ [l1 :~: l2, l1 :~: l2] $ tag ta
+meaning (Atomic ta) = case taAction ta of
+    (Swap l (l1, l2))     -> subjectTo (taTagPredicate ta) 
+        $ ((l1 :~: l2) <~ [l :~: l1, l :~: l2]) (taTag ta) (taDup ta)
+    (Transmit l (l1, l2)) -> subjectTo (taTagPredicate ta) 
+        $ ((l1 :~: l2) <~ [l :~: l]) (taTag ta) (taDup ta)
+    (Create l)            -> subjectTo (taTagPredicate ta) 
+        $ ((l :~: l) <~ []) (taTag ta) (taDup ta)
+    (Distill (l1, l2))    -> subjectTo (taTagPredicate ta) 
+        $ ((l1 :~: l2) <~% 0.5 %~ [l1 :~: l2, l1 :~: l2]) (taTag ta) (taDup ta)
 meaning (Sequence p q)        = meaning p <> meaning q
 meaning (Parallel p q)        = meaning p <||> meaning q
 
@@ -147,6 +156,11 @@ dupHistory = History . Mset.map (\t -> Node (rootLabel t) [t]) . getForest
 -- | Duplicating history
 dupHistoryN :: Ord t => Int -> History t -> History t
 dupHistoryN n = appEndo . mconcat . replicate n $ Endo dupHistory
+
+processDup :: Ord a => DupKind -> UForest a -> UForest a
+processDup dk ts
+  | shouldDup dk = ts
+  | otherwise = foldMap subForest ts
 
 mapPredicate :: [TaggedRequiredRoots t] 
              -> [(RequiredRoots, Predicate (TaggedBellPair t))]
@@ -192,7 +206,7 @@ instance Ord t => ParallelSemigroup (HistoryQuantum t) where
         }
 
 instance Ord t => Quantum (HistoryQuantum t) t where
-    tryCreateBellPairFrom pt p bp prob t = HistoryQuantum
+    tryCreateBellPairFrom pt p bp prob t dk = HistoryQuantum
         { requiredRoots = [(bp, pt)]
         , execute = \h@(History ts) ->
             case findTreeRootsNDP fst bp (snd >$< pt) ts of
@@ -200,8 +214,8 @@ instance Ord t => Quantum (HistoryQuantum t) t where
                 partialTsNews ->
                     mconcat
                     [ case prob of
-                        Nothing -> [History tsRest <> [Node (p, t) . foldMap subForest . toList $ tsNew]]
-                        Just _ -> [History tsRest <> [Node (p, t) . foldMap subForest . toList $ tsNew], History tsRest]
+                        Nothing -> [History tsRest <> [Node (p, t) . processDup dk $ tsNew]]
+                        Just _ -> [History tsRest <> [Node (p, t) . processDup dk $ tsNew], History tsRest]
                     | Partial { chosen = tsNew, rest = tsRest } <- partialTsNews
                     ]
         }
@@ -246,7 +260,7 @@ instance Ord t => ParallelSemigroup (TimelyHistoryQuantum t) where
         }
 
 instance Ord t => Quantum (TimelyHistoryQuantum t) t where
-    tryCreateBellPairFrom pt bp bps prob t = TimelyHistoryQuantum
+    tryCreateBellPairFrom pt bp bps prob t _dk = TimelyHistoryQuantum
         { requiredRootsTimely = [(bps, pt)]
         , executeTimely = \h@(History ts) ->
             case findTreeRootsNDP fst bps (snd >$< pt) ts of
@@ -278,8 +292,8 @@ instance Ord t => ParallelSemigroup (StepHistoryQuantum t) where
                 ++ restSteps shq ++ restSteps shq'
 
 instance Ord t => Quantum (StepHistoryQuantum t) t where
-    tryCreateBellPairFrom pt p bp prob t = StepHistoryQuantum
-        [tryCreateBellPairFrom pt p bp prob t]
+    tryCreateBellPairFrom pt p bp prob t dk = StepHistoryQuantum
+        [tryCreateBellPairFrom pt p bp prob t dk]
 
 applyPolicySteps :: (Ord t) => Policy t -> History t -> Set (History t)
 applyPolicySteps p h = foldl'
@@ -306,7 +320,7 @@ instance (Arbitrary t, Eq t) => Arbitrary (Policy t) where
         if n == 0 then
             resize 1 $ do
                 predicate :: [t] <- arbitrary
-                Atomic <$> (TaggedAction (Predicate (`elem` predicate)) <$> arbitrary <*> arbitrary)
+                Atomic <$> (TaggedAction (Predicate (`elem` predicate)) <$> arbitrary <*> arbitrary <*> arbitrary)
         else
             resize (n - 1) $ oneof [
                 Sequence <$> arbitrary <*> arbitrary,
