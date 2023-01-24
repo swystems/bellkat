@@ -63,7 +63,6 @@ class (ParallelSemigroup a) => Quantum a t | a -> t where
         -> Maybe Double 
         -> t -- | new tag
         -> a
-    dup :: a
 
 -- | Notation for predicate
 subjectTo :: Quantum a t => Predicate t -> (Predicate t -> a) -> a
@@ -105,7 +104,6 @@ data Policy t
     = Atomic (TaggedAction t)
     | Sequence (Policy t) (Policy t)
     | Parallel (Policy t) (Policy t)
-    | Dup
     deriving stock (Show)
 
 instance Semigroup (Policy t) where
@@ -123,7 +121,6 @@ meaning (Atomic ta) = case action ta of
     (Distill (l1, l2))    -> subjectTo (tagPredicate ta) $ (l1 :~: l2) <~% 0.5 %~ [l1 :~: l2, l1 :~: l2] $ tag ta
 meaning (Sequence p q)        = meaning p <> meaning q
 meaning (Parallel p q)        = meaning p <||> meaning q
-meaning Dup                   = dup
 
 -- * History of BellPairs
 
@@ -209,8 +206,6 @@ instance Ord t => Quantum (HistoryQuantum t) t where
                     ]
         }
 
-    dup = HistoryQuantum { requiredRoots = [], execute = \h -> [dupHistory h] }
-
 applyPolicy :: Ord t => Policy t -> History t -> Set (History t)
 applyPolicy = execute . meaning
 
@@ -265,8 +260,6 @@ instance Ord t => Quantum (TimelyHistoryQuantum t) t where
                     ]
         }
 
-    dup = TimelyHistoryQuantum { requiredRootsTimely = [], executeTimely = \h -> [(h, 0)] }
-
 applyPolicyTimely :: Ord t => Policy t -> History t -> Set (History t)
 applyPolicyTimely p = Set.map fst . executeTimely (meaning p)
 
@@ -287,8 +280,6 @@ instance Ord t => ParallelSemigroup (StepHistoryQuantum t) where
 instance Ord t => Quantum (StepHistoryQuantum t) t where
     tryCreateBellPairFrom pt p bp prob t = StepHistoryQuantum
         [tryCreateBellPairFrom pt p bp prob t]
-
-    dup = StepHistoryQuantum []
 
 applyPolicySteps :: (Ord t) => Policy t -> History t -> Set (History t)
 applyPolicySteps p h = foldl'
