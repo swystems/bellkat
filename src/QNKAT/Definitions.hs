@@ -280,7 +280,7 @@ applyPolicyTimely p = Set.map fst . executeTimely (meaning p)
 -- ** Quantum operations represented as a sequence of primitive actions
 
 newtype StepHistoryQuantum t = StepHistoryQuantum
-    { getSteps :: [TimelyHistoryQuantum t]
+    { getSteps :: [HistoryQuantum t]
     } deriving newtype (Semigroup)
 
 instance Ord t => ParallelSemigroup (StepHistoryQuantum t) where
@@ -297,7 +297,7 @@ instance Ord t => Quantum (StepHistoryQuantum t) t where
 
 applyPolicySteps :: (Ord t) => Policy t -> History t -> Set (History t)
 applyPolicySteps p h = foldl'
-    (\hs hq -> Set.unions (Set.map (Set.map fst . executeTimely hq) hs))
+    (\hs hq -> Set.unions (Set.map (execute hq) hs))
     (Set.singleton h) (getSteps $ meaning p)
 
 -- * Testing definitions
