@@ -10,7 +10,7 @@ import           QNKAT.Definitions
 import           QNKAT.UnorderedTree        (UTree (..))
 
 defaultTagged :: Action -> Policy (Maybe t)
-defaultTagged a = Atomic $ TaggedAction mempty a Nothing (DupKind False)
+defaultTagged a = Atomic $ TaggedAction mempty a Nothing mempty
 
 distill :: (Location, Location) -> Policy (Maybe t)
 distill locs = defaultTagged $ Distill locs
@@ -24,10 +24,11 @@ swap loc locs = defaultTagged $ Swap loc locs
 create :: Location -> Policy (Maybe t)
 create loc = defaultTagged $ Create loc
 
-dup :: Policy a -> Policy a
-dup (Atomic (TaggedAction pt a t _)) = Atomic $
-    TaggedAction pt a t (DupKind True)
-dup p = p
+dupA :: DupKind
+dupA = DupKind { dupBefore = False, dupAfter = True }
+
+dupB :: DupKind
+dupB = DupKind { dupBefore = True, dupAfter = False }
 
 class PredicateLike p t where
     toPredicate :: p -> t -> Bool
@@ -55,6 +56,11 @@ orP (Predicate f) (Predicate g) = Predicate ((||) <$> f <*> g)
 p ?~ Atomic (TaggedAction _ a t dupKind) = Atomic $ 
     TaggedAction (Predicate $ maybe True $ toPredicate p) a t dupKind
 _ ?~ p                           = p
+
+(.%) :: Policy a -> DupKind -> Policy a
+Atomic (TaggedAction p a t _) .% dk = Atomic $ TaggedAction p a t dk
+p .% _ = p
+
 
 node :: Ord t => BellPair -> UTree (TaggedBellPair (Maybe t))
 node bp = Node (bp, Nothing) []

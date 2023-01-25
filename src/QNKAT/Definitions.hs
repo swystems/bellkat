@@ -52,8 +52,13 @@ infixl 5 <||>
 class Semigroup a => ParallelSemigroup a where
     (<||>) :: a -> a -> a
 
-newtype DupKind = DupKind { shouldDup :: Bool }
-    deriving newtype Arbitrary
+data DupKind = DupKind { dupBefore :: Bool, dupAfter :: Bool }
+
+instance Semigroup DupKind where
+    (DupKind x y) <> (DupKind x' y') = DupKind (x || x') (y || y')
+
+instance Monoid DupKind where
+    mempty = DupKind False False
 
 -- | `Quantum` is a `ParallelSemigroup` with `BellPair` creation
 class (ParallelSemigroup a) => Quantum a t | a -> t where
@@ -71,18 +76,6 @@ class (ParallelSemigroup a) => Quantum a t | a -> t where
 -- | Notation for predicate
 subjectTo :: Quantum a t => Predicate t -> (Predicate t -> a) -> a
 subjectTo pt f = f pt
-
--- | Notation for deterministic `tryCreateBellPairFrom`
-(<~) :: (Quantum a t) => BellPair -> [BellPair] -> t -> DupKind -> Predicate t -> a
-bp <~ bps = \t dk pt -> tryCreateBellPairFrom pt bp bps Nothing t dk
-
--- | Notation for probabilistic `tryCreateBellPairFrom` (part I)
-(<~%) :: BellPair -> Double -> (BellPair, Double)
-bp <~% prob = (bp, prob)
-
--- | Notation for probabilistic `tryCreateBellPairFrom` (part II)
-(%~) :: Quantum a t => (BellPair, Double) -> [BellPair] -> t -> DupKind -> Predicate t -> a
-(bp, prob) %~ bps = \t dk pt -> tryCreateBellPairFrom pt bp bps (Just prob) t dk
 
 -- * Main policy definitions
 
@@ -120,14 +113,14 @@ instance ParallelSemigroup (Policy t) where
 -- | methods
 meaning :: Quantum a t => Policy t -> a
 meaning (Atomic ta) = case taAction ta of
-    (Swap l (l1, l2))     -> subjectTo (taTagPredicate ta) 
-        $ ((l1 :~: l2) <~ [l :~: l1, l :~: l2]) (taTag ta) (taDup ta)
-    (Transmit l (l1, l2)) -> subjectTo (taTagPredicate ta) 
-        $ ((l1 :~: l2) <~ [l :~: l]) (taTag ta) (taDup ta)
-    (Create l)            -> subjectTo (taTagPredicate ta) 
-        $ ((l :~: l) <~ []) (taTag ta) (taDup ta)
-    (Distill (l1, l2))    -> subjectTo (taTagPredicate ta) 
-        $ ((l1 :~: l2) <~% 0.5 %~ [l1 :~: l2, l1 :~: l2]) (taTag ta) (taDup ta)
+    (Swap l (l1, l2))     -> tryCreateBellPairFrom (taTagPredicate ta) 
+        (l1 :~: l2) [l :~: l1, l :~: l2] Nothing (taTag ta) (taDup ta)
+    (Transmit l (l1, l2)) -> tryCreateBellPairFrom (taTagPredicate ta) 
+        (l1 :~: l2) [l :~: l] Nothing (taTag ta) (taDup ta)
+    (Create l)            -> tryCreateBellPairFrom (taTagPredicate ta) 
+        (l :~: l) [] Nothing (taTag ta) (taDup ta)
+    (Distill (l1, l2))    -> tryCreateBellPairFrom (taTagPredicate ta) 
+        (l1 :~: l2) [l1 :~: l2, l1 :~: l2] (Just 0.5) (taTag ta) (taDup ta)
 meaning (Sequence p q)        = meaning p <> meaning q
 meaning (Parallel p q)        = meaning p <||> meaning q
 
@@ -157,10 +150,16 @@ dupHistory = History . Mset.map (\t -> Node (rootLabel t) [t]) . getForest
 dupHistoryN :: Ord t => Int -> History t -> History t
 dupHistoryN n = appEndo . mconcat . replicate n $ Endo dupHistory
 
-processDup :: Ord a => DupKind -> UForest a -> UForest a
-processDup dk ts
-  | shouldDup dk = ts
-  | otherwise = foldMap subForest ts
+processDupAfter :: Ord a => Bool -> a -> UForest a -> UTree a
+processDupAfter True x ts = Node x [Node x ts]
+processDupAfter False x ts = Node x ts
+
+processDupBefore :: Ord a => Bool -> UForest a -> UForest a
+processDupBefore True ts = ts
+processDupBefore False ts = foldMap subForest ts
+
+processDup :: Ord a => DupKind -> a -> UForest a -> UTree a
+processDup dk x = processDupAfter (dupAfter dk) x . processDupBefore (dupBefore dk)
 
 mapPredicate :: [TaggedRequiredRoots t] 
              -> [(RequiredRoots, Predicate (TaggedBellPair t))]
@@ -206,16 +205,16 @@ instance Ord t => ParallelSemigroup (HistoryQuantum t) where
         }
 
 instance Ord t => Quantum (HistoryQuantum t) t where
-    tryCreateBellPairFrom pt p bp prob t dk = HistoryQuantum
-        { requiredRoots = [(bp, pt)]
+    tryCreateBellPairFrom pt bp bps prob t dk = HistoryQuantum
+        { requiredRoots = [(bps, pt)]
         , execute = \h@(History ts) ->
-            case findTreeRootsNDP fst bp (snd >$< pt) ts of
+            case findTreeRootsNDP fst bps (snd >$< pt) ts of
                 [] -> [h]
                 partialTsNews ->
                     mconcat
                     [ case prob of
-                        Nothing -> [History tsRest <> [Node (p, t) . processDup dk $ tsNew]]
-                        Just _ -> [History tsRest <> [Node (p, t) . processDup dk $ tsNew], History tsRest]
+                        Nothing -> [History tsRest <> [processDup dk (bp, t) tsNew]]
+                        Just _ -> [History tsRest <> [processDup dk (bp, t) tsNew], History tsRest]
                     | Partial { chosen = tsNew, rest = tsRest } <- partialTsNews
                     ]
         }
@@ -312,6 +311,9 @@ instance Arbitrary Action where
         , Transmit <$> arbitrary <*> arbitrary
         , Distill <$> arbitrary
         ]
+
+instance Arbitrary DupKind where
+    arbitrary = DupKind <$> arbitrary <*> arbitrary
 
 
 instance (Arbitrary t, Eq t) => Arbitrary (Policy t) where
