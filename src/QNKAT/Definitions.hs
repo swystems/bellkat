@@ -161,9 +161,8 @@ processDupBefore False ts = foldMap subForest ts
 processDup :: Ord a => DupKind -> a -> UForest a -> UTree a
 processDup dk x = processDupAfter (dupAfter dk) x . processDupBefore (dupBefore dk)
 
-mapPredicate :: [TaggedRequiredRoots t] 
-             -> [(RequiredRoots, Predicate (TaggedBellPair t))]
-mapPredicate = map (\(x, y) -> (x, snd >$< y))
+toPredicate :: TaggedRequiredRoots t -> (RequiredRoots, Predicate (TaggedBellPair t))
+toPredicate (x, y) = (x, snd >$< y) 
 
 -- | choose two subhistory _non_deterministically_
 chooseTwoHistories 
@@ -173,7 +172,7 @@ chooseTwoHistories
     -> History t -> Set (History t, History t, History t)
 chooseTwoHistories reqRoots1 reqRoots2 (History ts) = 
       Set.map (\(a, b, c) -> (History a, History b, History c))
-  $ chooseTwoSubforestsP fst (mapPredicate reqRoots1) (mapPredicate reqRoots2) ts
+  $ chooseTwoSubforestsP fst (map toPredicate reqRoots1) (map toPredicate reqRoots2) ts
   
 
 -- ** Quantum operations represented as functions over histories
@@ -294,10 +293,11 @@ instance Ord t => Quantum (StepHistoryQuantum t) t where
     tryCreateBellPairFrom pt p bp prob t dk = StepHistoryQuantum
         [tryCreateBellPairFrom pt p bp prob t dk]
 
+executeSteps :: Ord t => History t -> StepHistoryQuantum t -> Set (History t)
+executeSteps h = foldl' (\hs hq -> Set.unions (Set.map (execute hq) hs)) (Set.singleton h) . getSteps
+
 applyPolicySteps :: (Ord t) => Policy t -> History t -> Set (History t)
-applyPolicySteps p h = foldl'
-    (\hs hq -> Set.unions (Set.map (execute hq) hs))
-    (Set.singleton h) (getSteps $ meaning p)
+applyPolicySteps p h = executeSteps h (meaning p)
 
 -- * Testing definitions
 
