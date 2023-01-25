@@ -1,17 +1,19 @@
 {-# LANGUAGE DerivingStrategies         #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE FunctionalDependencies     #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE ScopedTypeVariables      #-}
 {-# LANGUAGE OverloadedLists            #-}
 {-# LANGUAGE ParallelListComp           #-}
+{-# LANGUAGE PatternSynonyms            #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StrictData                 #-}
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE FunctionalDependencies     #-}
 
 module QNKAT.Definitions where
 
+import           Data.Bifunctor             (bimap)
 import           Data.Foldable              (toList)
 import           Data.Functor.Contravariant (Predicate (..), (>$<))
 import           Data.List                  (foldl', sort)
@@ -20,6 +22,8 @@ import qualified Data.Multiset              as Mset
 import           Data.Set                   (Set)
 import qualified Data.Set                   as Set
 import           Data.String                (IsString)
+import           Data.Vector.Fixed          (Arity, VecList, pattern V2)
+import qualified Data.Vector.Fixed          as FV
 import qualified GHC.Exts                   (IsList, Item, fromList, toList)
 import           Test.QuickCheck            hiding (choose)
 
@@ -64,11 +68,11 @@ instance Monoid DupKind where
 class (ParallelSemigroup a) => Quantum a t | a -> t where
     -- | is function from `BellPair`, `[BellPair]` to `Maybe Double` Quantum;
     -- will be used in `meaning` of `Distill`
-    tryCreateBellPairFrom 
+    tryCreateBellPairFrom
         :: Predicate t -- | tag predicate
-        -> BellPair 
-        -> [BellPair] 
-        -> Maybe Double 
+        -> BellPair
+        -> [BellPair]
+        -> Maybe Double
         -> t -- | new tag
         -> DupKind
         -> a
@@ -80,7 +84,7 @@ subjectTo pt f = f pt
 -- * Main policy definitions
 
 -- | Define primitive actions
-data Action 
+data Action
     = Swap Location (Location, Location)
     | Transmit Location (Location, Location)
     | Distill (Location, Location)
@@ -89,9 +93,9 @@ data Action
 
 data TaggedAction t = TaggedAction
     { taTagPredicate :: Predicate t
-    , taAction :: Action
-    , taTag :: t
-    , taDup :: DupKind
+    , taAction       :: Action
+    , taTag          :: t
+    , taDup          :: DupKind
     }
 
 instance Show t => Show (TaggedAction t) where
@@ -113,13 +117,13 @@ instance ParallelSemigroup (Policy t) where
 -- | methods
 meaning :: Quantum a t => Policy t -> a
 meaning (Atomic ta) = case taAction ta of
-    (Swap l (l1, l2))     -> tryCreateBellPairFrom (taTagPredicate ta) 
+    (Swap l (l1, l2))     -> tryCreateBellPairFrom (taTagPredicate ta)
         (l1 :~: l2) [l :~: l1, l :~: l2] Nothing (taTag ta) (taDup ta)
-    (Transmit l (l1, l2)) -> tryCreateBellPairFrom (taTagPredicate ta) 
+    (Transmit l (l1, l2)) -> tryCreateBellPairFrom (taTagPredicate ta)
         (l1 :~: l2) [l :~: l] Nothing (taTag ta) (taDup ta)
-    (Create l)            -> tryCreateBellPairFrom (taTagPredicate ta) 
+    (Create l)            -> tryCreateBellPairFrom (taTagPredicate ta)
         (l :~: l) [] Nothing (taTag ta) (taDup ta)
-    (Distill (l1, l2))    -> tryCreateBellPairFrom (taTagPredicate ta) 
+    (Distill (l1, l2))    -> tryCreateBellPairFrom (taTagPredicate ta)
         (l1 :~: l2) [l1 :~: l2, l1 :~: l2] (Just 0.5) (taTag ta) (taDup ta)
 meaning (Sequence p q)        = meaning p <> meaning q
 meaning (Parallel p q)        = meaning p <||> meaning q
@@ -151,29 +155,28 @@ dupHistoryN :: Ord t => Int -> History t -> History t
 dupHistoryN n = appEndo . mconcat . replicate n $ Endo dupHistory
 
 processDupAfter :: Ord a => Bool -> a -> UForest a -> UTree a
-processDupAfter True x ts = Node x [Node x ts]
+processDupAfter True x ts  = Node x [Node x ts]
 processDupAfter False x ts = Node x ts
 
 processDupBefore :: Ord a => Bool -> UForest a -> UForest a
-processDupBefore True ts = ts
+processDupBefore True ts  = ts
 processDupBefore False ts = foldMap subForest ts
 
 processDup :: Ord a => DupKind -> a -> UForest a -> UTree a
 processDup dk x = processDupAfter (dupAfter dk) x . processDupBefore (dupBefore dk)
 
-toPredicate :: TaggedRequiredRoots t -> (RequiredRoots, Predicate (TaggedBellPair t))
-toPredicate (x, y) = (x, snd >$< y) 
+requiredRootsToPredicate :: TaggedRequiredRoots t -> (RequiredRoots, Predicate (TaggedBellPair t))
+requiredRootsToPredicate (x, y) = (x, snd >$< y)
 
--- | choose two subhistory _non_deterministically_
-chooseTwoHistories 
-    :: Ord t
-    => [TaggedRequiredRoots t] 
-    -> [TaggedRequiredRoots t] 
-    -> History t -> Set (History t, History t, History t)
-chooseTwoHistories reqRoots1 reqRoots2 (History ts) = 
-      Set.map (\(a, b, c) -> (History a, History b, History c))
-  $ chooseTwoSubforestsP fst (map toPredicate reqRoots1) (map toPredicate reqRoots2) ts
-  
+-- | choose k subhistories _non_deterministically_
+chooseKHistories
+    :: (Ord t, Arity n)
+    => VecList n [TaggedRequiredRoots t]
+    -> History t -> Set (VecList n (History t), History t)
+chooseKHistories reqRoots (History ts) =
+      Set.map (bimap (FV.map History) History)
+  $ chooseKSubforestsP fst (FV.map (map requiredRootsToPredicate) reqRoots) ts
+
 
 -- ** Quantum operations represented as functions over histories
 
@@ -196,8 +199,8 @@ instance Ord t => ParallelSemigroup (HistoryQuantum t) where
         , execute = \h ->
             Set.fromList
                 [ hRest <> hNew <> hNew'
-                    | (hs, hs', hRest) <- toList $
-                        chooseTwoHistories (requiredRoots hq) (requiredRoots hq') h
+                    | (V2 hs hs', hRest) <- toList $
+                        chooseKHistories (V2 (requiredRoots hq) (requiredRoots hq')) h
                     , hNew <- Set.elems $ execute hq hs
                     , hNew' <- Set.elems $ execute hq' hs'
                 ]
@@ -250,8 +253,8 @@ instance Ord t => ParallelSemigroup (TimelyHistoryQuantum t) where
                 [ (dupHistoryN (max t t') hRest
                     <> dupHistoryN (max t t' - t) hNew <> dupHistoryN (max t t' - t') hNew'
                   , max t t')
-                | (hs, hs', hRest) <- toList $
-                    chooseTwoHistories (requiredRootsTimely hq) (requiredRootsTimely hq') h
+                | (V2 hs hs', hRest) <- toList $
+                    chooseKHistories (V2 (requiredRootsTimely hq) (requiredRootsTimely hq')) h
                 , (hNew, t) <- Set.elems $ executeTimely hq hs
                 , (hNew', t') <- Set.elems $ executeTimely hq' hs'
                 ]
@@ -305,7 +308,7 @@ instance Arbitrary Location where
     arbitrary = Location <$> growingElements [[c] | c <- ['A'..'Z']]
 
 instance Arbitrary Action where
-    arbitrary = oneof 
+    arbitrary = oneof
         [ Swap <$> arbitrary <*> arbitrary
         , Create <$> arbitrary
         , Transmit <$> arbitrary <*> arbitrary

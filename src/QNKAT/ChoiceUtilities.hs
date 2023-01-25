@@ -1,6 +1,10 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE OverloadedLists    #-}
+{-# LANGUAGE DataKinds    #-}
+{-# LANGUAGE ScopedTypeVariables    #-}
 {-# LANGUAGE TupleSections      #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE TypeFamilies      #-}
 
 module QNKAT.ChoiceUtilities where
 
@@ -11,6 +15,8 @@ import           Data.Maybe                 (fromJust)
 import qualified Data.Multiset              as Mset
 import           Data.Set                   (Set)
 import qualified Data.Set                   as Set
+import           Data.Vector.Fixed          (VecList, Arity)
+import qualified Data.Vector.Fixed          as FV
 
 import           QNKAT.UnorderedTree
 
@@ -116,32 +122,32 @@ chooseTreesNDP key pss ts =
 chooseTreesND
     :: (Ord a) => [[a]] -> UForest a -> Set [Maybe (UForest a)]
 chooseTreesND pss = chooseTreesNDP id (withTruePredicate pss)
-  --
--- | choose two subforests _non_deterministically_ with a predicate
-chooseTwoSubforestsP
-    :: (Ord a, Eq k)
+
+-- | choose k subforests _non_deterministically_ with a predicate
+chooseKSubforestsP
+    :: (Ord a, Eq k, Arity n)
     => (a -> k)
-    -> [([k], Predicate a)] -> [([k], Predicate a)]
-    -> UForest a -> Set (UForest a, UForest a, UForest a)
-chooseTwoSubforestsP key reqRoots1 reqRoots2 ts =
-    let n1 = length reqRoots1
-        n2 = length reqRoots2
+    -> VecList n [([k], Predicate a)]
+    -> UForest a -> Set (VecList n (UForest a), UForest a)
+chooseKSubforestsP key reqRoots ts =
+    let ns = FV.map length reqRoots
+        nsAcc = FV.scanl1 (+) ns
         combine mbhs = mconcat $ concatMap toList mbhs
         split mbhs =
-            let ts1 = combine (take n1 mbhs)
-                ts2 = combine (take n2 . drop n1 $ mbhs)
-             in (ts1, ts2, ts `Mset.difference` ts1 `Mset.difference` ts2)
+            let tss = FV.zipWith (\n k -> combine (take k . drop (n - k) $ mbhs)) nsAcc ns 
+                tssRest = FV.foldl Mset.difference ts tss
+             in (tss, tssRest)
      in Set.fromList
         [ split p
-        | p <- Set.toList $ chooseTreesNDP key (reqRoots1 <> reqRoots2) ts
+        | p <- Set.toList $ chooseTreesNDP key (FV.fold reqRoots) ts
         ]
 
 -- | choose two subforests _non_deterministically_
-chooseTwoSubforests
-    :: (Ord a)
-    => [[a]] -> [[a]] -> UForest a -> Set (UForest a, UForest a, UForest a)
-chooseTwoSubforests reqRoots1 reqRoots2 =
-     chooseTwoSubforestsP id (withTruePredicate reqRoots1) (withTruePredicate reqRoots2)
+chooseKSubforests
+    :: (Ord a, Arity n)
+    => VecList n [[a]] -> UForest a -> Set (VecList n (UForest a), UForest a)
+chooseKSubforests reqRoots =
+     chooseKSubforestsP id (FV.map withTruePredicate reqRoots)
 
 withTruePredicate :: [[a]] -> [([a], Predicate a)]
 withTruePredicate = map (, mempty)

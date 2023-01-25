@@ -17,6 +17,8 @@ import           Data.Functor.Contravariant (Predicate (..))
 import           Data.Monoid                (Sum (..))
 import           Data.Set                   (Set)
 import qualified Data.Set                   as Set
+import           Data.Vector.Fixed          (mk2)
+import qualified Data.Vector.Fixed          as FV
 import           GHC.Exts
 
 import           Test.Hspec
@@ -58,7 +60,7 @@ main = hspec $ do
                     [node ("A" :~: "A") .~ 2]
                 `historiesShouldSatisfy` all (all (hasBellPair ("A" :~: "A")) . getForest)
         it "should not transmit if wrong tag but should if the right" $
-            applyPolicy @Tag 
+            applyPolicy @Tag
                 (tags [1] ?~ trans "A" ("A", "B") <||> tags [1] ?~ trans "A" ("A", "B"))
                 [node ("A" :~: "A") .~ 2, node ("A" :~: "A") .~ 1]
                 `historiesShouldSatisfy` all (any (hasBellPair ("A" :~: "A")) . getForest)
@@ -95,13 +97,13 @@ main = hspec $ do
     describe "parallel (steps)" $ do
         prop "should be commutative" stepsParallelCompositionIsCommutative
         prop "should be associative" stepsParallelCompositionIsAssociative
-    describe "chooseTwoHistories" $ do
+    describe "chooseKHistories" $ do
         prop "should be \"commutative\"" $
             let setToPredicate (x, y) = (x, Predicate (`Set.member` y))
-                swapTuples = Set.map (\(x1, x2, x3) -> (x2, x1, x3))
+                swapTuples = Set.map (\(xs, x3) -> (FV.reverse xs, x3))
              in \x y h ->
-                 chooseTwoHistories @Tag (setToPredicate <$> x) (setToPredicate <$> y) h
-                    === swapTuples  (chooseTwoHistories @Tag (setToPredicate <$> y) (setToPredicate <$> x) h)
+                 chooseKHistories @Tag (mk2 (setToPredicate <$> x) (setToPredicate <$> y)) h
+                    === swapTuples  (chooseKHistories @Tag (mk2 (setToPredicate <$> y) (setToPredicate <$> x)) h)
     describe "findTreeRootsND" $ do
         prop "should return partial" $
             \ps (h :: UForest BellPair) -> all (isPartial h) (findTreeRootsND ps h)

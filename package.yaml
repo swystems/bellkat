@@ -14,6 +14,7 @@ dependencies:
   - ihaskell-diagrams
   - diagrams-cairo
   - QuickCheck
+  - fixed-vector
 
 library:
   source-dirs: src
