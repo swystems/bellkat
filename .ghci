@@ -1,5 +1,5 @@
 :set -isrc -itest
-:set -XOverloadedStrings -XFlexibleContexts -XOverloadedLists
+:set -XOverloadedStrings -XFlexibleContexts -XOverloadedLists -XDerivingStrategies -XFlexibleInstances -XScopedTypeVariables -XTypeFamilies -XGeneralizedNewtypeDeriving -XFunctionalDependencies
 :load QNKAT.Definitions
 :load QNKAT.Drawing
 :load QNKAT.Test

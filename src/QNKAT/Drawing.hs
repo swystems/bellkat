@@ -16,6 +16,8 @@ import Data.Set (Set)
 import Data.List (intercalate, intersperse)
 
 import QNKAT.UnorderedTree (toForest) 
+import QNKAT.Definitions.Core
+import QNKAT.Definitions.Policy
 import QNKAT.Definitions
 
 pairToDiagram :: (Show t, Eq t) => TaggedBellPair (Maybe t) -> Diagram B

@@ -6,7 +6,8 @@ module QNKAT.DSL where
 
 import           Data.Functor.Contravariant
 
-import           QNKAT.Definitions
+import           QNKAT.Definitions.Core
+import           QNKAT.Definitions.Policy
 import           QNKAT.UnorderedTree        (UTree (..))
 
 defaultTagged :: Action -> Policy (Maybe t)

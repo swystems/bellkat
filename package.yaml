@@ -1,5 +1,14 @@
 name: qnkat-playground
 
+default-extensions:
+  - DerivingStrategies
+  - TypeFamilies
+  - GeneralizedNewtypeDeriving
+  - FunctionalDependencies
+  - FlexibleInstances
+  - FlexibleContexts
+  - ScopedTypeVariables
+
 ghc-options:
   - -Wall
   - -Werror
@@ -21,6 +30,8 @@ library:
   exposed-modules:
     - QNKAT.Drawing
     - QNKAT.Definitions
+    - QNKAT.Definitions.Core
+    - QNKAT.Definitions.Policy
     - QNKAT.UnorderedTree
     - QNKAT.ChoiceUtilities
     - QNKAT.DSL
