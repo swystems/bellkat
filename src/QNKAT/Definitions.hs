@@ -33,4 +33,4 @@ applyPolicyTimely :: Ord t => Policy t -> History t -> Set (History t)
 applyPolicyTimely = THQ.execute . meaning
 
 applyPolicySteps :: (Ord t) => Policy t -> History t -> Set (History t)
-applyPolicySteps p h = SHQ.execute h (meaning p)
+applyPolicySteps  = SHQ.execute HQ.execute . meaning
