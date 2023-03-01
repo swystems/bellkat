@@ -22,7 +22,7 @@ import           QNKAT.UnorderedTree
 
 -- | Part that we have chosen and part that we have left out
 data Partial a = Partial { chosen :: a, rest :: a }
-    deriving stock (Show, Eq)
+    deriving stock (Show, Eq, Ord)
 
 chooseAll :: Monoid a => a -> Partial a
 chooseAll x = Partial { chosen = x, rest = mempty }
@@ -40,6 +40,9 @@ instance Semigroup a => Semigroup (Partial a) where
 instance Functor Partial where
     fmap f p = Partial { chosen = f (chosen p), rest = f (rest p) }
 
+-- | merge back chosen and rest
+unchoose :: (Semigroup a) => Partial a -> a
+unchoose pa = chosen pa <> rest pa
 
 -- | choose k items non-deterministically
 choose :: (Ord a) => Int -> [a] -> [Partial [a]]
