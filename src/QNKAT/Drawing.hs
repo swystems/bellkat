@@ -21,9 +21,9 @@ import QNKAT.Definitions.Policy
 import QNKAT.Definitions
 
 pairToDiagram :: (Show t, Eq t) => TaggedBellPair (Maybe t) -> Diagram B
-pairToDiagram (bp, Nothing) 
+pairToDiagram (TaggedBellPair bp Nothing) 
   = (text (show bp) <> rect 4 1) # fontSize (local 0.5) 
-pairToDiagram (bp, Just t) 
+pairToDiagram (TaggedBellPair bp (Just t)) 
   = (text (show bp <> "[" <> show t <> "]") <> rect 4 1) # fontSize (local 0.5) 
 
 treeToDiagram t = 
@@ -51,6 +51,9 @@ drawPolicyTimely p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPo
 
 drawPolicySteps :: (Ord t, Show t) => Policy (Maybe t) -> ManuallySized (Diagram B)
 drawPolicySteps p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPolicySteps p $ []
+
+drawOrderedPolicySteps :: (Ord t, Show t) => OrderedPolicy (Maybe t) -> ManuallySized (Diagram B)
+drawOrderedPolicySteps p = withImgWidth 600 . historiesToDiagram . Set.elems . applyOrderedPolicy p $ []
 
 drawHistoryText :: Show t => History t -> String
 drawHistoryText = drawForest . (fmap . fmap) show . toForest . getForest

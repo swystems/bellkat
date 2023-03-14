@@ -4,8 +4,9 @@ module QNKAT.Definitions.Core where
 import           Data.Bifunctor             (bimap)
 import           Data.Foldable              (toList)
 import           Data.Functor.Contravariant (Predicate (..), (>$<))
-import           Data.Monoid                (Endo(..))
 import           Data.List                  (sort)
+import           Data.List.NonEmpty         (NonEmpty)
+import           Data.Monoid                (Endo (..))
 import qualified Data.Multiset              as Mset
 import           Data.Set                   (Set)
 import qualified Data.Set                   as Set
@@ -54,18 +55,23 @@ instance Semigroup DupKind where
 instance Monoid DupKind where
     mempty = DupKind False False
 
+data CreateBellPairArgs t = CreateBellPairArgs
+    { cbpPredicate   :: Predicate t
+    , cbpOutputBP    :: BellPair
+    , cbpInputBPs    :: [BellPair]
+    , cbpProbability :: Maybe Double
+    , cbtNewTag      :: t
+    , cbtDup         :: DupKind
+    }
+
 -- | `Quantum` is a `ParallelSemigroup` with `BellPair` creation
 class (ParallelSemigroup a) => Quantum a t | a -> t where
     -- | is function from `BellPair`, `[BellPair]` to `Maybe Double` Quantum;
     -- will be used in `meaning` of `Distill`
-    tryCreateBellPairFrom
-        :: Predicate t -- | tag predicate
-        -> BellPair
-        -> [BellPair]
-        -> Maybe Double
-        -> t -- | new tag
-        -> DupKind
-        -> a
+    tryCreateBellPairFrom :: CreateBellPairArgs t -> a
+
+class (Quantum a t) => OrderedQuantum a t where
+    tryCreateBellPairsFromOrdered :: NonEmpty (CreateBellPairArgs t) -> a
 
 -- | Notation for predicate
 subjectTo :: Quantum a t => Predicate t -> (Predicate t -> a) -> a
@@ -74,7 +80,11 @@ subjectTo pt f = f pt
 -- * History of BellPairs
 
 type RequiredRoots = [BellPair]
-type TaggedBellPair t = (BellPair, t)
+data TaggedBellPair t = TaggedBellPair
+    { bellPair    :: BellPair
+    , bellPairTag :: t
+    } deriving stock (Eq, Ord, Show)
+
 type TaggedRequiredRoots t = (RequiredRoots, Predicate t)
 
 -- | `History` is a forest of `BellPair`s
@@ -92,7 +102,7 @@ instance (Ord t, Show t) => Show (History t) where
 -- ** History choice utilities
 
 requiredRootsToPredicate :: TaggedRequiredRoots t -> (RequiredRoots, Predicate (TaggedBellPair t))
-requiredRootsToPredicate (x, y) = (x, snd >$< y)
+requiredRootsToPredicate (x, y) = (x, bellPairTag >$< y)
 
 -- | choose k subhistories _non_deterministically_
 chooseKHistories
@@ -101,7 +111,7 @@ chooseKHistories
     -> History t -> Set (VecList n (History t), History t)
 chooseKHistories reqRoots (History ts) =
       Set.map (bimap (FV.map History) History)
-  $ chooseKSubforestsP fst (FV.map (map requiredRootsToPredicate) reqRoots) ts
+  $ chooseKSubforestsP bellPair (FV.map (map requiredRootsToPredicate) reqRoots) ts
 
 -- ** History duplication utilities
 
@@ -135,3 +145,6 @@ instance Arbitrary BellPair where
 
 instance Arbitrary DupKind where
     arbitrary = DupKind <$> arbitrary <*> arbitrary
+
+instance (Arbitrary t) => Arbitrary (TaggedBellPair t) where
+    arbitrary = TaggedBellPair <$> arbitrary <*> arbitrary

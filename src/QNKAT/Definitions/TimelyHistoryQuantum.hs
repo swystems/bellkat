@@ -51,15 +51,15 @@ instance Ord t => ParallelSemigroup (TimelyHistoryQuantum t) where
         }
 
 instance Ord t => Quantum (TimelyHistoryQuantum t) t where
-    tryCreateBellPairFrom pt bp bps prob t _dk = TimelyHistoryQuantum
+    tryCreateBellPairFrom (CreateBellPairArgs pt bp bps prob t _dk) = TimelyHistoryQuantum
         { requiredRootsTimely = [(bps, pt)]
         , executeTimely = \h@(History ts) ->
-            case findTreeRootsNDP fst bps (snd >$< pt) ts of
+            case findTreeRootsNDP bellPair bps (bellPairTag >$< pt) ts of
                 [] -> [(dupHistory h, 1)]
                 partialTsNews -> mconcat
                     [ case prob of
-                        Nothing -> [(dupHistory (History tsRest) <> [Node (bp, t) tsNew], 1)]
-                        Just _ ->  [(dupHistory (History tsRest) <> [Node (bp, t) tsNew], 1)
+                        Nothing -> [(dupHistory (History tsRest) <> [Node (TaggedBellPair bp t) tsNew], 1)]
+                        Just _ ->  [(dupHistory (History tsRest) <> [Node (TaggedBellPair bp t) tsNew], 1)
                                    ,(dupHistory (History tsRest), 1)]
                     | Partial { chosen = tsNew, rest = tsRest } <- partialTsNews
                     ]

@@ -1,29 +1,40 @@
 {-# LANGUAGE FlexibleInstances      #-}
-{-# LANGUAGE OverloadedLists        #-}
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE OverloadedLists        #-}
 
 module QNKAT.DSL where
 
 import           Data.Functor.Contravariant
+import           Data.List.NonEmpty         (NonEmpty (..))
 
 import           QNKAT.Definitions.Core
 import           QNKAT.Definitions.Policy
 import           QNKAT.UnorderedTree        (UTree (..))
 
-defaultTagged :: Action -> Policy (Maybe t)
-defaultTagged a = Atomic $ TaggedAction mempty a Nothing mempty
-
-distill :: (Location, Location) -> Policy (Maybe t)
+distill :: DSLFunctions p => (Location, Location) -> p
 distill locs = defaultTagged $ Distill locs
 
-trans :: Location -> (Location, Location) -> Policy (Maybe t)
+trans :: DSLFunctions p => Location -> (Location, Location) -> p
 trans loc locs = defaultTagged $ Transmit loc locs
 
-swap :: Location -> (Location, Location) -> Policy (Maybe t)
+swap :: DSLFunctions p => Location -> (Location, Location) -> p
 swap loc locs = defaultTagged $ Swap loc locs
 
-create :: Location -> Policy (Maybe t)
+create :: DSLFunctions p => Location -> p
 create loc = defaultTagged $ Create loc
+
+class DSLFunctions p where
+    defaultTagged :: Action -> p
+
+instance DSLFunctions (Policy (Maybe t)) where
+    defaultTagged a = APAtomic $ TaggedAction mempty a Nothing mempty
+
+instance DSLFunctions (OrderedPolicy (Maybe t)) where
+    defaultTagged a = APAtomic $ TaggedAction mempty a Nothing mempty :| []
+
+(<.>) :: OrderedPolicy a -> OrderedPolicy a -> OrderedPolicy a
+(APAtomic tas) <.> (APAtomic tas') = APAtomic (tas <> tas')
+_ <.> _                            = error "Can only compose atomics with <.>"
 
 dupA :: DupKind
 dupA = DupKind { dupBefore = False, dupAfter = True }
@@ -44,24 +55,24 @@ class Taggable a t | a -> t where
     (.~) :: a -> t -> a
 
 instance Taggable (Policy (Maybe t)) t where
-    Atomic (TaggedAction p a _ dupKind) .~ t = Atomic (TaggedAction p a (Just t) dupKind)
+    APAtomic (TaggedAction p a _ dupKind) .~ t = APAtomic (TaggedAction p a (Just t) dupKind)
     p .~ _                           = p
 
 instance Taggable (UTree (TaggedBellPair (Maybe t))) t where
-    Node (bp, _) ts .~ t = Node (bp, Just t) ts
+    Node (TaggedBellPair bp _) ts .~ t = Node (TaggedBellPair bp (Just t)) ts
 
 orP :: Predicate t -> Predicate t -> Predicate t
-orP (Predicate f) (Predicate g) = Predicate ((||) <$> f <*> g) 
+orP (Predicate f) (Predicate g) = Predicate ((||) <$> f <*> g)
 
 (?~) :: PredicateLike p t => p -> Policy (Maybe t) -> Policy (Maybe t)
-p ?~ Atomic (TaggedAction _ a t dupKind) = Atomic $ 
+p ?~ APAtomic (TaggedAction _ a t dupKind) = APAtomic $
     TaggedAction (Predicate $ maybe True $ toPredicate p) a t dupKind
 _ ?~ p                           = p
 
 (.%) :: Policy a -> DupKind -> Policy a
-Atomic (TaggedAction p a t _) .% dk = Atomic $ TaggedAction p a t dk
-p .% _ = p
+APAtomic (TaggedAction p a t _) .% dk = APAtomic $ TaggedAction p a t dk
+p .% _                                = p
 
 
 node :: Ord t => BellPair -> UTree (TaggedBellPair (Maybe t))
-node bp = Node (bp, Nothing) []
+node bp = Node (TaggedBellPair bp Nothing) []

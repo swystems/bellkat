@@ -1,10 +1,12 @@
-{-# LANGUAGE StrictData #-}
+{-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE StrictData   #-}
 module QNKAT.Definitions.Policy where
 
 import           Data.Functor.Contravariant (Predicate (..))
 
 import           Test.QuickCheck            hiding (choose)
 
+import           Data.List.NonEmpty         (NonEmpty)
 import           QNKAT.Definitions.Core
 
 -- * Main policy definitions
@@ -28,18 +30,22 @@ instance Show t => Show (TaggedAction t) where
     show ta = "_:" <> show (taAction ta) <> ":" <> show (taTag ta)
 
 -- | Define policy
-data Policy t
-    = Atomic (TaggedAction t)
-    | Sequence (Policy t) (Policy t)
-    | Parallel (Policy t) (Policy t)
+data AbstractPolicy a
+    = APAtomic a
+    | APSequence (AbstractPolicy a) (AbstractPolicy a)
+    | APParallel (AbstractPolicy a) (AbstractPolicy a)
     deriving stock (Show)
 
-instance Semigroup (Policy t) where
-    (<>) = Sequence
+type Policy t = AbstractPolicy (TaggedAction t)
 
-instance ParallelSemigroup (Policy t) where
-    (<||>) = Parallel
---
+instance Semigroup (AbstractPolicy a) where
+    (<>) = APSequence
+
+instance ParallelSemigroup (AbstractPolicy a) where
+    (<||>) = APParallel
+
+type OrderedPolicy t = AbstractPolicy (NonEmpty (TaggedAction t))
+
 -- * Testing definitions
 
 instance Arbitrary Action where
@@ -50,19 +56,22 @@ instance Arbitrary Action where
         , Distill <$> arbitrary
         ]
 
-instance (Arbitrary t, Eq t) => Arbitrary (Policy t) where
+instance (Arbitrary t, Eq t) => Arbitrary (TaggedAction t) where
+  arbitrary = do
+    predicate :: [t] <- arbitrary
+    TaggedAction (Predicate (`elem` predicate)) <$> arbitrary <*> arbitrary <*> arbitrary
+
+instance (Arbitrary a) => Arbitrary (AbstractPolicy a) where
     arbitrary = do
         n <- getSize
         if n == 0 then
-            resize 1 $ do
-                predicate :: [t] <- arbitrary
-                Atomic <$> (TaggedAction (Predicate (`elem` predicate)) <$> arbitrary <*> arbitrary <*> arbitrary)
+            resize 1 $ APAtomic <$> arbitrary
         else
             resize (n - 1) $ oneof [
-                Sequence <$> arbitrary <*> arbitrary,
-                Sequence <$> arbitrary <*> arbitrary
+                APSequence <$> arbitrary <*> arbitrary,
+                APParallel <$> arbitrary <*> arbitrary
             ]
 
-    shrink (Sequence p q) = [p, q]
-    shrink (Parallel p q) = [p, q]
-    shrink _              = []
+    shrink (APSequence p q) = [p, q]
+    shrink (APParallel p q) = [p, q]
+    shrink _                = []

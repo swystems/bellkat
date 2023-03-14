@@ -112,7 +112,7 @@ tags :: [Int] -> [Int]
 tags = id
 
 hasBellPair :: BellPair -> UTree (TaggedBellPair a) -> Bool
-hasBellPair bp = (== bp) . fst . rootLabel
+hasBellPair bp = (== bp) . bellPair . rootLabel
 
 isPartial :: (Eq a, Semigroup a) => a -> Partial a -> Bool
 isPartial x partialX = x == (chosen partialX <> rest partialX)

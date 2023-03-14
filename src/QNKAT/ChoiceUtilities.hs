@@ -34,6 +34,9 @@ chooseNoneOfIfEmpty :: (Monoid a) => a -> [Partial a] -> [Partial a]
 chooseNoneOfIfEmpty x [] = [chooseNoneOf x]
 chooseNoneOfIfEmpty _ xs = xs
 
+mapChosen :: (a -> a) -> Partial a -> Partial a
+mapChosen f p = p { chosen = f (chosen p) }
+
 instance Semigroup a => Semigroup (Partial a) where
     p <> p' = Partial { chosen = chosen p <> chosen p', rest = rest p <> rest p' }
 
