@@ -5,9 +5,8 @@
 module QNKAT.DSL where
 
 import           Data.Functor.Contravariant
-import           Data.List.NonEmpty         (NonEmpty (..))
 
-import           QNKAT.Definitions.Core
+import           QNKAT.Definitions.Core     hiding (test, (<.>))
 import           QNKAT.Definitions.Policy
 import           QNKAT.UnorderedTree        (UTree (..))
 
@@ -23,6 +22,15 @@ swap loc locs = defaultTagged $ Swap loc locs
 create :: DSLFunctions p => Location -> p
 create loc = defaultTagged $ Create loc
 
+test :: Test (Maybe t) -> OrderedPolicy (Maybe t)
+test t = APAtomic [ ATest t ]
+
+(~~?) :: Location -> Location -> Test (Maybe t)
+l ~~? l' = any $ (== (l :~: l')) . bellPair
+
+(/~?) :: Location -> Location -> Test (Maybe t)
+l /~? l' = not . (l ~~? l')
+
 class DSLFunctions p where
     defaultTagged :: Action -> p
 
@@ -30,7 +38,7 @@ instance DSLFunctions (Policy (Maybe t)) where
     defaultTagged a = APAtomic $ TaggedAction mempty a Nothing mempty
 
 instance DSLFunctions (OrderedPolicy (Maybe t)) where
-    defaultTagged a = APAtomic $ TaggedAction mempty a Nothing mempty :| []
+    defaultTagged a = APAtomic [ AAction (TaggedAction mempty a Nothing mempty) ]
 
 (<.>) :: OrderedPolicy a -> OrderedPolicy a -> OrderedPolicy a
 (APAtomic tas) <.> (APAtomic tas') = APAtomic (tas <> tas')

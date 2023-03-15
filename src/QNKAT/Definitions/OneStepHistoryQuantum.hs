@@ -4,15 +4,15 @@
 module QNKAT.Definitions.OneStepHistoryQuantum (OneStepPolicy(..), execute) where
 
 import           Data.Foldable              (toList)
+import           Data.Functor.Compose       (Compose (..))
 import           Data.Functor.Contravariant ((>$<))
 import           Data.List.NonEmpty         (NonEmpty (..))
 import qualified Data.Multiset              as Mset
 import           Data.Set                   (Set)
 import qualified Data.Set                   as Set
-
-import           Data.Functor.Compose       (Compose (..))
 import           QNKAT.ChoiceUtilities
 import           QNKAT.Definitions.Core
+import           QNKAT.UnorderedTree        (UTree (..))
 
 data OneStepPolicy a
     = Atomic a
@@ -85,6 +85,10 @@ instance (Ord t) => Quantum (OneStepPolicy (OneStep t)) t where
                 | partial <- partialNewTs
                 ]
 
+instance (Ord t, Show t) => TestsQuantum (OneStepPolicy (OneStep t)) t where
+  test p = Atomic . OneStep . PartialNDEndo $ \h@(History ts) ->
+    if p (Mset.map rootLabel ts) then [ chooseNoneOf h ] else []
+
 instance Semigroup (Compose OneStepPolicy OneStep t) where
   p <> q = Compose $ getCompose p <> getCompose q
 
@@ -93,6 +97,9 @@ instance (Ord t) => ParallelSemigroup (Compose OneStepPolicy OneStep t) where
 
 instance (Ord t) => Quantum (Compose OneStepPolicy OneStep t) t where
   tryCreateBellPairFrom = Compose . tryCreateBellPairFrom
+
+instance (Show t, Ord t) => TestsQuantum (Compose OneStepPolicy OneStep t) t where
+  test = Compose . test
 
 executeOneStepPolicy :: (Ord t) => OneStepPolicy (OneStep t) -> OneStep t
 executeOneStepPolicy (Atomic x) = x

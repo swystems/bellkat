@@ -1,5 +1,4 @@
-{-# LANGUAGE InstanceSigs #-}
-{-# LANGUAGE StrictData   #-}
+{-# LANGUAGE StrictData #-}
 module QNKAT.Definitions.Policy where
 
 import           Data.Functor.Contravariant (Predicate (..))
@@ -44,7 +43,9 @@ instance Semigroup (AbstractPolicy a) where
 instance ParallelSemigroup (AbstractPolicy a) where
     (<||>) = APParallel
 
-type OrderedPolicy t = AbstractPolicy (NonEmpty (TaggedAction t))
+data Atomic t = AAction (TaggedAction t) | ATest (Test t)
+
+type OrderedPolicy t = AbstractPolicy (NonEmpty (Atomic t))
 
 -- * Testing definitions
 

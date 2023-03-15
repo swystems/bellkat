@@ -8,7 +8,6 @@ import           Data.List              (foldl')
 import           Data.Set               (Set)
 import qualified Data.Set               as Set
 
-import           Data.List.NonEmpty     (NonEmpty (..))
 import           QNKAT.Definitions.Core
 
 -- ** Quantum operations represented as a sequence of primitive actions
@@ -28,12 +27,17 @@ instance (Ord t, ParallelSemigroup (sq t)) =>  ParallelSemigroup (StepHistoryQua
 instance (Ord t, Quantum (sq t) t) => Quantum (StepHistoryQuantum sq t) t where
     tryCreateBellPairFrom args = StepHistoryQuantum [tryCreateBellPairFrom args]
 
-mconcatNonempty :: Semigroup a => NonEmpty a -> a
-mconcatNonempty (x :| [])        = x
-mconcatNonempty (x :| (x' : xs)) = x <> mconcatNonempty (x' :| xs)
-
 instance (Ord t, Quantum (sq t) t) => OrderedQuantum (StepHistoryQuantum sq t) t where
-  tryCreateBellPairsFromOrdered as = StepHistoryQuantum [ mconcatNonempty $ tryCreateBellPairFrom <$> as ]
+    newtype Layer (StepHistoryQuantum sq t) = OneStep (sq t)
+
+    orderedTryCreateBellPairFrom = OneStep . tryCreateBellPairFrom
+
+    fromLayer (OneStep s) = StepHistoryQuantum [s]
+
+    (OneStep s) <.> (OneStep s') = OneStep (s <> s')
+
+instance (Ord t, TestsQuantum (sq t) t) => TestsOrderedQuantum (StepHistoryQuantum sq t) t where
+    orderedTest = OneStep . test
 
 execute :: Ord t
     => (sq t -> History t -> Set (History t))

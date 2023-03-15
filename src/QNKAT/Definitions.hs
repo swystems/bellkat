@@ -6,6 +6,8 @@ module QNKAT.Definitions
 
 import           Data.Set                                (Set)
 
+import           Data.List.NonEmpty                      (NonEmpty)
+import           GHC.Base                                (NonEmpty (..))
 import           QNKAT.Definitions.Core
 import qualified QNKAT.Definitions.HistoryQuantum        as HQ
 import qualified QNKAT.Definitions.OneStepHistoryQuantum as OSHQ
@@ -32,8 +34,12 @@ meaning (APAtomic ta)    = tryCreateBellPairFrom $ actionArgs ta
 meaning (APSequence p q) = meaning p <> meaning q
 meaning (APParallel p q) = meaning p <||> meaning q
 
-meaningOrdered :: (OrderedQuantum a t) => OrderedPolicy t -> a
-meaningOrdered (APAtomic ta) = tryCreateBellPairsFromOrdered $ actionArgs <$> ta
+meaningLayer :: (TestsOrderedQuantum a t) => Atomic t -> Layer a
+meaningLayer (AAction a) = orderedTryCreateBellPairFrom $ actionArgs a
+meaningLayer (ATest t)   = orderedTest t
+
+meaningOrdered :: (TestsOrderedQuantum a t) => OrderedPolicy t -> a
+meaningOrdered (APAtomic ta) = fromLayer $ foldNonEmpty (<.>) $ meaningLayer <$> ta
 meaningOrdered (APSequence p q) = meaningOrdered p <> meaningOrdered q
 meaningOrdered (APParallel p q) = meaningOrdered p <||> meaningOrdered q
 
@@ -46,5 +52,9 @@ applyPolicyTimely = THQ.execute . meaning
 applyPolicySteps :: (Ord t) => Policy t -> History t -> Set (History t)
 applyPolicySteps  = SHQ.execute HQ.execute . meaning
 
-applyOrderedPolicy :: (Ord t) => OrderedPolicy t -> History t -> Set (History t)
+applyOrderedPolicy :: (Ord t, Show t) => OrderedPolicy t -> History t -> Set (History t)
 applyOrderedPolicy = SHQ.execute OSHQ.execute . meaningOrdered
+
+foldNonEmpty :: (a -> a -> a) -> NonEmpty a -> a
+foldNonEmpty _ (x :| [])        = x
+foldNonEmpty f (x :| (x' : xs)) = let y = f x x' in seq y (foldNonEmpty f (y :| xs))

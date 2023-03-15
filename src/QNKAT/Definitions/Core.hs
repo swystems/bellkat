@@ -5,7 +5,6 @@ import           Data.Bifunctor             (bimap)
 import           Data.Foldable              (toList)
 import           Data.Functor.Contravariant (Predicate (..), (>$<))
 import           Data.List                  (sort)
-import           Data.List.NonEmpty         (NonEmpty)
 import           Data.Monoid                (Endo (..))
 import qualified Data.Multiset              as Mset
 import           Data.Set                   (Set)
@@ -17,6 +16,7 @@ import           Data.Vector.Fixed          (Arity, VecList)
 import qualified Data.Vector.Fixed          as FV
 import           Test.QuickCheck            hiding (choose)
 
+import           Data.Multiset              (Multiset)
 import           QNKAT.ChoiceUtilities
 import           QNKAT.UnorderedTree
 --
@@ -64,14 +64,27 @@ data CreateBellPairArgs t = CreateBellPairArgs
     , cbtDup         :: DupKind
     }
 
+type Test t = Multiset (TaggedBellPair t) -> Bool
+
 -- | `Quantum` is a `ParallelSemigroup` with `BellPair` creation
 class (ParallelSemigroup a) => Quantum a t | a -> t where
     -- | is function from `BellPair`, `[BellPair]` to `Maybe Double` Quantum;
     -- will be used in `meaning` of `Distill`
     tryCreateBellPairFrom :: CreateBellPairArgs t -> a
 
-class (Quantum a t) => OrderedQuantum a t where
-    tryCreateBellPairsFromOrdered :: NonEmpty (CreateBellPairArgs t) -> a
+class (Quantum a t) => TestsQuantum a t | a -> t where
+    test :: Test t -> a
+
+class ParallelSemigroup a => OrderedQuantum a t | a -> t where
+    data Layer a
+
+    orderedTryCreateBellPairFrom :: CreateBellPairArgs t -> Layer a
+    (<.>) :: Layer a -> Layer a -> Layer a
+
+    fromLayer :: Layer a -> a
+
+class OrderedQuantum a t => TestsOrderedQuantum a t where
+    orderedTest :: Test t -> Layer a
 
 -- | Notation for predicate
 subjectTo :: Quantum a t => Predicate t -> (Predicate t -> a) -> a
