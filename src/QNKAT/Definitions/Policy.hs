@@ -29,23 +29,23 @@ instance Show t => Show (TaggedAction t) where
     show ta = "_:" <> show (taAction ta) <> ":" <> show (taTag ta)
 
 -- | Define policy
-data AbstractPolicy a
+data Policy a
     = APAtomic a
-    | APSequence (AbstractPolicy a) (AbstractPolicy a)
-    | APParallel (AbstractPolicy a) (AbstractPolicy a)
+    | APSequence (Policy a) (Policy a)
+    | APParallel (Policy a) (Policy a)
     deriving stock (Show)
 
-type Policy t = AbstractPolicy (TaggedAction t)
+type Normal p t = p (TaggedAction t)
 
-instance Semigroup (AbstractPolicy a) where
+instance Semigroup (Policy a) where
     (<>) = APSequence
 
-instance ParallelSemigroup (AbstractPolicy a) where
+instance ParallelSemigroup (Policy a) where
     (<||>) = APParallel
 
 data Atomic t = AAction (TaggedAction t) | ATest (Test t)
 
-type OrderedPolicy t = AbstractPolicy (NonEmpty (Atomic t))
+type Ordered p t = p (NonEmpty (Atomic t))
 
 -- * Testing definitions
 
@@ -62,7 +62,7 @@ instance (Arbitrary t, Eq t) => Arbitrary (TaggedAction t) where
     predicate :: [t] <- arbitrary
     TaggedAction (Predicate (`elem` predicate)) <$> arbitrary <*> arbitrary <*> arbitrary
 
-instance (Arbitrary a) => Arbitrary (AbstractPolicy a) where
+instance (Arbitrary a) => Arbitrary (Policy a) where
     arbitrary = do
         n <- getSize
         if n == 0 then

@@ -43,16 +43,16 @@ historyToDiagram (History ts) = hsep 0.5 . map treeToDiagram  . toForest $ ts
 historiesToDiagram :: (Ord t, Show t) => [History (Maybe t)] -> Diagram B
 historiesToDiagram = vsep 1 . fmap (alignL . frameDiagram . historyToDiagram)
 
-drawPolicy :: (Ord t, Show t) => Policy (Maybe t) -> ManuallySized (Diagram B)
+drawPolicy :: (Ord t, Show t) => Normal Policy (Maybe t) -> ManuallySized (Diagram B)
 drawPolicy p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPolicy p $ []
 
-drawPolicyTimely :: (Ord t, Show t) => Policy (Maybe t) -> ManuallySized (Diagram B)
+drawPolicyTimely :: (Ord t, Show t) => Normal Policy (Maybe t) -> ManuallySized (Diagram B)
 drawPolicyTimely p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPolicyTimely p $ []
 
-drawPolicySteps :: (Ord t, Show t) => Policy (Maybe t) -> ManuallySized (Diagram B)
+drawPolicySteps :: (Ord t, Show t) => Normal Policy (Maybe t) -> ManuallySized (Diagram B)
 drawPolicySteps p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPolicySteps p $ []
 
-drawOrderedPolicySteps :: (Ord t, Show t) => OrderedPolicy (Maybe t) -> ManuallySized (Diagram B)
+drawOrderedPolicySteps :: (Ord t, Show t) => Ordered Policy (Maybe t) -> ManuallySized (Diagram B)
 drawOrderedPolicySteps p = withImgWidth 600 . historiesToDiagram . Set.elems . applyOrderedPolicy p $ []
 
 drawHistoryText :: Show t => History t -> String

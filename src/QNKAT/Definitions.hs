@@ -29,7 +29,7 @@ actionArgs ta = case taAction ta of
         (l1 :~: l2) [l1 :~: l2, l1 :~: l2] (Just 0.5) (taTag ta) (taDup ta)
 
 
-meaning :: Quantum a t => Policy t -> a
+meaning :: Quantum a t => Normal Policy t -> a
 meaning (APAtomic ta)    = tryCreateBellPairFrom $ actionArgs ta
 meaning (APSequence p q) = meaning p <> meaning q
 meaning (APParallel p q) = meaning p <||> meaning q
@@ -38,21 +38,21 @@ meaningLayer :: (TestsOrderedQuantum a t) => Atomic t -> Layer a
 meaningLayer (AAction a) = orderedTryCreateBellPairFrom $ actionArgs a
 meaningLayer (ATest t)   = orderedTest t
 
-meaningOrdered :: (TestsOrderedQuantum a t) => OrderedPolicy t -> a
+meaningOrdered :: (TestsOrderedQuantum a t) => Ordered Policy t -> a
 meaningOrdered (APAtomic ta) = fromLayer $ foldNonEmpty (<.>) $ meaningLayer <$> ta
 meaningOrdered (APSequence p q) = meaningOrdered p <> meaningOrdered q
 meaningOrdered (APParallel p q) = meaningOrdered p <||> meaningOrdered q
 
-applyPolicy :: Ord t => Policy t -> History t -> Set (History t)
+applyPolicy :: Ord t => Normal Policy t -> History t -> Set (History t)
 applyPolicy = HQ.execute . meaning
 
-applyPolicyTimely :: Ord t => Policy t -> History t -> Set (History t)
+applyPolicyTimely :: Ord t => Normal Policy t -> History t -> Set (History t)
 applyPolicyTimely = THQ.execute . meaning
 
-applyPolicySteps :: (Ord t) => Policy t -> History t -> Set (History t)
+applyPolicySteps :: (Ord t) => Normal Policy t -> History t -> Set (History t)
 applyPolicySteps  = SHQ.execute HQ.execute . meaning
 
-applyOrderedPolicy :: (Ord t, Show t) => OrderedPolicy t -> History t -> Set (History t)
+applyOrderedPolicy :: (Ord t, Show t) => Ordered Policy t -> History t -> Set (History t)
 applyOrderedPolicy = SHQ.execute OSHQ.execute . meaningOrdered
 
 foldNonEmpty :: (a -> a -> a) -> NonEmpty a -> a

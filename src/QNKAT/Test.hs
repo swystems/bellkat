@@ -14,8 +14,8 @@ type Tag = Maybe Int
 
 testEquality 
     :: (Show t, Eq t)
-    => (Policy t -> History t -> Set (History t))
-    -> Policy t -> Policy t -> History t -> Property
+    => (Normal Policy t -> History t -> Set (History t))
+    -> Normal Policy t -> Normal Policy t -> History t -> Property
 testEquality apply p q h =
     let hsP = apply p h
         hsQ = apply q h
@@ -27,7 +27,7 @@ testEquality apply p q h =
      in counterexample counterexampleText (hsP == hsQ)
 
 
-(~) :: Policy Tag -> Policy Tag -> History Tag -> Property
+(~) :: Normal Policy Tag -> Normal Policy Tag -> History Tag -> Property
 (~) = testEquality applyPolicy
 
 isAssociative :: (a -> a -> p) -> (a -> a -> a) -> a -> a -> a -> p
@@ -44,7 +44,7 @@ parallelCompositionIsAssociative = isAssociative (~) (<||>)
 parallelCompositionIsCommutative = isCommutative (~) (<||>)
 sequentialCompositionDistributes = distributesOver (~) (<>) (<||>)
 
-(~~) :: Policy Tag -> Policy Tag -> History Tag -> Property
+(~~) :: Normal Policy Tag -> Normal Policy Tag -> History Tag -> Property
 (~~) = testEquality applyPolicyTimely
 
 timelySequentialCompositionIsAssociative = isAssociative (~~) (<>)
@@ -52,7 +52,7 @@ timelyParallelCompositionIsAssociative = isAssociative (~~) (<||>)
 timelyParallelCompositionIsCommutative = isCommutative (~~) (<||>)
 timelySequentialCompositionDistributes = distributesOver (~~) (<>) (<||>)
 
-(~~~) :: Policy Tag -> Policy Tag -> History Tag -> Property
+(~~~) :: Normal Policy Tag -> Normal Policy Tag -> History Tag -> Property
 (~~~) = testEquality applyPolicySteps
 
 stepsSequentialCompositionIsAssociative = isAssociative (~~~) (<>)
