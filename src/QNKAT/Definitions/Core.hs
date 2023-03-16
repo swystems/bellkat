@@ -39,13 +39,16 @@ instance Ord BellPair where
     compare (l1 :~: l2) (l1' :~: l2') = compare (sort [l1, l2]) (sort [l1', l2'])
 
 
--- parallel composition is left-associative
+-- parallel composition is left-associative and has lower precedence than `<>`
 infixl 5 <||>
 
 -- | Define alg structure `ParallelSemigroup` with `<>` inherited from
 -- `Semigroup` and new `<||>` for parallel composition
 class ParallelSemigroup a where
     (<||>) :: a -> a -> a
+
+-- choice is left-associative and has lower precedence than `<||>` or `<>`
+infixl 4 <+>
 
 class ChoiceSemigroup a where
     (<+>) :: a -> a -> a
