@@ -22,9 +22,6 @@ swap loc locs = defaultTagged $ Swap loc locs
 create :: DSLFunctions p => Location -> p
 create loc = defaultTagged $ Create loc
 
-test :: Test (Maybe t) -> Ordered Policy (Maybe t)
-test t = APAtomic [ ATest t ]
-
 (~~?) :: Location -> Location -> Test (Maybe t)
 l ~~? l' = any $ (== (l :~: l')) . bellPair
 
@@ -34,15 +31,37 @@ l /~? l' = not . (l ~~? l')
 class DSLFunctions p where
     defaultTagged :: Action -> p
 
+class DSLTestFunctions p t | p -> t where
+    test :: Test (Maybe t) -> p
+
+-- test :: Test (Maybe t) -> Ordered Policy (Maybe t)
+instance DSLTestFunctions (Ordered Policy (Maybe t)) t where
+    test t = APAtomic [ ATest t ]
+
+instance DSLTestFunctions (Ordered FullPolicy (Maybe t)) t where
+    test t = FPAtomic [ ATest t ]
+
+
 instance DSLFunctions (Normal Policy (Maybe t)) where
     defaultTagged a = APAtomic $ TaggedAction mempty a Nothing mempty
 
 instance DSLFunctions (Ordered Policy (Maybe t)) where
     defaultTagged a = APAtomic [ AAction (TaggedAction mempty a Nothing mempty) ]
 
-(<.>) :: Ordered Policy a -> Ordered Policy a -> Ordered Policy a
-(APAtomic tas) <.> (APAtomic tas') = APAtomic (tas <> tas')
-_ <.> _                            = error "Can only compose atomics with <.>"
+instance DSLFunctions (Ordered FullPolicy (Maybe t)) where
+    defaultTagged a = FPAtomic [ AAction (TaggedAction mempty a Nothing mempty) ]
+
+
+class DSLOrderedSemigroup a where
+    (<.>) :: a -> a -> a
+
+instance DSLOrderedSemigroup (Ordered Policy a) where
+    (APAtomic tas) <.> (APAtomic tas') = APAtomic (tas <> tas')
+    _ <.> _                            = error "Can only compose atomics with <.>"
+
+instance DSLOrderedSemigroup (Ordered FullPolicy a) where
+    (FPAtomic tas) <.> (FPAtomic tas') = FPAtomic (tas <> tas')
+    _ <.> _                            = error "Can only compose atomics with <.>"
 
 dupA :: DupKind
 dupA = DupKind { dupBefore = False, dupAfter = True }

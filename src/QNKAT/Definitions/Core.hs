@@ -44,8 +44,14 @@ infixl 5 <||>
 
 -- | Define alg structure `ParallelSemigroup` with `<>` inherited from
 -- `Semigroup` and new `<||>` for parallel composition
-class Semigroup a => ParallelSemigroup a where
+class ParallelSemigroup a where
     (<||>) :: a -> a -> a
+
+class ChoiceSemigroup a where
+    (<+>) :: a -> a -> a
+
+class OrderedSemigroup a where
+    (<.>) :: a -> a -> a
 
 data DupKind = DupKind { dupBefore :: Bool, dupAfter :: Bool }
 
@@ -67,7 +73,7 @@ data CreateBellPairArgs t = CreateBellPairArgs
 type Test t = Multiset (TaggedBellPair t) -> Bool
 
 -- | `Quantum` is a `ParallelSemigroup` with `BellPair` creation
-class (ParallelSemigroup a) => Quantum a t | a -> t where
+class (Semigroup a, ParallelSemigroup a) => Quantum a t | a -> t where
     -- | is function from `BellPair`, `[BellPair]` to `Maybe Double` Quantum;
     -- will be used in `meaning` of `Distill`
     tryCreateBellPairFrom :: CreateBellPairArgs t -> a
@@ -75,12 +81,10 @@ class (ParallelSemigroup a) => Quantum a t | a -> t where
 class (Quantum a t) => TestsQuantum a t | a -> t where
     test :: Test t -> a
 
-class ParallelSemigroup a => OrderedQuantum a t | a -> t where
+class (Semigroup a, ParallelSemigroup a, OrderedSemigroup (Layer a)) => OrderedQuantum a t | a -> t where
     data Layer a
 
     orderedTryCreateBellPairFrom :: CreateBellPairArgs t -> Layer a
-    (<.>) :: Layer a -> Layer a -> Layer a
-
     fromLayer :: Layer a -> a
 
 class OrderedQuantum a t => TestsOrderedQuantum a t where

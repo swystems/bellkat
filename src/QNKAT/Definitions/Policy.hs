@@ -35,16 +35,35 @@ data Policy a
     | APParallel (Policy a) (Policy a)
     deriving stock (Show)
 
-type Normal p t = p (TaggedAction t)
+data FullPolicy a
+    = FPAtomic a
+    | FPSequence (FullPolicy a) (FullPolicy a)
+    | FPParallel (FullPolicy a) (FullPolicy a)
+    | FPOne
+    | FPChoice (FullPolicy a) (FullPolicy a)
+    deriving stock (Show)
 
 instance Semigroup (Policy a) where
     (<>) = APSequence
 
+instance Semigroup (FullPolicy a) where
+    (<>) = FPSequence
+
+instance ParallelSemigroup (FullPolicy a) where
+    (<||>) = FPParallel
+
+instance Monoid (FullPolicy a) where
+    mempty = FPOne
+
 instance ParallelSemigroup (Policy a) where
     (<||>) = APParallel
 
+instance ChoiceSemigroup (FullPolicy a) where
+    (<+>) = FPChoice
+
 data Atomic t = AAction (TaggedAction t) | ATest (Test t)
 
+type Normal p t = p (TaggedAction t)
 type Ordered p t = p (NonEmpty (Atomic t))
 
 -- * Testing definitions

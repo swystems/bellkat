@@ -1,12 +1,11 @@
 module QNKAT.Definitions
     ( module QNKAT.Definitions.Core
     , module QNKAT.Definitions.Policy
-    , meaning, applyPolicy, applyPolicyTimely, applyPolicySteps, applyOrderedPolicy
+    , meaning, applyPolicy, applyPolicyTimely, applyPolicySteps, applyOrderedPolicy, applyFullOrderedPolicy
     ) where
 
-import           Data.Set                                (Set)
-
 import           Data.List.NonEmpty                      (NonEmpty)
+import           Data.Set                                (Set)
 import           GHC.Base                                (NonEmpty (..))
 import           QNKAT.Definitions.Core
 import qualified QNKAT.Definitions.HistoryQuantum        as HQ
@@ -28,8 +27,7 @@ actionArgs ta = case taAction ta of
     (Distill (l1, l2))    -> CreateBellPairArgs (taTagPredicate ta)
         (l1 :~: l2) [l1 :~: l2, l1 :~: l2] (Just 0.5) (taTag ta) (taDup ta)
 
-
-meaning :: Quantum a t => Normal Policy t -> a
+meaning :: (ParallelSemigroup a, Quantum a t) => Normal Policy t -> a
 meaning (APAtomic ta)    = tryCreateBellPairFrom $ actionArgs ta
 meaning (APSequence p q) = meaning p <> meaning q
 meaning (APParallel p q) = meaning p <||> meaning q
@@ -43,6 +41,14 @@ meaningOrdered (APAtomic ta) = fromLayer $ foldNonEmpty (<.>) $ meaningLayer <$>
 meaningOrdered (APSequence p q) = meaningOrdered p <> meaningOrdered q
 meaningOrdered (APParallel p q) = meaningOrdered p <||> meaningOrdered q
 
+meaningOrderedFull
+    :: (ChoiceSemigroup a, Monoid a, TestsOrderedQuantum a t) => Ordered FullPolicy t -> a
+meaningOrderedFull (FPAtomic ta) = fromLayer $ foldNonEmpty (<.>) $ meaningLayer <$> ta
+meaningOrderedFull (FPSequence p q) = meaningOrderedFull p <> meaningOrderedFull q
+meaningOrderedFull FPOne = mempty
+meaningOrderedFull (FPParallel p q) = meaningOrderedFull p <||> meaningOrderedFull q
+meaningOrderedFull (FPChoice p q) = meaningOrderedFull p <+> meaningOrderedFull q
+
 applyPolicy :: Ord t => Normal Policy t -> History t -> Set (History t)
 applyPolicy = HQ.execute . meaning
 
@@ -54,6 +60,9 @@ applyPolicySteps  = SHQ.execute HQ.execute . meaning
 
 applyOrderedPolicy :: (Ord t, Show t) => Ordered Policy t -> History t -> Set (History t)
 applyOrderedPolicy = SHQ.execute OSHQ.execute . meaningOrdered
+
+applyFullOrderedPolicy :: (Ord t, Show t) => Ordered FullPolicy t -> History t -> Set (History t)
+applyFullOrderedPolicy = SHQ.execute OSHQ.execute . meaningOrderedFull
 
 foldNonEmpty :: (a -> a -> a) -> NonEmpty a -> a
 foldNonEmpty _ (x :| [])        = x
