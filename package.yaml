@@ -33,6 +33,9 @@ library:
     - QNKAT.Definitions.Core
     - QNKAT.Definitions.Policy
     - QNKAT.Definitions.OneStepHistoryQuantum
+    - QNKAT.Definitions.TimelyHistoryQuantum
+    - QNKAT.Definitions.StepHistoryQuantum
+    - QNKAT.Definitions.HistoryQuantum
     - QNKAT.UnorderedTree
     - QNKAT.ChoiceUtilities
     - QNKAT.DSL
