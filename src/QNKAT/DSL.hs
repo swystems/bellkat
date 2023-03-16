@@ -9,6 +9,7 @@ import           Data.Functor.Contravariant
 import           QNKAT.Definitions.Core     hiding (test, (<.>))
 import           QNKAT.Definitions.Policy
 import           QNKAT.UnorderedTree        (UTree (..))
+import Data.List.NonEmpty (NonEmpty(..))
 
 distill :: DSLFunctions p => (Location, Location) -> p
 distill locs = defaultTagged $ Distill locs
@@ -30,6 +31,7 @@ l /~? l' = not . (l ~~? l')
 
 class DSLFunctions p where
     defaultTagged :: Action -> p
+    (.%) :: p -> DupKind -> p
 
 class DSLTestFunctions p t | p -> t where
     test :: Test (Maybe t) -> p
@@ -45,12 +47,22 @@ instance DSLTestFunctions (Ordered FullPolicy (Maybe t)) t where
 instance DSLFunctions (Normal Policy (Maybe t)) where
     defaultTagged a = APAtomic $ TaggedAction mempty a Nothing mempty
 
+    APAtomic (TaggedAction p a t _) .% dk = APAtomic $ TaggedAction p a t dk
+    _ .% _                                = error "cannot attach dup to this thing"
+
 instance DSLFunctions (Ordered Policy (Maybe t)) where
     defaultTagged a = APAtomic [ AAction (TaggedAction mempty a Nothing mempty) ]
+
+    APAtomic (AAction (TaggedAction p a t _) :| []) .% dk = APAtomic [ AAction (TaggedAction p a t dk) ]
+    _ .% _                                = error "cannot attach dup to this thing"
 
 instance DSLFunctions (Ordered FullPolicy (Maybe t)) where
     defaultTagged a = FPAtomic [ AAction (TaggedAction mempty a Nothing mempty) ]
 
+    FPAtomic (AAction (TaggedAction p a t _) :| []) .% dk = FPAtomic [ AAction (TaggedAction p a t dk) ]
+    _ .% _                                = error "cannot attach dup to this thing"
+
+infixl 7 <.>
 
 class DSLOrderedSemigroup a where
     (<.>) :: a -> a -> a
@@ -95,10 +107,6 @@ orP (Predicate f) (Predicate g) = Predicate ((||) <$> f <*> g)
 p ?~ APAtomic (TaggedAction _ a t dupKind) = APAtomic $
     TaggedAction (Predicate $ maybe True $ toPredicate p) a t dupKind
 _ ?~ p                           = p
-
-(.%) :: Normal Policy a -> DupKind -> Normal Policy a
-APAtomic (TaggedAction p a t _) .% dk = APAtomic $ TaggedAction p a t dk
-p .% _                                = p
 
 
 node :: Ord t => BellPair -> UTree (TaggedBellPair (Maybe t))
