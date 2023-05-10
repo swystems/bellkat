@@ -2,7 +2,7 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE StrictData      #-}
 
-module QNKAT.Definitions.HistoryQuantum (HistoryQuantum, execute) where
+module QNKAT.Implementations.HistoryQuantum (HistoryQuantum, execute) where
 
 import           Data.Foldable              (toList)
 import           Data.Functor.Contravariant ((>$<))

@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE StrictData      #-}
-module QNKAT.Definitions.TimelyHistoryQuantum (execute) where
+module QNKAT.Implementations.TimelyHistoryQuantum (execute) where
 
 import           Data.Foldable              (toList)
 import           Data.Functor.Contravariant ((>$<))

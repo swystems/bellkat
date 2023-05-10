@@ -11,11 +11,11 @@ import           GHC.Base                                (NonEmpty (..))
 
 import           QNKAT.Definitions.Structures
 import           QNKAT.Definitions.Core
-import qualified QNKAT.Definitions.HistoryQuantum        as HQ
-import qualified QNKAT.Definitions.OneStepHistoryQuantum as OSHQ
+import qualified QNKAT.Implementations.HistoryQuantum        as HQ
+import qualified QNKAT.Implementations.OneStepHistoryQuantum as OSHQ
 import           QNKAT.Definitions.Policy
-import qualified QNKAT.Definitions.StepHistoryQuantum    as SHQ
-import qualified QNKAT.Definitions.TimelyHistoryQuantum  as THQ
+import qualified QNKAT.Implementations.StepHistoryQuantum    as SHQ
+import qualified QNKAT.Implementations.TimelyHistoryQuantum  as THQ
 
 -- | methods
 

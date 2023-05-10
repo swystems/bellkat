@@ -2,7 +2,7 @@
 {-# LANGUAGE ParallelListComp #-}
 {-# LANGUAGE StrictData       #-}
 {-# LANGUAGE TypeApplications #-}
-module QNKAT.Definitions.StepHistoryQuantum (execute) where
+module QNKAT.Implementations.StepHistoryQuantum (execute) where
 
 import           Data.List              (foldl')
 import           Data.Set               (Set)

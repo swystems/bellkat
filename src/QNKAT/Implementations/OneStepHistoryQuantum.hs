@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingVia          #-}
 {-# LANGUAGE OverloadedLists      #-}
 {-# LANGUAGE UndecidableInstances #-}
-module QNKAT.Definitions.OneStepHistoryQuantum (OneStepPolicy(..), execute) where
+module QNKAT.Implementations.OneStepHistoryQuantum (OneStepPolicy(..), execute) where
 
 import           Data.Foldable              (toList)
 import           Data.Functor.Compose       (Compose (..))

@@ -33,10 +33,10 @@ library:
     - QNKAT.Definitions.Core
     - QNKAT.Definitions.Structures
     - QNKAT.Definitions.Policy
-    - QNKAT.Definitions.OneStepHistoryQuantum
-    - QNKAT.Definitions.TimelyHistoryQuantum
-    - QNKAT.Definitions.StepHistoryQuantum
-    - QNKAT.Definitions.HistoryQuantum
+    - QNKAT.Implementations.OneStepHistoryQuantum
+    - QNKAT.Implementations.TimelyHistoryQuantum
+    - QNKAT.Implementations.StepHistoryQuantum
+    - QNKAT.Implementations.HistoryQuantum
     - QNKAT.UnorderedTree
     - QNKAT.ChoiceUtilities
     - QNKAT.DSL

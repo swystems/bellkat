@@ -28,7 +28,7 @@ data TaggedAction t = TaggedAction
 instance Show t => Show (TaggedAction t) where
     show ta = "_:" <> show (taAction ta) <> ":" <> show (taTag ta)
 
--- | Define policy
+-- | Define a language for policies, where `a` is the type of an atomic action
 data Policy a
     = APAtomic a
     | APSequence (Policy a) (Policy a)
