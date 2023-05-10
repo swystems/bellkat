@@ -7,7 +7,7 @@ module QNKAT.DSL where
 import           Data.Functor.Contravariant
 
 import           Data.List.NonEmpty         (NonEmpty (..))
-import           QNKAT.Definitions.Core     hiding (test, (<.>))
+import           QNKAT.Definitions.Core
 import           QNKAT.Definitions.Policy
 import           QNKAT.Utils.UnorderedTree         (UTree (..))
 

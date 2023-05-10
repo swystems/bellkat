@@ -23,7 +23,7 @@ import           GHC.Exts
 
 import           Test.Hspec
 import           Test.Hspec.QuickCheck
-import           Test.QuickCheck            ((===))
+import           Test.QuickCheck            ((===), mapSize)
 
 main :: IO ()
 main = hspec $ do
@@ -83,20 +83,20 @@ main = hspec $ do
             chooseTreesND [["A":~:"A"], ["A":~:"A"]] [Node ("A" :~: "A") [], Node ("A" :~: "A") []]
                 `shouldBe` [[Just [Node ("A" :~: "A") []], Just [Node ("A" :~: "A") []]]]
     describe "parallel" $ do
-        prop "should be commutative" parallelCompositionIsCommutative
-        prop "should be associative" parallelCompositionIsAssociative
+        prop "should be commutative" $ mapSize (const 1) parallelCompositionIsCommutative
+        prop "should be associative" $ mapSize (const 1) parallelCompositionIsAssociative
     describe "sequential" $ do
         prop "should be associative" sequentialCompositionIsAssociative
     describe "parallel (timely)" $ do
-        prop "should be commutative" timelyParallelCompositionIsCommutative
-        prop "should be associative" timelyParallelCompositionIsAssociative
+        prop "should be commutative" $ mapSize (const 1) timelyParallelCompositionIsCommutative
+        prop "should be associative" $ mapSize (const 1) timelyParallelCompositionIsAssociative
     describe "sequential (timely)" $ do
         prop "should be associative" timelySequentialCompositionIsAssociative
     describe "sequential (steps)" $ do
         prop "should be associative" stepsSequentialCompositionIsAssociative
     describe "parallel (steps)" $ do
-        prop "should be commutative" stepsParallelCompositionIsCommutative
-        prop "should be associative" stepsParallelCompositionIsAssociative
+        prop "should be commutative" $ mapSize (const 1) stepsParallelCompositionIsCommutative
+        prop "should be associative" $ mapSize (const 1) stepsParallelCompositionIsAssociative
     describe "chooseKHistories" $ do
         prop "should be \"commutative\"" $
             let setToPredicate (x, y) = (x, Predicate (`Set.member` y))

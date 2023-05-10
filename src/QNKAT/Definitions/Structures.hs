@@ -6,6 +6,7 @@ module QNKAT.Definitions.Structures
     , TestsOrderedQuantum(..)
     , OrderedQuantum(..)
     , OrderedSemigroup(..)
+    , subjectTo
     ) where
 
 import           Data.Functor.Contravariant (Predicate (..))
