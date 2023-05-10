@@ -30,6 +30,7 @@ library:
   exposed-modules:
     - QNKAT.Drawing
     - QNKAT.Definitions
+    - QNKAT.PolicyEmbeddings
     - QNKAT.Definitions.Core
     - QNKAT.Definitions.Structures
     - QNKAT.Definitions.Policy
