@@ -41,7 +41,7 @@ instance (Ord t, Quantum (sq t) t) => OrderedQuantum (StepHistoryQuantum sq t) t
 
     orderedTryCreateBellPairFrom = OneStep . tryCreateBellPairFrom
 
-    fromLayer (OneStep s) = StepHistoryQuantum [[s]]
+    liftLayer (OneStep s) = StepHistoryQuantum [[s]]
 
 instance (Semigroup (sq t)) => OrderedSemigroup (Layer (StepHistoryQuantum sq t)) where
    (OneStep s) <.> (OneStep s') = OneStep (s <> s')

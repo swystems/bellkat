@@ -40,13 +40,13 @@ meaningLayer (AAction a) = orderedTryCreateBellPairFrom $ actionArgs a
 meaningLayer (ATest t)   = orderedTest t
 
 meaningOrdered :: (TestsOrderedQuantum a t) => Ordered Policy t -> a
-meaningOrdered (APAtomic ta) = fromLayer $ foldNonEmpty (<.>) $ meaningLayer <$> ta
+meaningOrdered (APAtomic ta) = liftLayer $ foldNonEmpty (<.>) $ meaningLayer <$> ta
 meaningOrdered (APSequence p q) = meaningOrdered p <> meaningOrdered q
 meaningOrdered (APParallel p q) = meaningOrdered p <||> meaningOrdered q
 
 meaningOrderedFull
     :: (ChoiceSemigroup a, Monoid a, TestsOrderedQuantum a t) => Ordered FullPolicy t -> a
-meaningOrderedFull (FPAtomic ta) = fromLayer $ foldNonEmpty (<.>) $ meaningLayer <$> ta
+meaningOrderedFull (FPAtomic ta) = liftLayer $ foldNonEmpty (<.>) $ meaningLayer <$> ta
 meaningOrderedFull (FPSequence p q) = meaningOrderedFull p <> meaningOrderedFull q
 meaningOrderedFull FPOne = mempty
 meaningOrderedFull (FPParallel p q) = meaningOrderedFull p <||> meaningOrderedFull q
