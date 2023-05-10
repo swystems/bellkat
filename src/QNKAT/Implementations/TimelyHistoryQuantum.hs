@@ -10,10 +10,10 @@ import qualified Data.Set                   as Set
 
 import           Data.Vector.Fixed          (pattern V2)
 
-import           QNKAT.ChoiceUtilities
 import           QNKAT.Definitions.Core
 import           QNKAT.Definitions.Structures
-import           QNKAT.UnorderedTree
+import           QNKAT.Utils.Choice
+import           QNKAT.Utils.UnorderedTree
 
 -- ** Quantum operations represented as functions over histories recorded in a
 -- _timely_ manner

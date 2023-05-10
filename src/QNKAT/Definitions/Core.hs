@@ -28,10 +28,10 @@ import qualified GHC.Exts                   (IsList, Item, fromList, toList)
 import           Data.Vector.Fixed          (Arity, VecList)
 import qualified Data.Vector.Fixed          as FV
 import           Test.QuickCheck            hiding (choose)
-
 import           Data.Multiset              (Multiset)
-import           QNKAT.ChoiceUtilities
-import           QNKAT.UnorderedTree
+
+import           QNKAT.Utils.Choice
+import           QNKAT.Utils.UnorderedTree
 --
 -- * Type definitions
 

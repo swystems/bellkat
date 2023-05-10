@@ -6,10 +6,10 @@ module QNKAT.DSL where
 
 import           Data.Functor.Contravariant
 
+import           Data.List.NonEmpty         (NonEmpty (..))
 import           QNKAT.Definitions.Core     hiding (test, (<.>))
 import           QNKAT.Definitions.Policy
-import           QNKAT.UnorderedTree        (UTree (..))
-import Data.List.NonEmpty (NonEmpty(..))
+import           QNKAT.Utils.UnorderedTree         (UTree (..))
 
 distill :: DSLFunctions p => (Location, Location) -> p
 distill locs = defaultTagged $ Distill locs

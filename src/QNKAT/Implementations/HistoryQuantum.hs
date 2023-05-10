@@ -11,7 +11,7 @@ import qualified Data.Set                   as Set
 
 import           Data.Vector.Fixed          (pattern V2)
 
-import           QNKAT.ChoiceUtilities
+import           QNKAT.Utils.Choice
 import           QNKAT.Definitions.Core
 import           QNKAT.Definitions.Structures
 

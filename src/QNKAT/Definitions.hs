@@ -5,15 +5,14 @@ module QNKAT.Definitions
     , meaning, applyPolicy, applyPolicyTimely, applyPolicySteps, applyOrderedPolicy, applyFullOrderedPolicy
     ) where
 
-import           Data.List.NonEmpty                      (NonEmpty)
 import           Data.Set                                (Set)
-import           GHC.Base                                (NonEmpty (..))
 
 import           QNKAT.Definitions.Structures
 import           QNKAT.Definitions.Core
+import           QNKAT.Definitions.Policy
+import           QNKAT.Utils.NonEmpty
 import qualified QNKAT.Implementations.HistoryQuantum        as HQ
 import qualified QNKAT.Implementations.OneStepHistoryQuantum as OSHQ
-import           QNKAT.Definitions.Policy
 import qualified QNKAT.Implementations.StepHistoryQuantum    as SHQ
 import qualified QNKAT.Implementations.TimelyHistoryQuantum  as THQ
 
@@ -30,27 +29,30 @@ actionArgs ta = case taAction ta of
     (Distill (l1, l2))    -> CreateBellPairArgs (taTagPredicate ta)
         (l1 :~: l2) [l1 :~: l2, l1 :~: l2] (Just 0.5) (taTag ta) (taDup ta)
 
-meaning :: (ParallelSemigroup a, Quantum a t) => Normal Policy t -> a
-meaning (APAtomic ta)    = tryCreateBellPairFrom $ actionArgs ta
-meaning (APSequence p q) = meaning p <> meaning q
-meaning (APParallel p q) = meaning p <||> meaning q
+class HasMeaning p a where
+    meaning :: p -> a
 
-meaningLayer :: (TestsOrderedQuantum a t) => Atomic t -> Layer a
-meaningLayer (AAction a) = orderedTryCreateBellPairFrom $ actionArgs a
-meaningLayer (ATest t)   = orderedTest t
+instance (ParallelSemigroup a, Quantum a t) => HasMeaning (Normal Policy t) a where
+    meaning (APAtomic ta)    = tryCreateBellPairFrom $ actionArgs ta
+    meaning (APSequence p q) = meaning p <> meaning q
+    meaning (APParallel p q) = meaning p <||> meaning q
 
-meaningOrdered :: (TestsOrderedQuantum a t) => Ordered Policy t -> a
-meaningOrdered (APAtomic ta) = liftLayer $ foldNonEmpty (<.>) $ meaningLayer <$> ta
-meaningOrdered (APSequence p q) = meaningOrdered p <> meaningOrdered q
-meaningOrdered (APParallel p q) = meaningOrdered p <||> meaningOrdered q
+instance (TestsOrderedQuantum a t) => HasMeaning (Atomic t) (Layer a) where
+    meaning (AAction a) = orderedTryCreateBellPairFrom $ actionArgs a
+    meaning (ATest t)   = orderedTest t
 
-meaningOrderedFull
-    :: (ChoiceSemigroup a, Monoid a, TestsOrderedQuantum a t) => Ordered FullPolicy t -> a
-meaningOrderedFull (FPAtomic ta) = liftLayer $ foldNonEmpty (<.>) $ meaningLayer <$> ta
-meaningOrderedFull (FPSequence p q) = meaningOrderedFull p <> meaningOrderedFull q
-meaningOrderedFull FPOne = mempty
-meaningOrderedFull (FPParallel p q) = meaningOrderedFull p <||> meaningOrderedFull q
-meaningOrderedFull (FPChoice p q) = meaningOrderedFull p <+> meaningOrderedFull q
+instance (TestsOrderedQuantum a t) => HasMeaning (Ordered Policy t) a where
+    meaning (APAtomic ta) = liftLayer $ foldNonEmpty (<.>) $ meaning <$> ta
+    meaning (APSequence p q) = meaning p <> meaning q
+    meaning (APParallel p q) = meaning p <||> meaning q
+
+instance (ChoiceSemigroup a, Monoid a, TestsOrderedQuantum a t) 
+  => HasMeaning (Ordered FullPolicy t) a where
+    meaning (FPAtomic ta) = liftLayer $ foldNonEmpty (<.>) $ meaning <$> ta
+    meaning (FPSequence p q) = meaning p <> meaning q
+    meaning FPOne = mempty
+    meaning (FPParallel p q) = meaning p <||> meaning q
+    meaning (FPChoice p q) = meaning p <+> meaning q
 
 applyPolicy :: Ord t => Normal Policy t -> History t -> Set (History t)
 applyPolicy = HQ.execute . meaning
@@ -62,11 +64,7 @@ applyPolicySteps :: (Ord t) => Normal Policy t -> History t -> Set (History t)
 applyPolicySteps  = SHQ.execute HQ.execute . meaning
 
 applyOrderedPolicy :: (Ord t, Show t) => Ordered Policy t -> History t -> Set (History t)
-applyOrderedPolicy = SHQ.execute OSHQ.execute . meaningOrdered
+applyOrderedPolicy = SHQ.execute OSHQ.execute . meaning
 
 applyFullOrderedPolicy :: (Ord t, Show t) => Ordered FullPolicy t -> History t -> Set (History t)
-applyFullOrderedPolicy = SHQ.execute OSHQ.execute . meaningOrderedFull
-
-foldNonEmpty :: (a -> a -> a) -> NonEmpty a -> a
-foldNonEmpty _ (x :| [])        = x
-foldNonEmpty f (x :| (x' : xs)) = let y = f x x' in seq y (foldNonEmpty f (y :| xs))
+applyFullOrderedPolicy = SHQ.execute OSHQ.execute . meaning

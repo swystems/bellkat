@@ -3,18 +3,18 @@
 {-# LANGUAGE UndecidableInstances #-}
 module QNKAT.Implementations.OneStepHistoryQuantum (OneStepPolicy(..), execute) where
 
-import           Data.Foldable              (toList)
-import           Data.Functor.Compose       (Compose (..))
-import           Data.Functor.Contravariant ((>$<))
-import           Data.List.NonEmpty         (NonEmpty (..))
-import qualified Data.Multiset              as Mset
-import           Data.Set                   (Set)
-import qualified Data.Set                   as Set
+import           Data.Foldable                (toList)
+import           Data.Functor.Compose         (Compose (..))
+import           Data.Functor.Contravariant   ((>$<))
+import           Data.List.NonEmpty           (NonEmpty (..))
+import qualified Data.Multiset                as Mset
+import           Data.Set                     (Set)
+import qualified Data.Set                     as Set
 
-import           QNKAT.ChoiceUtilities
-import           QNKAT.Definitions.Structures
 import           QNKAT.Definitions.Core
-import           QNKAT.UnorderedTree        (UTree (..))
+import           QNKAT.Definitions.Structures
+import           QNKAT.Utils.Choice
+import           QNKAT.Utils.UnorderedTree    (UTree (..))
 
 data OneStepPolicy a
     = Atomic a

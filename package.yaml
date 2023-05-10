@@ -37,8 +37,9 @@ library:
     - QNKAT.Implementations.TimelyHistoryQuantum
     - QNKAT.Implementations.StepHistoryQuantum
     - QNKAT.Implementations.HistoryQuantum
-    - QNKAT.UnorderedTree
-    - QNKAT.ChoiceUtilities
+    - QNKAT.Utils.UnorderedTree
+    - QNKAT.Utils.NonEmpty
+    - QNKAT.Utils.Choice
     - QNKAT.DSL
     - QNKAT.Test
 

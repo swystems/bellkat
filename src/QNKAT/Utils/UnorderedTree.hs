@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE StrictData         #-}
-module QNKAT.UnorderedTree where
+module QNKAT.Utils.UnorderedTree where
 
 import           Data.Multiset   (Multiset)
 import qualified Data.Multiset   as Mset
