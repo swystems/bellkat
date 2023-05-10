@@ -13,6 +13,7 @@ import           Data.Vector.Fixed          (pattern V2)
 
 import           QNKAT.ChoiceUtilities
 import           QNKAT.Definitions.Core
+import           QNKAT.Definitions.Structures
 
 -- ** Quantum operations represented as functions over histories
 

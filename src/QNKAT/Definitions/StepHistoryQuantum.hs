@@ -9,6 +9,7 @@ import           Data.Set               (Set)
 import qualified Data.Set               as Set
 
 import           QNKAT.Definitions.Core
+import           QNKAT.Definitions.Structures
 
 -- ** Quantum operations represented as a sequence of primitive actions
 newtype StepHistoryQuantum sq t = StepHistoryQuantum

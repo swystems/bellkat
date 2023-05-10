@@ -1,5 +1,6 @@
 module QNKAT.Definitions
     ( module QNKAT.Definitions.Core
+    , module QNKAT.Definitions.Structures
     , module QNKAT.Definitions.Policy
     , meaning, applyPolicy, applyPolicyTimely, applyPolicySteps, applyOrderedPolicy, applyFullOrderedPolicy
     ) where
@@ -7,6 +8,8 @@ module QNKAT.Definitions
 import           Data.List.NonEmpty                      (NonEmpty)
 import           Data.Set                                (Set)
 import           GHC.Base                                (NonEmpty (..))
+
+import           QNKAT.Definitions.Structures
 import           QNKAT.Definitions.Core
 import qualified QNKAT.Definitions.HistoryQuantum        as HQ
 import qualified QNKAT.Definitions.OneStepHistoryQuantum as OSHQ

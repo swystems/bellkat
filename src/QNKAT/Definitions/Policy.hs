@@ -2,11 +2,11 @@
 module QNKAT.Definitions.Policy where
 
 import           Data.Functor.Contravariant (Predicate (..))
-
 import           Test.QuickCheck            hiding (choose)
-
 import           Data.List.NonEmpty         (NonEmpty)
+
 import           QNKAT.Definitions.Core
+import           QNKAT.Definitions.Structures
 
 -- * Main policy definitions
 

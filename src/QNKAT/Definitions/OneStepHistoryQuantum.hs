@@ -10,7 +10,9 @@ import           Data.List.NonEmpty         (NonEmpty (..))
 import qualified Data.Multiset              as Mset
 import           Data.Set                   (Set)
 import qualified Data.Set                   as Set
+
 import           QNKAT.ChoiceUtilities
+import           QNKAT.Definitions.Structures
 import           QNKAT.Definitions.Core
 import           QNKAT.UnorderedTree        (UTree (..))
 
