@@ -43,6 +43,8 @@ instance DSLTestFunctions (Ordered Policy (Maybe t)) t where
 instance DSLTestFunctions (Ordered FullPolicy (Maybe t)) t where
     test t = FPAtomic [ ATest t ]
 
+instance DSLTestFunctions (Ordered StarPolicy (Maybe t)) t where
+    test t = SPAtomic [ ATest t ]
 
 instance DSLFunctions (Normal Policy (Maybe t)) where
     defaultTagged a = APAtomic $ TaggedAction mempty a Nothing mempty
@@ -62,6 +64,18 @@ instance DSLFunctions (Ordered FullPolicy (Maybe t)) where
     FPAtomic (AAction (TaggedAction p a t _) :| []) .% dk = FPAtomic [ AAction (TaggedAction p a t dk) ]
     _ .% _                                = error "cannot attach dup to this thing"
 
+instance DSLFunctions (Ordered StarPolicy (Maybe t)) where
+    defaultTagged a = SPAtomic [ AAction (TaggedAction mempty a Nothing mempty) ]
+
+    SPAtomic (AAction (TaggedAction p a t _) :| []) .% dk = SPAtomic [ AAction (TaggedAction p a t dk) ]
+    _ .% _                                = error "cannot attach dup to this thing"
+
+instance DSLFunctions (Ordered StarPolicy ()) where
+    defaultTagged a = SPAtomic [ AAction (TaggedAction mempty a () mempty) ]
+
+    SPAtomic (AAction (TaggedAction p a t _) :| []) .% dk = SPAtomic [ AAction (TaggedAction p a t dk) ]
+    _ .% _                                = error "cannot attach dup to this thing"
+
 infixl 7 <.>
 
 class DSLOrderedSemigroup a where
@@ -73,6 +87,10 @@ instance DSLOrderedSemigroup (Ordered Policy a) where
 
 instance DSLOrderedSemigroup (Ordered FullPolicy a) where
     (FPAtomic tas) <.> (FPAtomic tas') = FPAtomic (tas <> tas')
+    _ <.> _                            = error "Can only compose atomics with <.>"
+
+instance DSLOrderedSemigroup (Ordered StarPolicy a) where
+    (SPAtomic tas) <.> (SPAtomic tas') = SPAtomic (tas <> tas')
     _ <.> _                            = error "Can only compose atomics with <.>"
 
 dupA :: DupKind

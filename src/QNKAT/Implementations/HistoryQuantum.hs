@@ -43,7 +43,7 @@ instance Ord t => ParallelSemigroup (HistoryQuantum t) where
                 ]
         }
 
-instance Ord t => Quantum (HistoryQuantum t) t where
+instance Ord t => CreatesBellPairs (HistoryQuantum t) t where
     tryCreateBellPairFrom (CreateBellPairArgs pt bp bps prob t dk) = HistoryQuantum
         { requiredRoots = [(bps, pt)]
         , execute = \h@(History ts) ->
@@ -57,3 +57,5 @@ instance Ord t => Quantum (HistoryQuantum t) t where
                     | Partial { chosen = tsNew, rest = tsRest } <- partialTsNews
                     ]
         }
+
+instance Ord t => Quantum (HistoryQuantum t) t where

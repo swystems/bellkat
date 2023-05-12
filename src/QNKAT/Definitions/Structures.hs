@@ -1,20 +1,27 @@
 module QNKAT.Definitions.Structures
     ( ParallelSemigroup(..)
     , ChoiceSemigroup(..)
-    , Quantum(..)
-    , TestsQuantum(..)
+    , Quantum
+    , CreatesBellPairs(..)
+    , Tests(..)
+    , TestsQuantum
     , TestsOrderedQuantum(..)
     , OrderedQuantum(..)
     , OrderedSemigroup(..)
+    , MonoidStar(..)
     , subjectTo
     ) where
 
 import           Data.Functor.Contravariant (Predicate (..))
+import           Data.Orphans ()
 
 import           QNKAT.Definitions.Core
         --
 -- parallel composition is left-associative and has lower precedence than `<>`
 infixl 5 <||>
+
+class (ChoiceSemigroup a, Monoid a) => MonoidStar a where
+    star :: a -> a
 
 -- | Define alg structure `ParallelSemigroup` with `<>` inherited from
 -- `Semigroup` and new `<||>` for parallel composition
@@ -30,15 +37,19 @@ class ChoiceSemigroup a where
 class OrderedSemigroup a where
     (<.>) :: a -> a -> a
 
--- | `Quantum` is a `ParallelSemigroup` with `BellPair` creation
--- `a` is the type of the carrier and `t` is a tag
-class (Semigroup a, ParallelSemigroup a) => Quantum a t | a -> t where
+class CreatesBellPairs a t | a -> t where
     -- | is function from `BellPair`, `[BellPair]` to `Maybe Double` Quantum;
     -- will be used in `meaning` of `Distill`
     tryCreateBellPairFrom :: CreateBellPairArgs t -> a
 
-class (Quantum a t) => TestsQuantum a t | a -> t where
+-- | `Quantum` is a `ParallelSemigroup` with `BellPair` creation
+-- `a` is the type of the carrier and `t` is a tag
+class (Semigroup a, ParallelSemigroup a, CreatesBellPairs a t) => Quantum a t | a -> t where
+
+class Tests a t | a -> t where
     test :: Test t -> a
+
+class (Quantum a t, Tests a t) => TestsQuantum a t | a -> t where
 
 -- | `Quantum` that has two domains: 
 --  * `a` for the top-level behavior having `Semigroup` and `ParallelSemigroup` structures)

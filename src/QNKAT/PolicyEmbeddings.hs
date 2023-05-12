@@ -33,6 +33,14 @@ instance (ChoiceSemigroup a, Monoid a, TestsOrderedQuantum a t)
     meaning (FPParallel p q) = meaning p <||> meaning q
     meaning (FPChoice p q) = meaning p <+> meaning q
 
+instance (MonoidStar a, TestsOrderedQuantum a t) => HasMeaning (Ordered StarPolicy t) a where
+    meaning (SPAtomic ta) = liftLayer $ foldNonEmpty (<.>) $ meaning <$> ta
+    meaning (SPSequence p q) = meaning p <> meaning q
+    meaning SPOne = mempty
+    meaning (SPStar p) = star (meaning p)
+    meaning (SPParallel p q) = meaning p <||> meaning q
+    meaning (SPChoice p q) = meaning p <+> meaning q
+
 -- | methods
 actionArgs :: TaggedAction t -> CreateBellPairArgs t
 actionArgs ta = case taAction ta of

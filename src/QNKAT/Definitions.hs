@@ -2,7 +2,13 @@ module QNKAT.Definitions
     ( module QNKAT.Definitions.Core
     , module QNKAT.Definitions.Structures
     , module QNKAT.Definitions.Policy
-    , applyPolicy, applyPolicyTimely, applyPolicySteps, applyOrderedPolicy, applyFullOrderedPolicy
+    , applyPolicy
+    , applyPolicyTimely
+    , applyPolicySteps
+    , applyOrderedPolicy
+    , applyFullOrderedPolicy
+    , applyFullOrderedPolicyAuto
+    , applyStarOrderedPolicy
     ) where
 
 import           Data.Set                                (Set)
@@ -14,6 +20,7 @@ import           QNKAT.PolicyEmbeddings
 import qualified QNKAT.Implementations.HistoryQuantum        as HQ
 import qualified QNKAT.Implementations.OneStepHistoryQuantum as OSHQ
 import qualified QNKAT.Implementations.StepHistoryQuantum    as SHQ
+import qualified QNKAT.Implementations.AutomataStepHistoryQuantum    as ASHQ
 import qualified QNKAT.Implementations.TimelyHistoryQuantum  as THQ
 
 applyPolicy :: Ord t => Normal Policy t -> History t -> Set (History t)
@@ -30,3 +37,9 @@ applyOrderedPolicy = SHQ.execute OSHQ.execute . meaning
 
 applyFullOrderedPolicy :: (Ord t, Show t) => Ordered FullPolicy t -> History t -> Set (History t)
 applyFullOrderedPolicy = SHQ.execute OSHQ.execute . meaning
+
+applyFullOrderedPolicyAuto :: (Ord t, Show t) => Ordered FullPolicy t -> History t -> Set (History t)
+applyFullOrderedPolicyAuto = ASHQ.execute OSHQ.execute . meaning
+
+applyStarOrderedPolicy :: (Ord t, Show t) => Ordered StarPolicy t -> History t -> Set (History t)
+applyStarOrderedPolicy = ASHQ.execute OSHQ.execute . meaning

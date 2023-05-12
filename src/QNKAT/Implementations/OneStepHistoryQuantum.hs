@@ -1,7 +1,12 @@
 {-# LANGUAGE DerivingVia          #-}
 {-# LANGUAGE OverloadedLists      #-}
 {-# LANGUAGE UndecidableInstances #-}
-module QNKAT.Implementations.OneStepHistoryQuantum (OneStepPolicy(..), execute) where
+module QNKAT.Implementations.OneStepHistoryQuantum 
+    ( OneStepPolicy(..)
+    , OneStep
+    , OneStepFree
+    , execute
+    ) where
 
 import           Data.Foldable                (toList)
 import           Data.Functor.Compose         (Compose (..))
@@ -10,6 +15,7 @@ import           Data.List.NonEmpty           (NonEmpty (..))
 import qualified Data.Multiset                as Mset
 import           Data.Set                     (Set)
 import qualified Data.Set                     as Set
+import           Data.Functor.Classes
 
 import           QNKAT.Definitions.Core
 import           QNKAT.Definitions.Structures
@@ -21,6 +27,13 @@ data OneStepPolicy a
     | Sequence (OneStepPolicy a) (OneStepPolicy a)
     | Choice (OneStepPolicy a) (OneStepPolicy a)
     deriving stock (Show)
+
+instance Show1 OneStepPolicy where
+  liftShowsPrec sp _ d (Atomic x) = showsUnaryWith sp "Atomic" d x
+  liftShowsPrec sp sl d (Sequence x y) = 
+      showsBinaryWith (liftShowsPrec sp sl) (liftShowsPrec sp sl) "Sequence" d x y
+  liftShowsPrec sp sl d (Choice x y) = 
+      showsBinaryWith (liftShowsPrec sp sl) (liftShowsPrec sp sl) "Choice" d x y
 
 instance Semigroup (OneStepPolicy a) where
     (<>) = Sequence
@@ -68,13 +81,16 @@ newtype OneStep t = OneStep
     { executeOneStep :: PartialNDEndo (History t)
     } deriving newtype (Semigroup)
 
+instance Show1 OneStep where
+  liftShowsPrec _ _ _ _ = shows "OneStep [\\h -> ..]"
+
 oneStepChoice :: Ord t => OneStep t -> OneStep t -> OneStep t
 oneStepChoice (OneStep p) (OneStep q) = OneStep . PartialNDEndo $
     \h -> applyPartialNDEndo p h <> applyPartialNDEndo q h
 
-instance (Ord t) => Quantum (OneStepPolicy (OneStep t)) t where
+instance Ord t => CreatesBellPairs (OneStep t) t where
     tryCreateBellPairFrom (CreateBellPairArgs pt bp bps prob t dk) =
-        Atomic . OneStep . PartialNDEndo $ \h@(History ts) ->
+        OneStep . PartialNDEndo $ \h@(History ts) ->
             case findTreeRootsNDP bellPair bps (bellPairTag >$< pt) ts of
             [] -> [chooseNoneOf h]
             partialNewTs ->
@@ -87,21 +103,47 @@ instance (Ord t) => Quantum (OneStepPolicy (OneStep t)) t where
                 | partial <- partialNewTs
                 ]
 
-instance (Ord t, Show t) => TestsQuantum (OneStepPolicy (OneStep t)) t where
-  test p = Atomic . OneStep . PartialNDEndo $ \h@(History ts) ->
+instance Ord t => Tests (OneStep t) t where
+  test p = OneStep . PartialNDEndo $ \h@(History ts) ->
     if p (Mset.map rootLabel ts) then [ chooseNoneOf h ] else []
 
-instance Semigroup (Compose OneStepPolicy OneStep t) where
-  p <> q = Compose $ getCompose p <> getCompose q
+data OneStepFree t = OSFCreate (CreateBellPairArgs t) | OSFTest
 
-instance (Ord t) => ParallelSemigroup (Compose OneStepPolicy OneStep t) where
+instance Show1 OneStepFree where
+  liftShowsPrec sp sl d (OSFCreate x) = showsUnaryWith (liftShowsPrec sp sl) "OSFCreate" d x
+  liftShowsPrec _ _ _ OSFTest = shows "OSFTest"
+
+instance CreatesBellPairs (OneStepFree t) t where
+  tryCreateBellPairFrom = OSFCreate
+
+instance Tests (OneStepFree t) t where
+  test _ = OSFTest
+
+instance CreatesBellPairs a t =>  CreatesBellPairs (OneStepPolicy a) t where
+    tryCreateBellPairFrom = Atomic . tryCreateBellPairFrom
+
+instance (Ord t) => Quantum (OneStepPolicy (OneStep t)) t
+
+instance (Ord t, Show t, Tests a t) => Tests (OneStepPolicy a) t where
+  test = Atomic . test
+
+instance (Ord t, Show t) => TestsQuantum (OneStepPolicy (OneStep t)) t where
+
+instance (Ord t) => ParallelSemigroup (Compose OneStepPolicy a t) where
   p <||> q = Compose $ getCompose p <||> getCompose q
 
-instance (Ord t) => Quantum (Compose OneStepPolicy OneStep t) t where
+instance (Ord t) => ChoiceSemigroup (Compose OneStepPolicy a t) where
+  p <+> q = Compose $ getCompose p <||> getCompose q
+
+instance (Ord t, CreatesBellPairs (a t) t) => CreatesBellPairs (Compose OneStepPolicy a t) t where
   tryCreateBellPairFrom = Compose . tryCreateBellPairFrom
 
-instance (Show t, Ord t) => TestsQuantum (Compose OneStepPolicy OneStep t) t where
+instance (Ord t, CreatesBellPairs (a t) t) => Quantum (Compose OneStepPolicy a t) t where
+
+instance (Show t, Ord t, Tests (a t) t) => Tests (Compose OneStepPolicy a t) t where
   test = Compose . test
+
+instance (Show t, Ord t, Tests (a t) t, CreatesBellPairs (a t) t) => TestsQuantum (Compose OneStepPolicy a t) t where
 
 executeOneStepPolicy :: (Ord t) => OneStepPolicy (OneStep t) -> OneStep t
 executeOneStepPolicy (Atomic x) = x

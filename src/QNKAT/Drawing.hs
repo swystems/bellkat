@@ -58,6 +58,9 @@ drawOrderedPolicySteps p = withImgWidth 600 . historiesToDiagram . Set.elems . a
 drawFullOrderedPolicySteps :: (Ord t, Show t) => Ordered FullPolicy (Maybe t) -> ManuallySized (Diagram B)
 drawFullOrderedPolicySteps p = withImgWidth 600 . historiesToDiagram . Set.elems . applyFullOrderedPolicy p $ []
 
+drawStarOrderedPolicySteps :: (Ord t, Show t) => Ordered StarPolicy (Maybe t) -> ManuallySized (Diagram B)
+drawStarOrderedPolicySteps p = withImgWidth 600 . historiesToDiagram . Set.elems . applyStarOrderedPolicy p $ []
+
 drawHistoryText :: Show t => History t -> String
 drawHistoryText = drawForest . (fmap . fmap) show . toForest . getForest
 

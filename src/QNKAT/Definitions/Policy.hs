@@ -43,6 +43,15 @@ data FullPolicy a
     | FPChoice (FullPolicy a) (FullPolicy a)
     deriving stock (Show)
 
+data StarPolicy a
+    = SPAtomic a
+    | SPSequence (StarPolicy a) (StarPolicy a)
+    | SPParallel (StarPolicy a) (StarPolicy a)
+    | SPOne
+    | SPStar (StarPolicy a)
+    | SPChoice (StarPolicy a) (StarPolicy a)
+    deriving stock (Show)
+
 instance Semigroup (Policy a) where
     (<>) = APSequence
 
@@ -60,6 +69,21 @@ instance ParallelSemigroup (Policy a) where
 
 instance ChoiceSemigroup (FullPolicy a) where
     (<+>) = FPChoice
+
+instance Semigroup (StarPolicy a) where
+    (<>) = SPSequence
+
+instance Monoid (StarPolicy a) where
+    mempty = SPOne
+
+instance MonoidStar (StarPolicy a) where
+    star = SPStar
+
+instance ParallelSemigroup (StarPolicy a) where
+    (<||>) = SPParallel
+
+instance ChoiceSemigroup (StarPolicy a) where
+    (<+>) = SPChoice
 
 data Atomic t = AAction (TaggedAction t) | ATest (Test t)
 

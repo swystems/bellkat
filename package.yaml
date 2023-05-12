@@ -24,6 +24,10 @@ dependencies:
   - diagrams-cairo
   - QuickCheck
   - fixed-vector
+  - these
+  - pointed
+  - base-orphans
+  - mtl
 
 library:
   source-dirs: src

@@ -17,6 +17,7 @@ module QNKAT.Definitions.Core (
 import           Data.Bifunctor             (bimap)
 import           Data.Foldable              (toList)
 import           Data.Functor.Contravariant (Predicate (..), (>$<))
+import           Data.Functor.Classes
 import           Data.List                  (sort)
 import           Data.Monoid                (Endo (..))
 import qualified Data.Multiset              as Mset
@@ -67,6 +68,9 @@ data CreateBellPairArgs t = CreateBellPairArgs
     , cbtNewTag      :: t
     , cbtDup         :: DupKind
     }
+
+instance Show1 CreateBellPairArgs where
+  liftShowsPrec _ _ _ _ = shows "cbp"
 
 type Test t = Multiset (TaggedBellPair t) -> Bool
 
