@@ -29,7 +29,7 @@ data OneStepPolicy a
     deriving stock (Show)
 
 instance Show1 OneStepPolicy where
-  liftShowsPrec sp _ d (Atomic x) = showsUnaryWith sp "Atomic" d x
+  liftShowsPrec sp _ d (Atomic x) = sp d x
   liftShowsPrec sp sl d (Sequence x y) = 
       showsBinaryWith (liftShowsPrec sp sl) (liftShowsPrec sp sl) "Sequence" d x y
   liftShowsPrec sp sl d (Choice x y) = 
@@ -110,8 +110,8 @@ instance Ord t => Tests (OneStep t) t where
 data OneStepFree t = OSFCreate (CreateBellPairArgs t) | OSFTest
 
 instance Show1 OneStepFree where
-  liftShowsPrec sp sl d (OSFCreate x) = showsUnaryWith (liftShowsPrec sp sl) "OSFCreate" d x
-  liftShowsPrec _ _ _ OSFTest = shows "OSFTest"
+  liftShowsPrec sp sl d (OSFCreate x) = showString "create(" . showString ")"
+  liftShowsPrec _ _ _ OSFTest = showString "[..]"
 
 instance CreatesBellPairs (OneStepFree t) t where
   tryCreateBellPairFrom = OSFCreate
@@ -128,6 +128,10 @@ instance (Ord t, Show t, Tests a t) => Tests (OneStepPolicy a) t where
   test = Atomic . test
 
 instance (Ord t, Show t) => TestsQuantum (OneStepPolicy (OneStep t)) t where
+
+    
+instance {-# OVERLAPPING #-} (Show1 f, Show a) => Show (Compose OneStepPolicy f a) where
+    showsPrec d  (Compose x) = liftShowsPrec (liftShowsPrec showsPrec showList) (liftShowList showsPrec showList) d x
 
 instance (Ord t) => ParallelSemigroup (Compose OneStepPolicy a t) where
   p <||> q = Compose $ getCompose p <||> getCompose q

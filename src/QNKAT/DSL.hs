@@ -5,8 +5,8 @@
 module QNKAT.DSL where
 
 import           Data.Functor.Contravariant
-
 import           Data.List.NonEmpty         (NonEmpty (..))
+
 import           QNKAT.Definitions.Core
 import           QNKAT.Definitions.Policy
 import           QNKAT.Utils.UnorderedTree         (UTree (..))
@@ -114,6 +114,19 @@ class Taggable a t | a -> t where
 instance Taggable (Normal Policy (Maybe t)) t where
     APAtomic (TaggedAction p a _ dupKind) .~ t = APAtomic (TaggedAction p a (Just t) dupKind)
     p .~ _                           = p
+
+instance Eq t => Taggable (Ordered StarPolicy (Maybe t)) t where
+    SPAtomic (AAction (TaggedAction p a _ dupKind) :| []) .~ t = 
+        SPAtomic $ AAction (TaggedAction p a (Just t) dupKind) :| []
+    SPAtomic (ATest t :| []) .~ tag = 
+        SPAtomic $ ATest (t .~ tag) :| []
+    p .~ _                           = p
+
+instance Eq t => Taggable (Test (Maybe t)) t where
+    t .~ tag = \bps -> all (hasTag tag) bps && t bps
+
+hasTag :: Eq t => t -> TaggedBellPair (Maybe t) -> Bool
+hasTag tag tbp = Just tag == bellPairTag tbp
 
 instance Taggable (UTree (TaggedBellPair (Maybe t))) t where
     Node (TaggedBellPair bp _) ts .~ t = Node (TaggedBellPair bp (Just t)) ts

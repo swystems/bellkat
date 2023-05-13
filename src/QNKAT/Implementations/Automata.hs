@@ -12,6 +12,7 @@ import qualified Data.Set                     as Set
 import           Data.These
 import           Data.Foldable (toList)
 import           Data.These.Combinators       (isThat, justThat)
+import           Data.Graph
 
 import           QNKAT.Definitions.Structures
 
@@ -29,6 +30,14 @@ data MagicNFA a = MNFA
     , mnfaFinal      :: !IntSet
     }
 
+showTransition :: Show a => (Int, a) -> String
+showTransition (j , act) = "-( " <> show act <> " )-> " <> show j
+
+showEpsTransition :: Show a => (Int, These Eps a) -> String
+showEpsTransition (j, This Eps) = "-()-> " <> show j
+showEpsTransition (j, These Eps act) = "-( eps | " <> show act <> " )-> " <> show j
+showEpsTransition (j, That x) = showTransition (j, x)
+
 instance Show a => Show (MagicNFA a) where
     show x = unlines $
         map showState $ IM.toList (mnfaTransition x)
@@ -39,7 +48,6 @@ instance Show a => Show (MagicNFA a) where
             <> (if IS.member s (mnfaFinal x) then "$" else "")
             <> ": "
             <> unwords (map showTransition $ IM.toList sTr)
-        showTransition (j, act) = "-> " <>  show j <> " (" <> show act <> ")"
 
 instance Show a => Show (EpsNFA a) where
     show x = unlines $
@@ -50,8 +58,7 @@ instance Show a => Show (EpsNFA a) where
             <> show s 
             <> (if IS.member s (enfaFinal x) then "$" else "")
             <> ": "
-            <> unwords (map showTransition $ IM.toList sTr)
-        showTransition (j, act) = "-> " <>  show j <> " (" <> show act <> ")"
+            <> unwords (map showEpsTransition $ IM.toList sTr)
 
 shiftFinalUp :: Int -> IntSet -> IntSet
 shiftFinalUp k = IS.mapMonotonic (+ k)
@@ -97,11 +104,23 @@ instance ChoiceSemigroup a => ChoiceSemigroup (EpsNFA a) where
             nabT = IM.singleton 0 $ IM.singleton naI (This Eps) <> IM.singleton nbI (This Eps)
          in ENFA 0 (naT `unionTransition` nbT `unionTransition` nabT) (naF <> nbF)
 
+
 computeClosures :: IntMap (IntMap (These Eps a)) -> IntMap IntSet
-computeClosures = IM.mapWithKey (\k v -> IS.insert k . IM.keysSet . IM.filter (not . isThat) $ v)
+computeClosures tr = 
+    let g = epsTransitionToGraph tr
+     in IM.fromSet (IS.fromList . reachable g) $ IM.keysSet tr
+
+epsTransitionToGraph :: IntMap (IntMap (These Eps a)) -> Graph
+epsTransitionToGraph tr = 
+    buildG (IS.findMin . IM.keysSet $ tr, IS.findMax . IM.keysSet $ tr) 
+        [ (i, j) 
+        | (i, trI) <- IM.toList tr
+        , (j, act) <- IM.toList trI
+        , not . isThat $ act ]
 
 computeClosureTransition
-    :: (ChoiceSemigroup a) => IntMap (IntMap (These Eps a)) -> IntSet -> IntMap a
+    :: (ChoiceSemigroup a) 
+    => IntMap (IntMap (These Eps a)) -> IntSet -> IntMap a
 computeClosureTransition tr =
     foldl' (IM.unionWith (<+>)) IM.empty
     . map (IM.mapMaybe justThat)
