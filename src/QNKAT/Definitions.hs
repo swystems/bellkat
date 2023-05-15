@@ -9,6 +9,7 @@ module QNKAT.Definitions
     , applyFullOrderedPolicy
     , applyFullOrderedPolicyAuto
     , applyStarOrderedPolicy
+    , applyStarOrderedPolicyBounded
     ) where
 
 import           Data.Set                                (Set)
@@ -43,3 +44,10 @@ applyFullOrderedPolicyAuto = ASHQ.execute OSHQ.execute . meaning
 
 applyStarOrderedPolicy :: (Ord t, Show t) => Ordered StarPolicy t -> History t -> Set (History t)
 applyStarOrderedPolicy = ASHQ.execute OSHQ.execute . meaning
+
+applyStarOrderedPolicyBounded :: (Ord t, Show t) => Ordered StarPolicy t -> History t -> Set (History t)
+applyStarOrderedPolicyBounded = (handleExecutionError .) . ASHQ.executeWith (ASHQ.EP (Just 100)) OSHQ.execute . meaning
+  where
+    handleExecutionError :: Maybe a -> a
+    handleExecutionError Nothing = error "couldn't execute"
+    handleExecutionError (Just x) = x

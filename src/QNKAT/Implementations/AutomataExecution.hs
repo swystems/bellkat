@@ -1,5 +1,10 @@
 {-# LANGUAGE LambdaCase #-}
-module QNKAT.Implementations.AutomataExecution (execute) where
+{-# LANGUAGE StrictData #-}
+module QNKAT.Implementations.AutomataExecution 
+    ( execute
+    , defaultExecutionParams
+    , ExecutionParams(..)
+    ) where
 
 import           Data.IntMap.Strict (IntMap)
 import qualified Data.IntMap.Strict as IM
@@ -7,34 +12,48 @@ import           Data.Set           (Set)
 import qualified Data.Set           as Set
 import           Control.Monad.State.Strict
 import           Control.Monad.Reader
+import           Control.Monad.Except
 
 import QNKAT.Implementations.Automata
 
 execute :: Ord s
-    => (a -> s -> Set s)
+    => ExecutionParams
+    -> (a -> s -> Set s)
     -> MagicNFA a
-    -> s -> Set s
-execute executeStep mnfa x = 
-    let env = EE { eeAutomaton = mnfa, eeStepEvaluation = executeStep }
+    -> s -> Maybe (Set s)
+execute params executeStep mnfa x = 
+    let env = EE { eeAutomaton = mnfa, eeStepEvaluation = executeStep, eeExecutionParams = params }
         stInit = ES 
             { esPending = IM.singleton (mnfaInitial mnfa) (Set.singleton x) 
             , esProcessed = IM.map (const Set.empty) (mnfaTransition mnfa) 
             }
-        res = esProcessed $ execState (runReaderT executeAutomata env) stInit
-        resFinal = IM.restrictKeys res (mnfaFinal mnfa)
-     in IM.foldl' Set.union Set.empty resFinal
+        (err, st) = (`runState` stInit) . runExceptT .(`runReaderT` env) $ executeAutomata
+        resFinal = IM.restrictKeys (esProcessed st) (mnfaFinal mnfa)
+     in case err of 
+          Left _ -> Nothing
+          Right () -> Just $ IM.foldl' Set.union Set.empty resFinal
 
 data ExecutionState s = ES
     { esPending   :: IntMap (Set s)
     , esProcessed :: IntMap (Set s)
     }
 
+newtype ExecutionParams = EP 
+    { maxOptionsPerState :: Maybe Int
+    }
+
+defaultExecutionParams :: ExecutionParams
+defaultExecutionParams = EP Nothing
+
+data ExecutionError = TooManyStates
+
 data ExecutionEnvironment a s = EE
     { eeAutomaton :: MagicNFA a
     , eeStepEvaluation :: a -> s -> Set s
+    , eeExecutionParams :: ExecutionParams
     }
 
-type ExecutionMonad a s = ReaderT (ExecutionEnvironment a s) (State (ExecutionState s))
+type ExecutionMonad a s = ReaderT (ExecutionEnvironment a s) (ExceptT ExecutionError (State (ExecutionState s)))
 
 executeAutomata :: (Ord s) => ExecutionMonad a s ()
 executeAutomata = 
@@ -45,7 +64,15 @@ executeAutomata =
             fromI <- reader ((IM.! i) . mnfaTransition . eeAutomaton)
             evalStep <- reader eeStepEvaluation
             forM_ (IM.toList fromI) $ \(j, x) -> appendStates j $ evalStep x h
+            checkStateBound
             executeAutomata
+
+checkStateBound :: ExecutionMonad a s ()
+checkStateBound = reader (maxOptionsPerState . eeExecutionParams) >>= \case 
+    Nothing -> pure ()
+    Just maxOptions -> do
+      curMaxOptions <- gets (IM.foldl' max 0 . IM.map Set.size . esProcessed)
+      when (curMaxOptions > maxOptions) $ throwError TooManyStates
 
 markProcessed :: (Ord s) => IM.Key -> s -> ExecutionMonad a s ()
 markProcessed s hs = modify' $ \st -> 

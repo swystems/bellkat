@@ -2,16 +2,20 @@
 module QNKAT.Implementations.AutomataStepHistoryQuantum 
     ( AutomatonStepHistoryQuantum
     , execute
+    , executeWith
+    , ExecutionParams(..)
     ) where
 
 import           Data.Pointed
 import           Data.Set                       (Set)
+import           Data.Maybe                     (fromJust)
  
 
 import           QNKAT.Definitions.Core
 import           QNKAT.Definitions.Structures
 import           QNKAT.Implementations.Automata
 import qualified QNKAT.Implementations.AutomataExecution as AE
+import           QNKAT.Implementations.AutomataExecution (ExecutionParams)
 
 newtype AutomatonStepHistoryQuantum a = AutomatonStepHistoryQuantum (MagicNFA a)
     deriving newtype (Show, ParallelSemigroup, Pointed, Semigroup, Monoid, ChoiceSemigroup, MonoidStar)
@@ -40,4 +44,11 @@ execute :: Ord t
     => (a -> History t -> Set (History t))
     -> AutomatonStepHistoryQuantum a
     -> History t -> Set (History t)
-execute executeStep (AutomatonStepHistoryQuantum nfa) = AE.execute executeStep nfa
+execute executeStep ahq = fromJust . executeWith (AE.EP Nothing) executeStep ahq
+
+executeWith :: Ord t
+    => ExecutionParams
+    -> (a -> History t -> Set (History t))
+    -> AutomatonStepHistoryQuantum a
+    -> History t -> Maybe (Set (History t))
+executeWith params executeStep (AutomatonStepHistoryQuantum nfa) = AE.execute params executeStep nfa
