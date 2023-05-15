@@ -110,7 +110,7 @@ instance Ord t => Tests (OneStep t) t where
 data OneStepFree t = OSFCreate (CreateBellPairArgs t) | OSFTest
 
 instance Show1 OneStepFree where
-  liftShowsPrec sp sl d (OSFCreate x) = showString "create(" . showString ")"
+  liftShowsPrec _ _ _ (OSFCreate _) = showString "create(" . showString ")"
   liftShowsPrec _ _ _ OSFTest = showString "[..]"
 
 instance CreatesBellPairs (OneStepFree t) t where
