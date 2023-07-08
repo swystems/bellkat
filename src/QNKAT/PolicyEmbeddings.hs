@@ -25,6 +25,13 @@ instance (TestsOrderedQuantum a t) => HasMeaning (Atomic t) (Layer a) where
     meaning (AAction a) = orderedTryCreateBellPairFrom $ actionArgs a
     meaning (ATest t)   = orderedTest t
 
+instance (HasMeaning (TaggedAction at) a, Semigroup a, ParallelSemigroup a, ChoiceSemigroup a) 
+  => HasMeaning (Normal OneRoundPolicy at) a where
+    meaning (ORPAtomic ta) = meaning ta
+    meaning (ORPSequence p q) = meaning p <> meaning q
+    meaning (ORPParallel p q) = meaning p <||> meaning q
+    meaning (ORPChoice p q) = meaning p <+> meaning q
+
 instance (ChoiceSemigroup a, Monoid a, TestsOrderedQuantum a t) 
   => HasMeaning (Ordered FullPolicy t) a where
     meaning (FPAtomic ta) = liftLayer $ foldNonEmpty (<.>) $ meaning <$> ta
@@ -33,8 +40,9 @@ instance (ChoiceSemigroup a, Monoid a, TestsOrderedQuantum a t)
     meaning (FPParallel p q) = meaning p <||> meaning q
     meaning (FPChoice p q) = meaning p <+> meaning q
 
-instance (MonoidStar a, TestsOrderedQuantum a t) => HasMeaning (Ordered StarPolicy t) a where
+instance (MonoidStar a, OrderedSemigroup a, TestsOrderedQuantum a t) => HasMeaning (Ordered StarPolicy t) a where
     meaning (SPAtomic ta) = liftLayer $ foldNonEmpty (<.>) $ meaning <$> ta
+    meaning (SPOrdered p q) = meaning p <.> meaning q
     meaning (SPSequence p q) = meaning p <> meaning q
     meaning SPOne = mempty
     meaning (SPStar p) = star (meaning p)

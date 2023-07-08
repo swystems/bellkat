@@ -35,6 +35,21 @@ data Policy a
     | APParallel (Policy a) (Policy a)
     deriving stock (Show)
 
+data OneRoundPolicy a
+    = ORPAtomic a
+    | ORPSequence (OneRoundPolicy a) (OneRoundPolicy a)
+    | ORPParallel (OneRoundPolicy a) (OneRoundPolicy a)
+    | ORPChoice (OneRoundPolicy a) (OneRoundPolicy a)
+
+instance Show a => Show (OneRoundPolicy a) where
+    showsPrec _ (ORPAtomic x) = shows x
+    showsPrec d (ORPParallel x y) = showParen (d > 5) $ 
+        showsPrec 6 x . showString " <||> " . showsPrec 6 y
+    showsPrec d (ORPSequence x y) = showParen (d > 6) $ 
+        showsPrec 7 x . showString " <> " . showsPrec 7 y
+    showsPrec d (ORPChoice x y) = showParen (d > 4) $ 
+        showsPrec 5 x . showString " <+> " . showsPrec 5 y
+
 data FullPolicy a
     = FPAtomic a
     | FPSequence (FullPolicy a) (FullPolicy a)
@@ -47,6 +62,7 @@ data StarPolicy a
     = SPAtomic a
     | SPSequence (StarPolicy a) (StarPolicy a)
     | SPParallel (StarPolicy a) (StarPolicy a)
+    | SPOrdered (StarPolicy a) (StarPolicy a)
     | SPOne
     | SPStar (StarPolicy a)
     | SPChoice (StarPolicy a) (StarPolicy a)
@@ -67,6 +83,15 @@ instance Monoid (FullPolicy a) where
 instance ParallelSemigroup (Policy a) where
     (<||>) = APParallel
 
+instance ChoiceSemigroup (OneRoundPolicy a) where
+    (<+>) = ORPChoice
+
+instance Semigroup (OneRoundPolicy a) where
+    (<>) = ORPSequence
+
+instance ParallelSemigroup (OneRoundPolicy a) where
+    (<||>) = ORPParallel
+
 instance ChoiceSemigroup (FullPolicy a) where
     (<+>) = FPChoice
 
@@ -84,6 +109,9 @@ instance ParallelSemigroup (StarPolicy a) where
 
 instance ChoiceSemigroup (StarPolicy a) where
     (<+>) = SPChoice
+
+instance OrderedSemigroup (StarPolicy a) where
+    (<.>) = SPOrdered
 
 data Atomic t = AAction (TaggedAction t) | ATest (Test t)
 
@@ -118,4 +146,18 @@ instance (Arbitrary a) => Arbitrary (Policy a) where
 
     shrink (APSequence p q) = [p, q]
     shrink (APParallel p q) = [p, q]
+    shrink _                = []
+
+instance (Arbitrary a) => Arbitrary (OneRoundPolicy a) where
+    arbitrary = do
+        n <- getSize
+        if n == 0 then
+            resize 1 $ ORPAtomic <$> arbitrary
+        else
+            resize (n - 1) $ oneof [
+                ORPSequence <$> arbitrary <*> arbitrary,
+                ORPParallel <$> arbitrary <*> arbitrary
+            ]
+    shrink (ORPSequence p q) = [p, q]
+    shrink (ORPParallel p q) = [p, q]
     shrink _                = []

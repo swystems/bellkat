@@ -7,6 +7,7 @@ module QNKAT.Definitions.Core (
     History(..),
     DupKind(..),
     Test,
+    Partial(..),
     TaggedBellPair(..),
     dupHistory,
     dupHistoryN,

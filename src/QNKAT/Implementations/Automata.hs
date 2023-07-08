@@ -1,5 +1,5 @@
 {-# LANGUAGE StrictData #-}
-module QNKAT.Implementations.Automata (MagicNFA(..)) where
+module QNKAT.Implementations.Automata (MagicNFA(..), productWith) where
 
 import           Data.IntMap.Strict           (IntMap)
 import qualified Data.IntMap.Strict           as IM
@@ -104,7 +104,6 @@ instance ChoiceSemigroup a => ChoiceSemigroup (EpsNFA a) where
             nabT = IM.singleton 0 $ IM.singleton naI (This Eps) <> IM.singleton nbI (This Eps)
          in ENFA 0 (naT `unionTransition` nbT `unionTransition` nabT) (naF <> nbF)
 
-
 computeClosures :: IntMap (IntMap (These Eps a)) -> IntMap IntSet
 computeClosures tr = 
     let g = epsTransitionToGraph tr
@@ -161,28 +160,10 @@ instance ChoiceSemigroup a => ChoiceSemigroup (MagicNFA a) where
     a <+> b = enfaToMnfa (mnfaToEnfa a <+> mnfaToEnfa b)
 
 instance (ChoiceSemigroup a, ParallelSemigroup a) =>  ParallelSemigroup (MagicNFA a) where
-    (MNFA aI aT aF)  <||> (MNFA bI bT bF) =
-        let aSize = IM.size aT
-            aFinal = IM.size aT
-            bFinal = IM.size bT
-            encode x y = x + y * (aSize + 1) -- accounting for final
-            bothT = parallelTransition encode aT bT
-            aFinalT = stepFinalLeft encode aFinal aF (IM.keysSet bT)
-            bFinalT = stepFinalRight encode (IM.keysSet aT) bFinal bF
-            onlyA = IM.mapKeysMonotonic (`encode` bFinal)
-                . IM.map (IM.mapKeysMonotonic (`encode` bFinal)) $ aT
-            onlyB = IM.mapKeysMonotonic (aFinal `encode`)
-                . IM.map (IM.mapKeysMonotonic (`encode` bFinal)) $ aT
-            newAF = IS.map (`encode` bFinal) aF
-            newBF = IS.map (aFinal `encode`) bF
-         in enfaToMnfa $ ENFA
-                (encode aI bI)
-                (mnfaTransitionToEnfa bothT
-                    `unionTransition` aFinalT
-                    `unionTransition` bFinalT
-                    `unionTransition` mnfaTransitionToEnfa onlyA
-                    `unionTransition` mnfaTransitionToEnfa onlyB)
-                (newAF <>newBF)
+    p  <||> q = productWith (<||>) p q 
+
+instance (ChoiceSemigroup a, OrderedSemigroup a) =>  OrderedSemigroup (MagicNFA a) where
+    p  <.> q = productWith (<.>) p q 
 
 instance (ChoiceSemigroup a, ParallelSemigroup a) =>  ParallelSemigroup (EpsNFA a) where
     a <||> b = mnfaToEnfa $ enfaToMnfa a <||> enfaToMnfa b
@@ -210,19 +191,42 @@ stepFinalLeft encode lFinal lF rS = IM.fromList
 stepFinalRight :: (Int -> Int -> Int) -> IntSet -> Int -> IntSet -> IntMap (IntMap (These Eps a))
 stepFinalRight encode lS rFinal rF = stepFinalLeft (flip encode) rFinal rF lS
 
-parallelTransitionTo
-    :: (ParallelSemigroup a)
-    => (Int -> Int -> Int) -> IntMap a -> IntMap a -> IntMap a
-parallelTransitionTo encode atr btr = IM.fromList
-    [ (encode aTo bTo, aAct <||> bAct )
+productWith :: ChoiceSemigroup a => (a -> a -> a) -> MagicNFA a -> MagicNFA a -> MagicNFA a
+productWith f (MNFA aI aT aF) (MNFA bI bT bF) =
+    let aSize = IM.size aT
+        aFinal = IM.size aT
+        bFinal = IM.size bT
+        encode x y = x + y * (aSize + 1) -- accounting for final
+        bothT = productWithTransition f encode aT bT
+        aFinalT = stepFinalLeft encode aFinal aF (IM.keysSet bT)
+        bFinalT = stepFinalRight encode (IM.keysSet aT) bFinal bF
+        onlyA = IM.mapKeysMonotonic (`encode` bFinal)
+            . IM.map (IM.mapKeysMonotonic (`encode` bFinal)) $ aT
+        onlyB = IM.mapKeysMonotonic (aFinal `encode`)
+            . IM.map (IM.mapKeysMonotonic (`encode` bFinal)) $ aT
+        newAF = IS.map (`encode` bFinal) aF
+        newBF = IS.map (aFinal `encode`) bF
+     in enfaToMnfa $ ENFA
+            (encode aI bI)
+            (mnfaTransitionToEnfa bothT
+                `unionTransition` aFinalT
+                `unionTransition` bFinalT
+                `unionTransition` mnfaTransitionToEnfa onlyA
+                `unionTransition` mnfaTransitionToEnfa onlyB)
+            (newAF <>newBF)
+
+productWithTransitionTo
+    :: (a -> a -> a) -> (Int -> Int -> Int) -> IntMap a -> IntMap a -> IntMap a
+productWithTransitionTo f encode atr btr = IM.fromList
+    [ (encode aTo bTo, f aAct bAct )
     | (aTo, aAct) <- IM.toList atr
     , (bTo, bAct) <- IM.toList btr]
 
-parallelTransition
-    :: (ParallelSemigroup a)
-    => (Int -> Int -> Int) -> IntMap (IntMap a) -> IntMap (IntMap a) -> IntMap (IntMap a)
-parallelTransition encode aT bT = IM.fromList
-    [ (encode aFrom bFrom, parallelTransitionTo encode aTo bTo)
+productWithTransition
+    :: (a -> a -> a) -> (Int -> Int -> Int) 
+    -> IntMap (IntMap a) -> IntMap (IntMap a) -> IntMap (IntMap a)
+productWithTransition f encode aT bT = IM.fromList
+    [ (encode aFrom bFrom, productWithTransitionTo f encode aTo bTo)
     | (aFrom, aTo) <- IM.toList aT
     , (bFrom, bTo) <- IM.toList bT
     ]

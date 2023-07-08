@@ -6,6 +6,7 @@ module QNKAT.Implementations.OneStepHistoryQuantum
     , OneStep
     , OneStepFree
     , execute
+    , executePartial
     ) where
 
 import           Data.Foldable                (toList)
@@ -47,6 +48,11 @@ chooseConcat (x :| x' : xs') = Choice x (chooseConcat (x' :| xs'))
 
 instance ParallelSemigroup (OneStepPolicy a) where
     p <||> q = chooseConcat $
+        fmap (intermixAfterDecompsition q) (decompose p)
+        <> fmap (intermixAfterDecompsition p) (decompose q)
+
+instance OrderedSemigroup (OneStepPolicy a) where
+    p <.> q = chooseConcat $
         fmap (intermixAfterDecompsition q) (decompose p)
         <> fmap (intermixAfterDecompsition p) (decompose q)
 
@@ -129,7 +135,6 @@ instance (Ord t, Show t, Tests a t) => Tests (OneStepPolicy a) t where
 
 instance (Ord t, Show t) => TestsQuantum (OneStepPolicy (OneStep t)) t where
 
-    
 instance {-# OVERLAPPING #-} (Show1 f, Show a) => Show (Compose OneStepPolicy f a) where
     showsPrec d  (Compose x) = liftShowsPrec (liftShowsPrec showsPrec showList) (liftShowList showsPrec showList) d x
 
@@ -138,6 +143,9 @@ instance (Ord t) => ParallelSemigroup (Compose OneStepPolicy a t) where
 
 instance (Ord t) => ChoiceSemigroup (Compose OneStepPolicy a t) where
   p <+> q = Compose $ getCompose p <||> getCompose q
+
+instance (Ord t) => OrderedSemigroup (Compose OneStepPolicy a t) where
+  p <.> q = Compose $ getCompose p <> getCompose q
 
 instance (Ord t, CreatesBellPairs (a t) t) => CreatesBellPairs (Compose OneStepPolicy a t) t where
   tryCreateBellPairFrom = Compose . tryCreateBellPairFrom
@@ -154,6 +162,8 @@ executeOneStepPolicy (Atomic x) = x
 executeOneStepPolicy (Sequence p q)  = executeOneStepPolicy p <> executeOneStepPolicy q
 executeOneStepPolicy (Choice p q)  = oneStepChoice (executeOneStepPolicy p) (executeOneStepPolicy q)
 
+executePartial :: Ord t => Compose OneStepPolicy OneStep t -> History t -> Set (Partial (History t))
+executePartial (Compose osp) = applyPartialNDEndo (executeOneStep (executeOneStepPolicy osp))
+
 execute :: Ord t => Compose OneStepPolicy OneStep t -> History t -> Set (History t)
-execute (Compose osp) =
-    Set.map unchoose . applyPartialNDEndo (executeOneStep (executeOneStepPolicy osp))
+execute p = Set.map unchoose . executePartial p

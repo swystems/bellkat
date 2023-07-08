@@ -28,6 +28,7 @@ dependencies:
   - pointed
   - base-orphans
   - mtl
+  - smallcheck
 
 library:
   source-dirs: src
@@ -58,3 +59,10 @@ tests:
       - src
     dependencies: 
       - hspec
+  small:
+    source-dirs:
+      - test
+      - src
+    dependencies: 
+      - hspec
+    main: SpecSmall

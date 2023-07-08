@@ -10,6 +10,8 @@ module QNKAT.Definitions
     , applyFullOrderedPolicyAuto
     , applyStarOrderedPolicy
     , applyStarOrderedPolicyBounded
+    , applyOneStepPolicy
+    , applyOneStepPolicyPartial
     ) where
 
 import           Data.Set                                (Set)
@@ -44,6 +46,12 @@ applyFullOrderedPolicyAuto = ASHQ.execute OSHQ.execute . meaning
 
 applyStarOrderedPolicy :: (Ord t, Show t) => Ordered StarPolicy t -> History t -> Set (History t)
 applyStarOrderedPolicy = ASHQ.execute OSHQ.execute . meaning
+
+applyOneStepPolicyPartial :: (Ord t, Show t) => Normal OneRoundPolicy t -> History t -> Set (Partial (History t))
+applyOneStepPolicyPartial = OSHQ.executePartial . meaning
+
+applyOneStepPolicy :: (Ord t, Show t) => Normal OneRoundPolicy t -> History t -> Set (History t)
+applyOneStepPolicy = OSHQ.execute . meaning
 
 applyStarOrderedPolicyBounded :: (Ord t, Show t) => Ordered StarPolicy t -> History t -> Set (History t)
 applyStarOrderedPolicyBounded = (handleExecutionError .) . ASHQ.executeWith (ASHQ.EP (Just 100)) OSHQ.execute . meaning

@@ -18,7 +18,7 @@ import qualified QNKAT.Implementations.AutomataExecution as AE
 import           QNKAT.Implementations.AutomataExecution (ExecutionParams)
 
 newtype AutomatonStepHistoryQuantum a = AutomatonStepHistoryQuantum (MagicNFA a)
-    deriving newtype (Show, ParallelSemigroup, Pointed, Semigroup, Monoid, ChoiceSemigroup, MonoidStar)
+    deriving newtype (Show, ParallelSemigroup, OrderedSemigroup, Pointed, Semigroup, Monoid, ChoiceSemigroup, MonoidStar)
 
 instance (Ord t, ChoiceSemigroup (sq t), CreatesBellPairs (sq t) t)
         => CreatesBellPairs (AutomatonStepHistoryQuantum (sq t)) t where
