@@ -14,21 +14,28 @@
           overlays =
             [ self.overlays.ihaskell-diagrams-fix self.overlays.default ];
         };
-        ihaskell = pkgs.ihaskell.override {
+        ihaskell-dev = pkgs.ihaskell.override {
           packages = _:
             self.packages.${system}.default.getCabalDeps.libraryHaskellDepends
             ++ self.packages.${system}.default.getCabalDeps.testHaskellDepends;
         };
+        ihaskell = pkgs.ihaskell.override {
+          packages = _: [ (pkgs.haskell.lib.dontCheck pkgs.haskellPackages.qnkat-playground) ];
+        };
       in {
         packages.default = pkgs.haskellPackages.qnkat-playground;
-        devShell = pkgs.mkShell {
+        devShells.default = pkgs.mkShell {
           buildInputs = [
-            ihaskell
+            ihaskell-dev
             deploy-rs.defaultPackage.${system}
             pkgs.ghcid
             pkgs.cabal-install
             pkgs.haskellPackages.haskell-language-server
           ];
+        };
+
+        devShells.bellkat = pkgs.mkShell {
+          buildInputs = [ ihaskell ];
         };
       }) // (let system = "x86_64-linux";
       in {
