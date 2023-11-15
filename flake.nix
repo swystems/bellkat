@@ -16,11 +16,11 @@
         };
         ihaskell = pkgs.ihaskell.override {
           packages = _:
-            self.defaultPackage.${system}.getCabalDeps.libraryHaskellDepends
-            ++ self.defaultPackage.${system}.getCabalDeps.testHaskellDepends;
+            self.packages.${system}.default.getCabalDeps.libraryHaskellDepends
+            ++ self.packages.${system}.default.getCabalDeps.testHaskellDepends;
         };
       in {
-        defaultPackage = pkgs.haskellPackages.qnkat-playground;
+        packages.default = pkgs.haskellPackages.qnkat-playground;
         devShell = pkgs.mkShell {
           buildInputs = [
             ihaskell
