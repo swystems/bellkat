@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE StrictData      #-}
-module QNKAT.Implementations.TimelyHistoryQuantum (execute) where
+module BellKAT.Implementations.TimelyHistoryQuantum (execute) where
 
 import           Data.Foldable              (toList)
 import           Data.Functor.Contravariant ((>$<))
@@ -10,10 +10,10 @@ import qualified Data.Set                   as Set
 
 import           Data.Vector.Fixed          (pattern V2)
 
-import           QNKAT.Definitions.Core
-import           QNKAT.Definitions.Structures
-import           QNKAT.Utils.Choice
-import           QNKAT.Utils.UnorderedTree
+import           BellKAT.Definitions.Core
+import           BellKAT.Definitions.Structures
+import           BellKAT.Utils.Choice
+import           BellKAT.Utils.UnorderedTree
 
 -- ** Quantum operations represented as functions over histories recorded in a
 -- _timely_ manner

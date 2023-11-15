@@ -1,4 +1,4 @@
-module QNKAT.Utils.NonEmpty where
+module BellKAT.Utils.NonEmpty where
 
 import           Data.List.NonEmpty                      (NonEmpty (..))
 

@@ -1,6 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE StrictData #-}
-module QNKAT.Implementations.AutomataExecution 
+module BellKAT.Implementations.AutomataExecution 
     ( execute
     , defaultExecutionParams
     , ExecutionParams(..)
@@ -14,7 +14,7 @@ import           Control.Monad.State.Strict
 import           Control.Monad.Reader
 import           Control.Monad.Except
 
-import QNKAT.Implementations.Automata
+import BellKAT.Implementations.Automata
 
 execute :: Ord s
     => ExecutionParams

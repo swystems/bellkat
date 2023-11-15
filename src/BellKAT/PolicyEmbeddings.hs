@@ -1,11 +1,11 @@
-module QNKAT.PolicyEmbeddings where
+module BellKAT.PolicyEmbeddings where
 
 import Data.List.NonEmpty (NonEmpty)
 
-import QNKAT.Definitions.Core
-import QNKAT.Definitions.Structures
-import QNKAT.Definitions.Policy
-import QNKAT.Utils.NonEmpty
+import BellKAT.Definitions.Core
+import BellKAT.Definitions.Structures
+import BellKAT.Definitions.Policy
+import BellKAT.Utils.NonEmpty
 
 class HasMeaning p a where
     meaning :: p -> a

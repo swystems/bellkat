@@ -1,5 +1,5 @@
 {
-  description = "Environment for playing with quantum";
+  description = "Environment for BellKAT";
 
   inputs.nixpkgs.url = "github:pschuprikov/nixpkgs/nixos-23.05";
   inputs.flake-utils.url = "github:numtide/flake-utils";
@@ -20,10 +20,10 @@
             ++ self.packages.${system}.default.getCabalDeps.testHaskellDepends;
         };
         ihaskell = pkgs.ihaskell.override {
-          packages = _: [ (pkgs.haskell.lib.dontCheck pkgs.haskellPackages.qnkat-playground) ];
+          packages = _: [ (pkgs.haskell.lib.dontCheck pkgs.haskellPackages.bellkat) ];
         };
       in {
-        packages.default = pkgs.haskellPackages.qnkat-playground;
+        packages.default = pkgs.haskellPackages.bellkat;
         devShells.default = pkgs.mkShell {
           buildInputs = [
             ihaskell-dev
@@ -42,7 +42,7 @@
         overlays = {
           default = final: prev: {
             haskellPackages = prev.haskellPackages.extend (hself: hsuper: {
-              qnkat-playground = prev.haskell.lib.overrideCabal (hself.callCabal2nix "qnkat-playground"
+              bellkat = prev.haskell.lib.overrideCabal (hself.callCabal2nix "bellkat"
                 (prev.lib.sourceFilesBySuffices ./. [ ".hs" ".yaml" ])  {}) (attrs: { 
                   testFlags = ["--qc-max-size" "4" "--qc-max-success" "100"];
                 });
@@ -78,7 +78,7 @@
 
         nixosConfigurations.quantum-server = nixpkgs.lib.nixosSystem {
           inherit system;
-          specialArgs = { qnkat = self; };
+          specialArgs = { bellkat = self; };
           modules = [ ./configuration.nix ];
         };
 

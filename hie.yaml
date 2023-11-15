@@ -1,7 +1,7 @@
 cradle:
     cabal:
         - path: "src"
-          component: "lib:qnkat-playground"
+          component: "lib:bellkat"
         - path: "test"
           component: "test:spec"
 

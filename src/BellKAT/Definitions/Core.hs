@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedLists #-}
-module QNKAT.Definitions.Core (
+module BellKAT.Definitions.Core (
     Location, 
     TaggedRequiredRoots,
     CreateBellPairArgs(..),
@@ -32,8 +32,8 @@ import qualified Data.Vector.Fixed          as FV
 import           Test.QuickCheck            hiding (choose)
 import           Data.Multiset              (Multiset)
 
-import           QNKAT.Utils.Choice
-import           QNKAT.Utils.UnorderedTree
+import           BellKAT.Utils.Choice
+import           BellKAT.Utils.UnorderedTree
 --
 -- * Type definitions
 

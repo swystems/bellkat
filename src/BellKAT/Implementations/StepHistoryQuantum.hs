@@ -2,15 +2,15 @@
 {-# LANGUAGE ParallelListComp #-}
 {-# LANGUAGE StrictData       #-}
 {-# LANGUAGE TypeApplications #-}
-module QNKAT.Implementations.StepHistoryQuantum (execute) where
+module BellKAT.Implementations.StepHistoryQuantum (execute) where
 
 import           Data.List              (foldl')
 import           Data.Set               (Set)
 import qualified Data.Set               as Set
 import           Data.Pointed
 
-import           QNKAT.Definitions.Core
-import           QNKAT.Definitions.Structures
+import           BellKAT.Definitions.Core
+import           BellKAT.Definitions.Structures
 
 -- ** Quantum operations represented as a sequence of primitive actions
 newtype StepHistoryQuantum a = StepHistoryQuantum

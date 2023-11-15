@@ -1,4 +1,4 @@
-name: qnkat-playground
+name: bellkat
 
 default-extensions:
   - DerivingStrategies
@@ -33,23 +33,23 @@ dependencies:
 library:
   source-dirs: src
   exposed-modules:
-    - QNKAT.Drawing
-    - QNKAT.Definitions
-    - QNKAT.PolicyEmbeddings
-    - QNKAT.Definitions.Core
-    - QNKAT.Definitions.Structures
-    - QNKAT.Definitions.Policy
-    - QNKAT.Implementations.OneStepHistoryQuantum
-    - QNKAT.Implementations.TimelyHistoryQuantum
-    - QNKAT.Implementations.StepHistoryQuantum
-    - QNKAT.Implementations.HistoryQuantum
-    - QNKAT.Implementations.AutomataExecution
-    - QNKAT.Implementations.AutomataStepHistoryQuantum
-    - QNKAT.Utils.UnorderedTree
-    - QNKAT.Utils.NonEmpty
-    - QNKAT.Utils.Choice
-    - QNKAT.DSL
-    - QNKAT.Test
+    - BellKAT.Drawing
+    - BellKAT.Definitions
+    - BellKAT.PolicyEmbeddings
+    - BellKAT.Definitions.Core
+    - BellKAT.Definitions.Structures
+    - BellKAT.Definitions.Policy
+    - BellKAT.Implementations.OneStepHistoryQuantum
+    - BellKAT.Implementations.TimelyHistoryQuantum
+    - BellKAT.Implementations.StepHistoryQuantum
+    - BellKAT.Implementations.HistoryQuantum
+    - BellKAT.Implementations.AutomataExecution
+    - BellKAT.Implementations.AutomataStepHistoryQuantum
+    - BellKAT.Utils.UnorderedTree
+    - BellKAT.Utils.NonEmpty
+    - BellKAT.Utils.Choice
+    - BellKAT.DSL
+    - BellKAT.Test
 
 tests:
   spec: 

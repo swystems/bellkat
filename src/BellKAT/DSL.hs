@@ -2,14 +2,14 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE OverloadedLists        #-}
 
-module QNKAT.DSL where
+module BellKAT.DSL where
 
 import           Data.Functor.Contravariant
 import           Data.List.NonEmpty         (NonEmpty (..))
 
-import           QNKAT.Definitions.Core
-import           QNKAT.Definitions.Policy
-import           QNKAT.Utils.UnorderedTree         (UTree (..))
+import           BellKAT.Definitions.Core
+import           BellKAT.Definitions.Policy
+import           BellKAT.Utils.UnorderedTree         (UTree (..))
 
 distill :: DSLFunctions p => (Location, Location) -> p
 distill locs = defaultTagged $ Distill locs

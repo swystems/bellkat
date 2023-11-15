@@ -1,4 +1,4 @@
-module QNKAT.Definitions.Structures
+module BellKAT.Definitions.Structures
     ( ParallelSemigroup(..)
     , ChoiceSemigroup(..)
     , Quantum
@@ -15,7 +15,7 @@ module QNKAT.Definitions.Structures
 import           Data.Functor.Contravariant (Predicate (..))
 import           Data.Orphans ()
 
-import           QNKAT.Definitions.Core
+import           BellKAT.Definitions.Core
         --
 -- parallel composition is left-associative and has lower precedence than `<>`
 infixl 5 <||>

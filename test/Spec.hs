@@ -5,12 +5,12 @@
 
 module Spec where
 
-import           QNKAT.Utils.Choice
-import           QNKAT.Definitions
-import           QNKAT.Drawing
-import           QNKAT.DSL
-import           QNKAT.Test
-import           QNKAT.Utils.UnorderedTree
+import           BellKAT.Utils.Choice
+import           BellKAT.Definitions
+import           BellKAT.Drawing
+import           BellKAT.DSL
+import           BellKAT.Test
+import           BellKAT.Utils.UnorderedTree
 
 import           Control.Monad              (unless)
 import           Data.Functor.Contravariant (Predicate (..))

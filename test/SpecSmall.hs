@@ -6,8 +6,8 @@ module SpecSmall where
 import Test.SmallCheck
 import Test.SmallCheck.Series
 import           Data.Functor.Contravariant (Predicate (..))
-import           QNKAT.Definitions
-import           QNKAT.Utils.UnorderedTree
+import           BellKAT.Definitions
+import           BellKAT.Utils.UnorderedTree
 import           Data.Multiset   (Multiset)
 import qualified Data.Multiset   as Mset
 import qualified Data.Set   as Set

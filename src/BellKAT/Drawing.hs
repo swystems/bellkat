@@ -3,7 +3,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE OverloadedLists #-}
 
-module QNKAT.Drawing where
+module BellKAT.Drawing where
 
 import IHaskell.Display.Diagrams
 
@@ -15,10 +15,10 @@ import qualified Data.Set as Set
 import Data.Set (Set)
 import Data.List (intercalate, intersperse)
 
-import QNKAT.Utils.UnorderedTree (toForest) 
-import QNKAT.Definitions.Core
-import QNKAT.Definitions.Policy
-import QNKAT.Definitions
+import BellKAT.Utils.UnorderedTree (toForest) 
+import BellKAT.Definitions.Core
+import BellKAT.Definitions.Policy
+import BellKAT.Definitions
 
 pairToDiagram :: (Show t, Eq t) => TaggedBellPair (Maybe t) -> Diagram B
 pairToDiagram (TaggedBellPair bp Nothing) 

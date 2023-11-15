@@ -1,14 +1,14 @@
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
 
-module QNKAT.Test where
+module BellKAT.Test where
 
 import           Test.QuickCheck
 
 import           Data.List         (intercalate)
 import           Data.Set          (Set)
 
-import           QNKAT.Definitions
-import           QNKAT.Drawing
+import           BellKAT.Definitions
+import           BellKAT.Drawing
 
 type Tag = Maybe Int
 
@@ -63,5 +63,5 @@ stepsParallelCompositionIsAssociative = isAssociative (~~~) (<||>)
 stepsParallelCompositionIsCommutative = isCommutative (~~~) (<||>)
 stepsSequentialCompositionDistributes = distributesOver (~~~) (<>) (<||>)
 
-qnkatQuickCheck :: Testable prop => prop -> IO ()
-qnkatQuickCheck = quickCheckWith (stdArgs { maxSize = 4, maxSuccess = 10000 })
+bellkatQuickCheck :: Testable prop => prop -> IO ()
+bellkatQuickCheck = quickCheckWith (stdArgs { maxSize = 4, maxSuccess = 10000 })

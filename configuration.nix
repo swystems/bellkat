@@ -1,12 +1,12 @@
-{ config, pkgs, lib, modulesPath, qnkat, ... }:
+{ config, pkgs, lib, modulesPath, bellkat, ... }:
 let
   matplotlibLatex = pkgs.texlive.combine {
     inherit (pkgs.texlive) scheme-basic type1cm cm-super underscore dvipng;
   };
 
-  dontCheckQNKAT = final: prev: {
+  dontCheckBellKAT = final: prev: {
     haskellPackages = prev.haskellPackages.extend (hself: hsuper: {
-      qnkat-playground = prev.haskell.lib.dontCheck hsuper.qnkat-playground;
+      bellkat = prev.haskell.lib.dontCheck hsuper.bellkat;
     });
   };
 
@@ -17,7 +17,7 @@ let
   }) (ps: [
     ps.ihaskell
     ps.ihaskell-blaze
-    ps.qnkat-playground
+    ps.bellkat
   ]);
 
   ihaskell-kernel = pkgs.runCommand "ihaskell-kernel" {
@@ -68,7 +68,7 @@ in {
     [ (modulesPath + "/virtualisation/amazon-image.nix") ./hoogle_tls.nix ];
 
   nixpkgs.overlays =
-    [ qnkat.overlays.ihaskell-diagrams-fix qnkat.overlays.default dontCheckQNKAT ];
+    [ bellkat.overlays.ihaskell-diagrams-fix bellkat.overlays.default dontCheckBellKAT ];
 
   nix.settings.trusted-users = [ "pschuprikov" ];
   nix.extraOptions = ''
@@ -102,7 +102,7 @@ in {
   users.users.jupyter.group = "jupyter";
 
   services.hoogle.enable = true;
-  services.hoogle.packages = ps: [ ps.qnkat-playground ];
+  services.hoogle.packages = ps: [ ps.bellkat ];
   services.hoogle.host = "0.0.0.0";
 
   services.jupyter.package =

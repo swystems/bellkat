@@ -2,7 +2,7 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE StrictData      #-}
 
-module QNKAT.Implementations.HistoryQuantum (HistoryQuantum, execute) where
+module BellKAT.Implementations.HistoryQuantum (HistoryQuantum, execute) where
 
 import           Data.Foldable              (toList)
 import           Data.Functor.Contravariant ((>$<))
@@ -11,9 +11,9 @@ import qualified Data.Set                   as Set
 
 import           Data.Vector.Fixed          (pattern V2)
 
-import           QNKAT.Utils.Choice
-import           QNKAT.Definitions.Core
-import           QNKAT.Definitions.Structures
+import           BellKAT.Utils.Choice
+import           BellKAT.Definitions.Core
+import           BellKAT.Definitions.Structures
 
 -- ** Quantum operations represented as functions over histories
 

@@ -1,5 +1,5 @@
 {-# LANGUAGE StrictData #-}
-module QNKAT.Implementations.AutomataStepHistoryQuantum 
+module BellKAT.Implementations.AutomataStepHistoryQuantum 
     ( AutomatonStepHistoryQuantum
     , execute
     , executeWith
@@ -11,11 +11,11 @@ import           Data.Set                       (Set)
 import           Data.Maybe                     (fromJust)
  
 
-import           QNKAT.Definitions.Core
-import           QNKAT.Definitions.Structures
-import           QNKAT.Implementations.Automata
-import qualified QNKAT.Implementations.AutomataExecution as AE
-import           QNKAT.Implementations.AutomataExecution (ExecutionParams)
+import           BellKAT.Definitions.Core
+import           BellKAT.Definitions.Structures
+import           BellKAT.Implementations.Automata
+import qualified BellKAT.Implementations.AutomataExecution as AE
+import           BellKAT.Implementations.AutomataExecution (ExecutionParams)
 
 newtype AutomatonStepHistoryQuantum a = AutomatonStepHistoryQuantum (MagicNFA a)
     deriving newtype (Show, ParallelSemigroup, OrderedSemigroup, Pointed, Semigroup, Monoid, ChoiceSemigroup, MonoidStar)

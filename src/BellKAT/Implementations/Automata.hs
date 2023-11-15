@@ -1,5 +1,5 @@
 {-# LANGUAGE StrictData #-}
-module QNKAT.Implementations.Automata (MagicNFA(..), productWith) where
+module BellKAT.Implementations.Automata (MagicNFA(..), productWith) where
 
 import           Data.IntMap.Strict           (IntMap)
 import qualified Data.IntMap.Strict           as IM
@@ -14,7 +14,7 @@ import           Data.Foldable (toList)
 import           Data.These.Combinators       (isThat, justThat)
 import           Data.Graph
 
-import           QNKAT.Definitions.Structures
+import           BellKAT.Definitions.Structures
 
 data Eps = Eps deriving stock (Show)
 

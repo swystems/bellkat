@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingVia          #-}
 {-# LANGUAGE OverloadedLists      #-}
 {-# LANGUAGE UndecidableInstances #-}
-module QNKAT.Implementations.OneStepHistoryQuantum 
+module BellKAT.Implementations.OneStepHistoryQuantum 
     ( OneStepPolicy(..)
     , OneStep
     , OneStepFree
@@ -18,10 +18,10 @@ import           Data.Set                     (Set)
 import qualified Data.Set                     as Set
 import           Data.Functor.Classes
 
-import           QNKAT.Definitions.Core
-import           QNKAT.Definitions.Structures
-import           QNKAT.Utils.Choice
-import           QNKAT.Utils.UnorderedTree    (UTree (..))
+import           BellKAT.Definitions.Core
+import           BellKAT.Definitions.Structures
+import           BellKAT.Utils.Choice
+import           BellKAT.Utils.UnorderedTree    (UTree (..))
 
 data OneStepPolicy a
     = Atomic a

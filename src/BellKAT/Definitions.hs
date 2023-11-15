@@ -1,7 +1,7 @@
-module QNKAT.Definitions
-    ( module QNKAT.Definitions.Core
-    , module QNKAT.Definitions.Structures
-    , module QNKAT.Definitions.Policy
+module BellKAT.Definitions
+    ( module BellKAT.Definitions.Core
+    , module BellKAT.Definitions.Structures
+    , module BellKAT.Definitions.Policy
     , applyPolicy
     , applyPolicyTimely
     , applyPolicySteps
@@ -16,15 +16,15 @@ module QNKAT.Definitions
 
 import           Data.Set                                (Set)
 
-import           QNKAT.Definitions.Structures
-import           QNKAT.Definitions.Core
-import           QNKAT.Definitions.Policy
-import           QNKAT.PolicyEmbeddings
-import qualified QNKAT.Implementations.HistoryQuantum        as HQ
-import qualified QNKAT.Implementations.OneStepHistoryQuantum as OSHQ
-import qualified QNKAT.Implementations.StepHistoryQuantum    as SHQ
-import qualified QNKAT.Implementations.AutomataStepHistoryQuantum    as ASHQ
-import qualified QNKAT.Implementations.TimelyHistoryQuantum  as THQ
+import           BellKAT.Definitions.Structures
+import           BellKAT.Definitions.Core
+import           BellKAT.Definitions.Policy
+import           BellKAT.PolicyEmbeddings
+import qualified BellKAT.Implementations.HistoryQuantum        as HQ
+import qualified BellKAT.Implementations.OneStepHistoryQuantum as OSHQ
+import qualified BellKAT.Implementations.StepHistoryQuantum    as SHQ
+import qualified BellKAT.Implementations.AutomataStepHistoryQuantum    as ASHQ
+import qualified BellKAT.Implementations.TimelyHistoryQuantum  as THQ
 
 applyPolicy :: Ord t => Normal Policy t -> History t -> Set (History t)
 applyPolicy = HQ.execute . meaning

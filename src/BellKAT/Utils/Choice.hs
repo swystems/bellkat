@@ -6,7 +6,7 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE TypeFamilies      #-}
 
-module QNKAT.Utils.Choice where
+module BellKAT.Utils.Choice where
 
 import           Data.Foldable              (toList)
 import           Data.Functor.Contravariant (Predicate (..))
@@ -18,7 +18,7 @@ import qualified Data.Set                   as Set
 import           Data.Vector.Fixed          (VecList, Arity)
 import qualified Data.Vector.Fixed          as FV
 
-import           QNKAT.Utils.UnorderedTree
+import           BellKAT.Utils.UnorderedTree
 
 -- | Part that we have chosen and part that we have left out
 data Partial a = Partial { chosen :: a, rest :: a }
