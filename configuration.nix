@@ -3,6 +3,13 @@ let
   matplotlibLatex = pkgs.texlive.combine {
     inherit (pkgs.texlive) scheme-basic type1cm cm-super underscore dvipng;
   };
+
+  dontCheckQNKAT = final: prev: {
+    haskellPackages = prev.haskellPackages.extend (hself: hsuper: {
+      qnkat-playground = prev.haskell.lib.dontCheck hsuper.qnkat-playground;
+    });
+  };
+
   ihaskell-env = (pkgs.haskellPackages.ghcWithPackages.override {
     postBuild = ''
       wrapProgram $out/bin/ihaskell --prefix PATH : $out/bin
@@ -10,7 +17,8 @@ let
   }) (ps: [
     ps.ihaskell
     ps.ihaskell-blaze
-  ] ++ ps.qnkat-playground.getCabalDeps.libraryHaskellDepends);
+    ps.qnkat-playground
+  ]);
 
   ihaskell-kernel = pkgs.runCommand "ihaskell-kernel" {
     buildInputs = [ ihaskell-env pkgs.python310Packages.notebook ];
@@ -60,7 +68,7 @@ in {
     [ (modulesPath + "/virtualisation/amazon-image.nix") ./hoogle_tls.nix ];
 
   nixpkgs.overlays =
-    [ qnkat.overlays.ihaskell-diagrams-fix qnkat.overlays.default ];
+    [ qnkat.overlays.ihaskell-diagrams-fix qnkat.overlays.default dontCheckQNKAT ];
 
   nix.settings.trusted-users = [ "pschuprikov" ];
   nix.extraOptions = ''
@@ -88,7 +96,7 @@ in {
   }];
 
   networking.firewall.allowedTCPPorts =
-    [ 22 config.services.jupyter.port config.services.hoogle.port ];
+    [ config.services.jupyter.port config.services.hoogle.port ] ++ config.services.openssh.ports;
 
   users.groups.jupyter = { };
   users.users.jupyter.group = "jupyter";
