@@ -23,6 +23,9 @@ swap loc locs = defaultTagged $ Swap loc locs
 create :: DSLFunctions p => Location -> p
 create loc = defaultTagged $ Create loc
 
+ucreate :: DSLFunctions p => (Location, Location) -> p
+ucreate loc = defaultTagged $ UnstableCreate loc
+
 (~~?) :: Location -> Location -> Test (Maybe t)
 l ~~? l' = any $ (== (l :~: l')) . bellPair
 

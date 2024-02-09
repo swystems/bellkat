@@ -60,3 +60,5 @@ actionArgs ta = case taAction ta of
         (l :~: l) [] Nothing (taTag ta) (taDup ta)
     (Distill (l1, l2))    -> CreateBellPairArgs (taTagPredicate ta)
         (l1 :~: l2) [l1 :~: l2, l1 :~: l2] (Just 0.5) (taTag ta) (taDup ta)
+    (UnstableCreate (l1, l2))            -> CreateBellPairArgs (taTagPredicate ta)
+        (l1 :~: l2) [] (Just 0.5) (taTag ta) (taDup ta)

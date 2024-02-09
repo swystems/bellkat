@@ -16,6 +16,7 @@ data Action
     | Transmit Location (Location, Location)
     | Distill (Location, Location)
     | Create Location
+    | UnstableCreate (Location, Location)
     deriving stock (Show)
 
 data TaggedAction t = TaggedAction
