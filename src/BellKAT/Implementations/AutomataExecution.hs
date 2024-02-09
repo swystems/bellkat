@@ -1,8 +1,13 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE StrictData #-}
-module BellKAT.Implementations.AutomataExecution 
+module BellKAT.Implementations.AutomataExecution
     ( execute
+    , evalExecution
+    , runExecution
+    , executeAutomata
+    , getAllStates
     , defaultExecutionParams
+    , showStates
     , ExecutionParams(..)
     ) where
 
@@ -16,22 +21,62 @@ import           Control.Monad.Except
 
 import BellKAT.Implementations.Automata
 
-execute :: Ord s
+execute :: (Ord s, Show s)
     => ExecutionParams
     -> (a -> s -> Set s)
     -> MagicNFA a
     -> s -> Maybe (Set s)
-execute params executeStep mnfa x = 
-    let env = EE { eeAutomaton = mnfa, eeStepEvaluation = executeStep, eeExecutionParams = params }
-        stInit = ES 
-            { esPending = IM.singleton (mnfaInitial mnfa) (Set.singleton x) 
-            , esProcessed = IM.map (const Set.empty) (mnfaTransition mnfa) 
-            }
-        (err, st) = (`runState` stInit) . runExceptT .(`runReaderT` env) $ executeAutomata
-        resFinal = IM.restrictKeys (esProcessed st) (mnfaFinal mnfa)
-     in case err of 
+execute params executeStep mnfa x =
+    let err = evalExecution params executeStep mnfa x 
+            $ executeAutomata >> getFinalStatesCombined
+     in case err of
           Left _ -> Nothing
-          Right () -> Just $ IM.foldl' Set.union Set.empty resFinal
+          Right final -> Just final
+
+getAllStates :: Ord s => ExecutionMonad a s (IntMap (Set s))
+getAllStates = gets esProcessed
+
+getFinalStatesCombined :: Ord s => ExecutionMonad a s (Set s)
+getFinalStatesCombined = do
+    resFinal <- IM.restrictKeys <$> getAllStates <*> asks (mnfaFinal . eeAutomaton)
+    pure $ IM.foldl' Set.union Set.empty resFinal
+
+showStates :: Show s => MagicNFA a -> IntMap (Set s) -> String
+showStates x = concatMap showState . IM.toList
+  where
+    showState (s, zs) = 
+        if Set.null zs
+           then ""
+           else showStateId x s <> ":\n" 
+            <> unlines (map (\z -> "  " <> show z) $ Set.toList zs)
+
+evalExecution :: Ord s
+    => ExecutionParams
+    -> (a -> s -> Set s)
+    -> MagicNFA a
+    -> s
+    -> ExecutionMonad a s b
+    -> Either ExecutionError b
+evalExecution params executeStep mnfa x m = 
+    let env = EE { eeAutomaton = mnfa, eeStepEvaluation = executeStep, eeExecutionParams = params }
+     in (`evalState` initialState mnfa x) . runExceptT . (`runReaderT` env) $ m
+
+runExecution :: Ord s
+    => ExecutionParams
+    -> (a -> s -> Set s)
+    -> MagicNFA a
+    -> s
+    -> ExecutionMonad a s b
+    -> (Either ExecutionError b, ExecutionState s)
+runExecution params executeStep mnfa x m =
+    let env = EE { eeAutomaton = mnfa, eeStepEvaluation = executeStep, eeExecutionParams = params }
+     in (`runState` initialState mnfa x) . runExceptT . (`runReaderT` env) $ m
+
+initialState :: MagicNFA a -> s -> ExecutionState s
+initialState mnfa x = ES
+            { esPending = IM.singleton (mnfaInitial mnfa) (Set.singleton x)
+            , esProcessed = IM.map (const Set.empty) (mnfaTransition mnfa)
+            }
 
 data ExecutionState s = ES
     { esPending   :: IntMap (Set s)
@@ -55,8 +100,8 @@ data ExecutionEnvironment a s = EE
 
 type ExecutionMonad a s = ReaderT (ExecutionEnvironment a s) (ExceptT ExecutionError (State (ExecutionState s)))
 
-executeAutomata :: (Ord s) => ExecutionMonad a s ()
-executeAutomata = 
+executeAutomata :: (Ord s, Show s) => ExecutionMonad a s ()
+executeAutomata =
     popNextPending >>= \case
         Nothing -> return ()
         Just (i, h) -> do

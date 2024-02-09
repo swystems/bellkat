@@ -1,6 +1,6 @@
 {-# LANGUAGE StrictData #-}
 module BellKAT.Implementations.AutomataStepHistoryQuantum 
-    ( AutomatonStepHistoryQuantum
+    ( AutomatonStepHistoryQuantum (getNFA)
     , execute
     , executeWith
     , ExecutionParams(..)
@@ -17,8 +17,9 @@ import           BellKAT.Implementations.Automata
 import qualified BellKAT.Implementations.AutomataExecution as AE
 import           BellKAT.Implementations.AutomataExecution (ExecutionParams)
 
-newtype AutomatonStepHistoryQuantum a = AutomatonStepHistoryQuantum (MagicNFA a)
-    deriving newtype (Show, ParallelSemigroup, OrderedSemigroup, Pointed, Semigroup, Monoid, ChoiceSemigroup, MonoidStar)
+newtype AutomatonStepHistoryQuantum a = AutomatonStepHistoryQuantum 
+    { getNFA :: MagicNFA a
+    } deriving newtype (Show, ParallelSemigroup, OrderedSemigroup, Pointed, Semigroup, Monoid, ChoiceSemigroup, MonoidStar)
 
 instance (Ord t, ChoiceSemigroup (sq t), CreatesBellPairs (sq t) t)
         => CreatesBellPairs (AutomatonStepHistoryQuantum (sq t)) t where
@@ -40,13 +41,13 @@ instance (Ord t, ChoiceSemigroup (sq t), TestsQuantum (sq t) t)
         => TestsOrderedQuantum (AutomatonStepHistoryQuantum (sq t)) t where
     orderedTest = OneStep . test
 
-execute :: Ord t
+execute :: (Ord t, Show t)
     => (a -> History t -> Set (History t))
     -> AutomatonStepHistoryQuantum a
     -> History t -> Set (History t)
 execute executeStep ahq = fromJust . executeWith (AE.EP Nothing) executeStep ahq
 
-executeWith :: Ord t
+executeWith :: (Ord t, Show t)
     => ExecutionParams
     -> (a -> History t -> Set (History t))
     -> AutomatonStepHistoryQuantum a
