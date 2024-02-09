@@ -1,5 +1,10 @@
 {-# LANGUAGE StrictData #-}
-module BellKAT.Implementations.Automata (MagicNFA(..), productWith) where
+module BellKAT.Implementations.Automata 
+    ( MagicNFA(..)
+    , restrictStates
+    , productWith
+    , showStateId
+    ) where
 
 import           Data.IntMap.Strict           (IntMap)
 import qualified Data.IntMap.Strict           as IM
@@ -30,6 +35,13 @@ data MagicNFA a = MNFA
     , mnfaFinal      :: !IntSet
     }
 
+restrictStates :: MagicNFA a -> IntSet -> MagicNFA a
+restrictStates x states = MNFA 
+    { mnfaInitial = mnfaInitial x
+    , mnfaTransition = fmap (`IM.restrictKeys` states) $ mnfaTransition x `IM.restrictKeys` states
+    , mnfaFinal = states `IS.intersection` mnfaFinal x
+    }
+
 showTransition :: Show a => (Int, a) -> String
 showTransition (j , act) = "-( " <> show act <> " )-> " <> show j
 
@@ -39,16 +51,20 @@ showEpsTransition (j, These Eps act) = "-( eps | " <> show act <> " )-> " <> sho
 showEpsTransition (j, That x) = showTransition (j, x)
 
 instance Show a => Show (MagicNFA a) where
-    show x = unlines $
-        map showState $ IM.toList (mnfaTransition x)
+    show x = 
+        concatMap showState $ IM.toList (mnfaTransition x)
       where
         showState (s, sTr) = 
-            (if s == mnfaInitial x then "^" else "") 
-            <> show s 
-            <> (if IS.member s (mnfaFinal x) then "$" else "")
-            <> ": "
-            <> unwords (map showTransition $ IM.toList sTr)
+            showStateId x s
+            <> ":\n"
+            <> unlines (map showTransition $ IM.toList sTr)
 
+showStateId :: MagicNFA a -> Int -> String
+showStateId x s = 
+    (if s == mnfaInitial x then "^" else "") 
+    <> show s 
+    <> (if IS.member s (mnfaFinal x) then "$" else "")
+ 
 instance Show a => Show (EpsNFA a) where
     show x = unlines $
         map showState $ IM.toList (enfaTransition x)
