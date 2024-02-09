@@ -29,12 +29,25 @@ data OneStepPolicy a
     | Choice (OneStepPolicy a) (OneStepPolicy a)
     deriving stock (Show)
 
+instance Functor OneStepPolicy where
+    fmap f (Atomic x) = Atomic (f x)
+    fmap f (Sequence x y) = Sequence (fmap f x) (fmap f y)
+    fmap f (Choice x y) = Choice (fmap f x) (fmap f y)
+
 instance Show1 OneStepPolicy where
   liftShowsPrec sp _ d (Atomic x) = sp d x
   liftShowsPrec sp sl d (Sequence x y) = 
-      showsBinaryWith (liftShowsPrec sp sl) (liftShowsPrec sp sl) "Sequence" d x y
+      showParen (seq_prec < d) $ 
+        liftShowsPrec sp sl (seq_prec + 1) x . showString " <.> "  
+        . liftShowsPrec sp sl (seq_prec + 1) y
+    where
+        seq_prec = 7
   liftShowsPrec sp sl d (Choice x y) = 
-      showsBinaryWith (liftShowsPrec sp sl) (liftShowsPrec sp sl) "Choice" d x y
+      showParen (parallel_prec < d) $
+        liftShowsPrec sp sl (parallel_prec + 1) x . showString " <+> "  
+        . liftShowsPrec sp sl (parallel_prec + 1) y
+    where
+        parallel_prec = 4
 
 instance Semigroup (OneStepPolicy a) where
     (<>) = Sequence
