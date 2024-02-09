@@ -114,6 +114,7 @@ instance OrderedSemigroup (StarPolicy a) where
     (<.>) = SPOrdered
 
 data Atomic t = AAction (TaggedAction t) | ATest (Test t)
+    deriving stock (Show)
 
 type Normal p t = p (TaggedAction t)
 type Ordered p t = p (NonEmpty (Atomic t))

@@ -75,6 +75,9 @@ instance Show1 CreateBellPairArgs where
 
 type Test t = Multiset (TaggedBellPair t) -> Bool
 
+instance Show (Test t) where
+  showsPrec _ _ = shows "test"
+
 -- * History of BellPairs
 
 type RequiredRoots = [BellPair]
