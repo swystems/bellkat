@@ -7,6 +7,7 @@ module BellKAT.Implementations.OneStepHistoryQuantum
     , OneStepFree
     , execute
     , executePartial
+    , executeFree
     ) where
 
 import           Data.Foldable                (toList)
@@ -16,6 +17,7 @@ import           Data.List.NonEmpty           (NonEmpty (..))
 import qualified Data.Multiset                as Mset
 import           Data.Set                     (Set)
 import qualified Data.Set                     as Set
+import           Data.Maybe (isJust)
 import           Data.Functor.Classes
 
 import           BellKAT.Definitions.Core
@@ -126,17 +128,24 @@ instance Ord t => Tests (OneStep t) t where
   test p = OneStep . PartialNDEndo $ \h@(History ts) ->
     if p (Mset.map rootLabel ts) then [ chooseNoneOf h ] else []
 
-data OneStepFree t = OSFCreate (CreateBellPairArgs t) | OSFTest
+data OneStepFree t = OSFCreate (CreateBellPairArgs t) | OSFTest (Test t)
+
+runOneStepFree :: (Tests a t, CreatesBellPairs a t) => OneStepFree t -> a
+runOneStepFree (OSFCreate args) = tryCreateBellPairFrom args
+runOneStepFree (OSFTest args) = test args
 
 instance Show1 OneStepFree where
-  liftShowsPrec _ _ _ (OSFCreate _) = showString "create(" . showString ")"
-  liftShowsPrec _ _ _ OSFTest = showString "[..]"
+  liftShowsPrec _ _ _ (OSFCreate ca) 
+    = showString "create" 
+        . (if isJust (cbpProbability ca) then showString "?" else id ) 
+        . showString "(" . shows (cbpOutputBP ca). showString ")"
+  liftShowsPrec _ _ _ (OSFTest _) = showString "[..]"
 
 instance CreatesBellPairs (OneStepFree t) t where
   tryCreateBellPairFrom = OSFCreate
 
 instance Tests (OneStepFree t) t where
-  test _ = OSFTest
+  test = OSFTest
 
 instance CreatesBellPairs a t =>  CreatesBellPairs (OneStepPolicy a) t where
     tryCreateBellPairFrom = Atomic . tryCreateBellPairFrom
@@ -177,6 +186,9 @@ executeOneStepPolicy (Choice p q)  = oneStepChoice (executeOneStepPolicy p) (exe
 
 executePartial :: Ord t => Compose OneStepPolicy OneStep t -> History t -> Set (Partial (History t))
 executePartial (Compose osp) = applyPartialNDEndo (executeOneStep (executeOneStepPolicy osp))
+
+executeFree :: Ord t => Compose OneStepPolicy OneStepFree t -> History t -> Set (History t)
+executeFree = execute . Compose . fmap runOneStepFree . getCompose
 
 execute :: Ord t => Compose OneStepPolicy OneStep t -> History t -> Set (History t)
 execute p = Set.map unchoose . executePartial p
