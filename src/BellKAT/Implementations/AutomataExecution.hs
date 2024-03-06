@@ -8,6 +8,7 @@ module BellKAT.Implementations.AutomataExecution
     , getAllStates
     , defaultExecutionParams
     , showStates
+    , printAutomatonStats
     , ExecutionParams(..)
     ) where
 
@@ -144,3 +145,15 @@ popNextPending = do
                    st { esPending = IM.union p' $ 
                        if Set.size v' == 0 then IM.empty else IM.singleton k v' }
                return $ Just (k, r)
+
+printAutomatonStats :: (Monoid b, Ord b, Show b, Show a) => (a -> b -> Set b) -> MagicNFA a -> IO ()
+printAutomatonStats exec nfa =
+    let
+        st = evalExecution (EP Nothing) exec nfa mempty $ 
+            executeAutomata >> getAllStates
+    in case st of 
+         Left _ -> putStrLn "execution error"
+         Right states -> do
+             let reachableStates = IM.filter (not . null) states
+             putStrLn $ showStates nfa reachableStates
+             print $ restrictStates nfa (IM.keysSet reachableStates)

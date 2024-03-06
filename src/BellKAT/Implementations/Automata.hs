@@ -219,7 +219,7 @@ productWith f (MNFA aI aT aF) (MNFA bI bT bF) =
         onlyA = IM.mapKeysMonotonic (`encode` bFinal)
             . IM.map (IM.mapKeysMonotonic (`encode` bFinal)) $ aT
         onlyB = IM.mapKeysMonotonic (aFinal `encode`)
-            . IM.map (IM.mapKeysMonotonic (`encode` bFinal)) $ aT
+            . IM.map (IM.mapKeysMonotonic (aFinal `encode`)) $ bT
         newAF = IS.map (`encode` bFinal) aF
         newBF = IS.map (aFinal `encode`) bF
      in enfaToMnfa $ ENFA
