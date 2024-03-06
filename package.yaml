@@ -51,17 +51,28 @@ library:
     - BellKAT.DSL
     - BellKAT.Test
 
+executables:
+  paper:
+    source-dirs:
+      - test/paper
+      - src
+    dependencies: 
+      - hspec
+    main: SpecPaper
+    ghc-options:
+      - -Wno-unused-local-binds
+
 tests:
   spec: 
     main: Spec
     source-dirs: 
-      - test
+      - test/main
       - src
     dependencies: 
       - hspec
   small:
     source-dirs:
-      - test
+      - test/small
       - src
     dependencies: 
       - hspec

@@ -2,6 +2,10 @@ cradle:
     cabal:
         - path: "src"
           component: "lib:bellkat"
-        - path: "test"
+        - path: "test/main"
           component: "test:spec"
+        - path: "test/small"
+          component: "test:small"
+        - path: "test/paper"
+          component: "exe:paper"
 

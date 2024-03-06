@@ -73,6 +73,15 @@ data CreateBellPairArgs t = CreateBellPairArgs
 instance Show1 CreateBellPairArgs where
   liftShowsPrec _ _ _ _ = shows "cbp"
 
+data FreeTest t 
+    = FTSubset (Multiset (TaggedBellPair t))
+    | FTNot (FreeTest t)
+
+instance Show t => Show (FreeTest t) where
+    showsPrec _ (FTSubset x) = shows x
+    showsPrec d (FTNot x) = showParen (app_prec < d) $ showString "not " . shows x
+      where app_prec = 10
+
 type Test t = Multiset (TaggedBellPair t) -> Bool
 
 instance Show (Test t) where
