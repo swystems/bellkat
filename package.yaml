@@ -41,6 +41,7 @@ library:
     - BellKAT.Definitions.Structures
     - BellKAT.Definitions.Policy
     - BellKAT.Implementations.OneStepHistoryQuantum
+    - BellKAT.Implementations.OneStepHistoryQuantum.FunctionStep
     - BellKAT.Implementations.TimelyHistoryQuantum
     - BellKAT.Implementations.StepHistoryQuantum
     - BellKAT.Implementations.HistoryQuantum
