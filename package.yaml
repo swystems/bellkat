@@ -8,6 +8,7 @@ default-extensions:
   - FlexibleInstances
   - FlexibleContexts
   - ScopedTypeVariables
+  - NoPolyKinds
 
 ghc-options:
   - -Wall
@@ -59,9 +60,6 @@ executables:
     dependencies: 
       - hspec
     main: SpecPaper
-    ghc-options:
-      - -Wno-unused-local-binds
-      - -Wno-unused-imports
 
 tests:
   spec: 

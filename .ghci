@@ -1,5 +1,5 @@
 :set -isrc -itest/main
-:set -XFlexibleContexts -XDerivingStrategies -XFlexibleInstances -XScopedTypeVariables -XTypeFamilies -XGeneralizedNewtypeDeriving -XFunctionalDependencies
+:set -XNoPolyKinds -XFlexibleContexts -XDerivingStrategies -XFlexibleInstances -XScopedTypeVariables -XTypeFamilies -XGeneralizedNewtypeDeriving -XFunctionalDependencies 
 :load BellKAT.Definitions
 :load BellKAT.DSL
 :load BellKAT.Drawing
