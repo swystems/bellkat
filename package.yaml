@@ -42,6 +42,7 @@ library:
     - BellKAT.Definitions.Policy
     - BellKAT.Implementations.OneStepHistoryQuantum
     - BellKAT.Implementations.OneStepHistoryQuantum.FunctionStep
+    - BellKAT.Implementations.OneStepHistoryQuantum.FreeStep
     - BellKAT.Implementations.TimelyHistoryQuantum
     - BellKAT.Implementations.StepHistoryQuantum
     - BellKAT.Implementations.HistoryQuantum

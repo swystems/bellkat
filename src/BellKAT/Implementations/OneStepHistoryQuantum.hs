@@ -3,8 +3,8 @@
 {-# LANGUAGE UndecidableInstances #-}
 module BellKAT.Implementations.OneStepHistoryQuantum
     ( OneStepPolicy(..)
-    , FunctionStep(..)
-    , OneStepFree
+    , FunctionStep (..)
+    , FreeStep
     , execute
     , executePartial
     , executeFree
@@ -14,13 +14,13 @@ import           Data.Functor.Compose         (Compose (..))
 import           Data.List.NonEmpty           (NonEmpty (..))
 import           Data.Set                     (Set)
 import qualified Data.Set                     as Set
-import           Data.Maybe (isJust)
 import           Data.Functor.Classes
 
 import           BellKAT.Definitions.Core
 import           BellKAT.Definitions.Structures
 import           BellKAT.Utils.Choice
 import           BellKAT.Implementations.OneStepHistoryQuantum.FunctionStep
+import           BellKAT.Implementations.OneStepHistoryQuantum.FreeStep
 
 data OneStepPolicy a
     = Atomic a
@@ -83,26 +83,6 @@ sequenceAfterDecomposition :: OneStepPolicy a -> Decomposition a  -> Decompositi
 sequenceAfterDecomposition q (Left x)        = Right (x, q)
 sequenceAfterDecomposition q (Right (x, xs)) = Right (x, Sequence xs q)
 
-data OneStepFree test tag = OSFCreate (CreateBellPairArgs tag) | OSFTest (test tag)
-
-runOneStepFree
-    :: (Test test, Ord tag, Tests a BellPairsPredicate tag, CreatesBellPairs a tag)
-    => OneStepFree test tag -> a
-runOneStepFree (OSFCreate args) = tryCreateBellPairFrom args
-runOneStepFree (OSFTest args) = test . toBPsPredicate $ args
-
-instance Show1 test => Show1 (OneStepFree test) where
-  liftShowsPrec _ _ _ (OSFCreate ca)
-    = showString "create"
-        . (if isJust (cbpProbability ca) then showString "?" else id )
-        . showString "(" . shows (cbpOutputBP ca). showString ")"
-  liftShowsPrec s sl _ (OSFTest t) = showString "[" . liftShowsPrec s sl 0 t . showString "]"
-
-instance CreatesBellPairs (OneStepFree test t) t where
-  tryCreateBellPairFrom = OSFCreate
-
-instance Tests (OneStepFree test t) test t where
-  test = OSFTest
 
 instance CreatesBellPairs a t =>  CreatesBellPairs (OneStepPolicy a) t where
     tryCreateBellPairFrom = Atomic . tryCreateBellPairFrom
@@ -145,8 +125,8 @@ executeOneStepPolicy (Choice p q)  = executeOneStepPolicy p <+> executeOneStepPo
 executePartial :: Ord tag => Compose OneStepPolicy FunctionStep tag -> History tag -> Set (Partial (History tag))
 executePartial (Compose osp) = applyPartialNDEndo (executeFunctionStep (executeOneStepPolicy osp))
 
-executeFree :: (Test test, Ord tag) => Compose OneStepPolicy (OneStepFree test) tag -> History tag -> Set (History tag)
-executeFree = execute . Compose . fmap runOneStepFree . getCompose
+executeFree :: (Test test, Ord tag) => Compose OneStepPolicy (FreeStep test) tag -> History tag -> Set (History tag)
+executeFree = execute . Compose . fmap runFreeStep . getCompose
 
 execute :: Ord t => Compose OneStepPolicy FunctionStep t -> History t -> Set (History t)
 execute p = Set.map unchoose . executePartial p
