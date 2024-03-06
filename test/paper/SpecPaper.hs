@@ -4,14 +4,10 @@
 
 module SpecPaper where
 
-import           Data.Functor.Compose         (Compose (..))
-
 import BellKAT.Drawing
 import BellKAT.DSL
 import BellKAT.Definitions hiding (test, (<.>))
-import qualified BellKAT.Implementations.OneStepHistoryQuantum as OSHQ
 
-type OneStepPolicy = Compose OSHQ.OneStepPolicy (OSHQ.OneStepFree FreeTest) (Maybe ())
 type PaperPolicy = Ordered StarPolicy BellPairsPredicate (Maybe ())
 
 main :: IO ()
