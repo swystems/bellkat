@@ -5,28 +5,15 @@ module BellKAT.Implementations.OneStepHistoryQuantum.FunctionStep
     , PartialNDEndo (..)
     ) where
 
-import           Data.Foldable                (toList)
 import           Data.Functor.Classes
 import           Data.Functor.Contravariant   ((>$<))
 import qualified Data.Multiset                as Mset
-import           Data.Set                     (Set)
-import qualified Data.Set                     as Set
 
 import           BellKAT.Definitions.Core
 import           BellKAT.Definitions.Structures
 import           BellKAT.Utils.Choice
+import           BellKAT.Utils.PartialNDEndo
 import           BellKAT.Utils.UnorderedTree    (UTree (..))
-
-newtype PartialNDEndo a = PartialNDEndo
-    { applyPartialNDEndo :: a -> Set (Partial a)
-    }
-
-instance (Ord a, Monoid a) => Semigroup (PartialNDEndo a) where
-    (PartialNDEndo f) <> (PartialNDEndo g) = PartialNDEndo $ \x -> Set.fromList
-        [ pb <> chooseAll (chosen pa) | pa <- toList $ f x, pb <- toList $ g (rest pa) ]
-
-instance (Ord a, Monoid a) => Monoid (PartialNDEndo a) where
-    mempty = PartialNDEndo $ Set.singleton . chooseNoneOf
 
 newtype FunctionStep tag = FunctionStep
     { executeFunctionStep :: PartialNDEndo (History tag)

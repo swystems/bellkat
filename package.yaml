@@ -51,6 +51,7 @@ library:
     - BellKAT.Utils.UnorderedTree
     - BellKAT.Utils.NonEmpty
     - BellKAT.Utils.Choice
+    - BellKAT.Utils.PartialNDEndo
     - BellKAT.DSL
     - BellKAT.Test
 
