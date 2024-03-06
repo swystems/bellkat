@@ -37,8 +37,8 @@ instance (ChoiceSemigroup (sq t), Quantum (sq t) t)
 instance (Semigroup (sq t)) => OrderedSemigroup (Layer (AutomatonStepHistoryQuantum (sq t))) where
    (OneStep s) <.> (OneStep s') = OneStep (s <> s')
 
-instance (Ord t, ChoiceSemigroup (sq t), TestsQuantum (sq t) t) 
-        => TestsOrderedQuantum (AutomatonStepHistoryQuantum (sq t)) t where
+instance (Ord tag, ChoiceSemigroup (sq tag), TestsQuantum (sq tag) test tag)
+        => TestsOrderedQuantum (AutomatonStepHistoryQuantum (sq tag)) test tag where
     orderedTest = OneStep . test
 
 execute :: (Ord t, Show t)

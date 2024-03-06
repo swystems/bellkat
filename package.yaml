@@ -61,6 +61,7 @@ executables:
     main: SpecPaper
     ghc-options:
       - -Wno-unused-local-binds
+      - -Wno-unused-imports
 
 tests:
   spec: 

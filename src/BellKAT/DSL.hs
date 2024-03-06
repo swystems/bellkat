@@ -26,54 +26,66 @@ create loc = defaultTagged $ Create loc
 ucreate :: DSLFunctions p => (Location, Location) -> p
 ucreate loc = defaultTagged $ UnstableCreate loc
 
-(~~?) :: Location -> Location -> Test (Maybe t)
-l ~~? l' = any $ (== (l :~: l')) . bellPair
+class DSLTestNeq t where
+    (/~?) :: Location -> Location -> t
 
-(/~?) :: Location -> Location -> Test (Maybe t)
-l /~? l' = not . (l ~~? l')
+class DSLTestNeq t => DSLTest t where
+    (~~?) :: Location -> Location -> t
+
+instance DSLTestNeq (BellPairsPredicate (Maybe t)) where
+    l /~? l' = BPsPredicate $ not . any ((== (l :~: l')) . bellPair)
+
+instance DSLTest (BellPairsPredicate (Maybe t)) where
+    l ~~? l' = BPsPredicate $ any $ (== (l :~: l')) . bellPair
+
+instance Ord t => DSLTestNeq (FreeTest (Maybe t)) where
+    l /~? l' = FTNot $ FTSubset [TaggedBellPair (l :~: l') Nothing]
+
+instance Ord t => DSLTest (FreeTest (Maybe t)) where
+    l ~~? l' = FTSubset [TaggedBellPair (l :~: l') Nothing]
 
 class DSLFunctions p where
     defaultTagged :: Action -> p
     (.%) :: p -> DupKind -> p
 
-class DSLTestFunctions p t | p -> t where
-    test :: Test (Maybe t) -> p
+class DSLTestFunctions p test t | p -> t, p -> test where
+    test :: test (Maybe t) -> p
 
 -- test :: Test (Maybe t) -> Ordered Policy (Maybe t)
-instance DSLTestFunctions (Ordered Policy (Maybe t)) t where
+instance DSLTestFunctions (Ordered Policy test (Maybe tag)) test tag where
     test t = APAtomic [ ATest t ]
 
-instance DSLTestFunctions (Ordered FullPolicy (Maybe t)) t where
+instance DSLTestFunctions (Ordered FullPolicy test (Maybe tag)) test tag where
     test t = FPAtomic [ ATest t ]
 
-instance DSLTestFunctions (Ordered StarPolicy (Maybe t)) t where
+instance DSLTestFunctions (Ordered StarPolicy test (Maybe tag)) test tag where
     test t = SPAtomic [ ATest t ]
 
-instance DSLFunctions (Normal Policy (Maybe t)) where
+instance DSLFunctions (Normal Policy (Maybe tag)) where
     defaultTagged a = APAtomic $ TaggedAction mempty a Nothing mempty
 
     APAtomic (TaggedAction p a t _) .% dk = APAtomic $ TaggedAction p a t dk
     _ .% _                                = error "cannot attach dup to this thing"
 
-instance DSLFunctions (Ordered Policy (Maybe t)) where
+instance DSLFunctions (Ordered Policy test (Maybe tag)) where
     defaultTagged a = APAtomic [ AAction (TaggedAction mempty a Nothing mempty) ]
 
     APAtomic (AAction (TaggedAction p a t _) :| []) .% dk = APAtomic [ AAction (TaggedAction p a t dk) ]
     _ .% _                                = error "cannot attach dup to this thing"
 
-instance DSLFunctions (Ordered FullPolicy (Maybe t)) where
+instance DSLFunctions (Ordered FullPolicy test (Maybe tag)) where
     defaultTagged a = FPAtomic [ AAction (TaggedAction mempty a Nothing mempty) ]
 
     FPAtomic (AAction (TaggedAction p a t _) :| []) .% dk = FPAtomic [ AAction (TaggedAction p a t dk) ]
     _ .% _                                = error "cannot attach dup to this thing"
 
-instance DSLFunctions (Ordered StarPolicy (Maybe t)) where
+instance DSLFunctions (Ordered StarPolicy test (Maybe tag)) where
     defaultTagged a = SPAtomic [ AAction (TaggedAction mempty a Nothing mempty) ]
 
     SPAtomic (AAction (TaggedAction p a t _) :| []) .% dk = SPAtomic [ AAction (TaggedAction p a t dk) ]
     _ .% _                                = error "cannot attach dup to this thing"
 
-instance DSLFunctions (Ordered StarPolicy ()) where
+instance DSLFunctions (Ordered StarPolicy test ()) where
     defaultTagged a = SPAtomic [ AAction (TaggedAction mempty a () mempty) ]
 
     SPAtomic (AAction (TaggedAction p a t _) :| []) .% dk = SPAtomic [ AAction (TaggedAction p a t dk) ]
@@ -84,15 +96,15 @@ infixl 7 <.>
 class DSLOrderedSemigroup a where
     (<.>) :: a -> a -> a
 
-instance DSLOrderedSemigroup (Ordered Policy a) where
+instance DSLOrderedSemigroup (Ordered Policy test tag) where
     (APAtomic tas) <.> (APAtomic tas') = APAtomic (tas <> tas')
     _ <.> _                            = error "Can only compose atomics with <.>"
 
-instance DSLOrderedSemigroup (Ordered FullPolicy a) where
+instance DSLOrderedSemigroup (Ordered FullPolicy test tag) where
     (FPAtomic tas) <.> (FPAtomic tas') = FPAtomic (tas <> tas')
     _ <.> _                            = error "Can only compose atomics with <.>"
 
-instance DSLOrderedSemigroup (Ordered StarPolicy a) where
+instance DSLOrderedSemigroup (Ordered StarPolicy test tag) where
     (SPAtomic tas) <.> (SPAtomic tas') = SPAtomic (tas <> tas')
     _ <.> _                            = error "Can only compose atomics with <.>"
 
@@ -118,15 +130,16 @@ instance Taggable (Normal Policy (Maybe t)) t where
     APAtomic (TaggedAction p a _ dupKind) .~ t = APAtomic (TaggedAction p a (Just t) dupKind)
     p .~ _                           = p
 
-instance Eq t => Taggable (Ordered StarPolicy (Maybe t)) t where
+instance (Eq tag, Taggable (test (Maybe tag)) tag) 
+        => Taggable (Ordered StarPolicy test (Maybe tag)) tag where
     SPAtomic (AAction (TaggedAction p a _ dupKind) :| []) .~ t = 
         SPAtomic $ AAction (TaggedAction p a (Just t) dupKind) :| []
     SPAtomic (ATest t :| []) .~ tag = 
         SPAtomic $ ATest (t .~ tag) :| []
     p .~ _                           = p
 
-instance Eq t => Taggable (Test (Maybe t)) t where
-    t .~ tag = \bps -> all (hasTag tag) bps && t bps
+instance Eq t => Taggable (BellPairsPredicate (Maybe t)) t where
+    t .~ tag = BPsPredicate $ \bps -> all (hasTag tag) bps && getBPsPredicate t bps
 
 hasTag :: Eq t => t -> TaggedBellPair (Maybe t) -> Bool
 hasTag tag tbp = Just tag == bellPairTag tbp

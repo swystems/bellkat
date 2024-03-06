@@ -53,7 +53,7 @@ instance (Semigroup (sq t)) => OrderedSemigroup (Layer (StepHistoryQuantum (sq t
 instance ChoiceSemigroup (StepHistoryQuantum a) where
     hq <+> hq' = StepHistoryQuantum $ getSteps hq <> getSteps hq'
 
-instance (Ord t, TestsQuantum (sq t) t) => TestsOrderedQuantum (StepHistoryQuantum (sq t)) t where
+instance (Ord t, TestsQuantum (sq t) test t) => TestsOrderedQuantum (StepHistoryQuantum (sq t)) test t where
     orderedTest = OneStep . test
 
 execute :: Ord t

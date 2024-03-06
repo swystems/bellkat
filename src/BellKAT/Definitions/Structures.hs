@@ -46,10 +46,10 @@ class CreatesBellPairs a t | a -> t where
 -- `a` is the type of the carrier and `t` is a tag
 class (Semigroup a, ParallelSemigroup a, CreatesBellPairs a t) => Quantum a t | a -> t where
 
-class Tests a t | a -> t where
-    test :: Test t -> a
+class Tests a test tag | a -> tag, a -> test where
+    test :: test tag -> a
 
-class (Quantum a t, Tests a t) => TestsQuantum a t | a -> t where
+class (Quantum a tag, Tests a test tag) => TestsQuantum a test tag | a -> test, a -> tag where
 
 -- | `Quantum` that has two domains: 
 --  * `a` for the top-level behavior having `Semigroup` and `ParallelSemigroup` structures)
@@ -61,8 +61,8 @@ class (Semigroup a, ParallelSemigroup a, OrderedSemigroup (Layer a)) => OrderedQ
     orderedTryCreateBellPairFrom :: CreateBellPairArgs t -> Layer a
     liftLayer :: Layer a -> a
 
-class OrderedQuantum a t => TestsOrderedQuantum a t where
-    orderedTest :: Test t -> Layer a
+class OrderedQuantum a tag => TestsOrderedQuantum a test tag where
+    orderedTest :: test tag -> Layer a
 
 -- | Notation for predicate
 subjectTo :: Quantum a t => Predicate t -> (Predicate t -> a) -> a

@@ -114,11 +114,11 @@ instance ChoiceSemigroup (StarPolicy a) where
 instance OrderedSemigroup (StarPolicy a) where
     (<.>) = SPOrdered
 
-data Atomic t = AAction (TaggedAction t) | ATest (Test t)
+data Atomic test tag = AAction (TaggedAction tag) | ATest (test tag)
     deriving stock (Show)
 
-type Normal p t = p (TaggedAction t)
-type Ordered p t = p (NonEmpty (Atomic t))
+type Normal p tag = p (TaggedAction tag)
+type Ordered p test tag = p (NonEmpty (Atomic test tag))
 
 -- * Testing definitions
 

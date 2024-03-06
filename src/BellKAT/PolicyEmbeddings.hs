@@ -10,10 +10,10 @@ import BellKAT.Utils.NonEmpty
 class HasMeaning p a where
     meaning :: p -> a
 
-instance Quantum a t => HasMeaning (TaggedAction t) a where
+instance Quantum a tag => HasMeaning (TaggedAction tag) a where
     meaning = tryCreateBellPairFrom . actionArgs
 
-instance TestsOrderedQuantum a t => HasMeaning (NonEmpty (Atomic t)) a where
+instance TestsOrderedQuantum a test tag => HasMeaning (NonEmpty (Atomic test tag)) a where
     meaning ta = liftLayer $ foldNonEmpty (<.>) $ meaning <$> ta
 
 instance (ParallelSemigroup a, Semigroup a, HasMeaning at a) => HasMeaning (Policy at) a where
@@ -21,7 +21,7 @@ instance (ParallelSemigroup a, Semigroup a, HasMeaning at a) => HasMeaning (Poli
     meaning (APSequence p q) = meaning p <> meaning q
     meaning (APParallel p q) = meaning p <||> meaning q
 
-instance (TestsOrderedQuantum a t) => HasMeaning (Atomic t) (Layer a) where
+instance (TestsOrderedQuantum a test tag) => HasMeaning (Atomic test tag) (Layer a) where
     meaning (AAction a) = orderedTryCreateBellPairFrom $ actionArgs a
     meaning (ATest t)   = orderedTest t
 
@@ -32,15 +32,15 @@ instance (HasMeaning (TaggedAction at) a, Semigroup a, ParallelSemigroup a, Choi
     meaning (ORPParallel p q) = meaning p <||> meaning q
     meaning (ORPChoice p q) = meaning p <+> meaning q
 
-instance (ChoiceSemigroup a, Monoid a, TestsOrderedQuantum a t) 
-  => HasMeaning (Ordered FullPolicy t) a where
+instance (ChoiceSemigroup a, Monoid a, TestsOrderedQuantum a test tag) 
+  => HasMeaning (Ordered FullPolicy test tag) a where
     meaning (FPAtomic ta) = liftLayer $ foldNonEmpty (<.>) $ meaning <$> ta
     meaning (FPSequence p q) = meaning p <> meaning q
     meaning FPOne = mempty
     meaning (FPParallel p q) = meaning p <||> meaning q
     meaning (FPChoice p q) = meaning p <+> meaning q
 
-instance (MonoidStar a, OrderedSemigroup a, TestsOrderedQuantum a t) => HasMeaning (Ordered StarPolicy t) a where
+instance (MonoidStar a, OrderedSemigroup a, TestsOrderedQuantum a test tag) => HasMeaning (Ordered StarPolicy test tag) a where
     meaning (SPAtomic ta) = liftLayer $ foldNonEmpty (<.>) $ meaning <$> ta
     meaning (SPOrdered p q) = meaning p <.> meaning q
     meaning (SPSequence p q) = meaning p <> meaning q

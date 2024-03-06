@@ -6,9 +6,11 @@ module BellKAT.Definitions.Core (
     BellPair(..), 
     History(..),
     DupKind(..),
-    Test,
+    Test(..),
+    BellPairsPredicate(..),
     Partial(..),
     TaggedBellPair(..),
+    FreeTest(..),
     dupHistory,
     dupHistoryN,
     processDup,
@@ -77,14 +79,28 @@ data FreeTest t
     = FTSubset (Multiset (TaggedBellPair t))
     | FTNot (FreeTest t)
 
+instance Show1 FreeTest where
+    liftShowsPrec s sl i (FTNot t) = showString "~" . liftShowsPrec s sl i t
+    liftShowsPrec _ _ _ (FTSubset bps) = shows (map bellPair $ toList bps)
+
 instance Show t => Show (FreeTest t) where
     showsPrec _ (FTSubset x) = shows x
     showsPrec d (FTNot x) = showParen (app_prec < d) $ showString "not " . shows x
       where app_prec = 10
 
-type Test t = Multiset (TaggedBellPair t) -> Bool
+newtype BellPairsPredicate t = BPsPredicate { getBPsPredicate :: Multiset (TaggedBellPair t) -> Bool }
 
-instance Show (Test t) where
+class Test test where
+    toBPsPredicate :: Ord tag => test tag -> BellPairsPredicate tag
+
+instance Test FreeTest where
+    toBPsPredicate (FTNot t) = BPsPredicate $ not . getBPsPredicate (toBPsPredicate t)
+    toBPsPredicate (FTSubset bps) = BPsPredicate (bps `Mset.isSubsetOf`)
+
+instance Test BellPairsPredicate where
+    toBPsPredicate = id
+
+instance Show (BellPairsPredicate t) where
   showsPrec _ _ = shows "test"
 
 -- * History of BellPairs

@@ -26,34 +26,48 @@ import qualified BellKAT.Implementations.StepHistoryQuantum    as SHQ
 import qualified BellKAT.Implementations.AutomataStepHistoryQuantum    as ASHQ
 import qualified BellKAT.Implementations.TimelyHistoryQuantum  as THQ
 
-applyPolicy :: Ord t => Normal Policy t -> History t -> Set (History t)
+applyPolicy :: Ord tag => Normal Policy tag -> History tag -> Set (History tag)
 applyPolicy = HQ.execute . meaning
 
-applyPolicyTimely :: Ord t => Normal Policy t -> History t -> Set (History t)
+applyPolicyTimely :: Ord tag => Normal Policy tag -> History tag -> Set (History tag)
 applyPolicyTimely = THQ.execute . meaning
 
-applyPolicySteps :: (Ord t) => Normal Policy t -> History t -> Set (History t)
+applyPolicySteps :: (Ord tag) => Normal Policy tag -> History tag -> Set (History tag)
 applyPolicySteps  = SHQ.execute HQ.execute . meaning
 
-applyOrderedPolicy :: (Ord t, Show t) => Ordered Policy t -> History t -> Set (History t)
+applyOrderedPolicy 
+    :: (Ord tag, Show tag) 
+    => Ordered Policy BellPairsPredicate tag -> History tag -> Set (History tag)
 applyOrderedPolicy = SHQ.execute OSHQ.execute . meaning
 
-applyFullOrderedPolicy :: (Ord t, Show t) => Ordered FullPolicy t -> History t -> Set (History t)
+applyFullOrderedPolicy 
+    :: (Ord tag, Show tag) 
+    => Ordered FullPolicy BellPairsPredicate tag -> History tag -> Set (History tag)
 applyFullOrderedPolicy = SHQ.execute OSHQ.execute . meaning
 
-applyFullOrderedPolicyAuto :: (Ord t, Show t) => Ordered FullPolicy t -> History t -> Set (History t)
+applyFullOrderedPolicyAuto 
+    :: (Ord tag, Show tag) 
+    => Ordered FullPolicy BellPairsPredicate tag -> History tag -> Set (History tag)
 applyFullOrderedPolicyAuto = ASHQ.execute OSHQ.execute . meaning
 
-applyStarOrderedPolicy :: (Ord t, Show t) => Ordered StarPolicy t -> History t -> Set (History t)
+applyStarOrderedPolicy 
+    :: (Ord tag, Show tag) 
+    => Ordered StarPolicy BellPairsPredicate tag -> History tag -> Set (History tag)
 applyStarOrderedPolicy = ASHQ.execute OSHQ.execute . meaning
 
-applyOneStepPolicyPartial :: (Ord t, Show t) => Normal OneRoundPolicy t -> History t -> Set (Partial (History t))
+applyOneStepPolicyPartial 
+    :: (Ord tag, Show tag) 
+    => Normal OneRoundPolicy tag -> History tag -> Set (Partial (History tag))
 applyOneStepPolicyPartial = OSHQ.executePartial . meaning
 
-applyOneStepPolicy :: (Ord t, Show t) => Normal OneRoundPolicy t -> History t -> Set (History t)
+applyOneStepPolicy 
+    :: (Ord tag, Show tag) 
+    => Normal OneRoundPolicy tag -> History tag -> Set (History tag)
 applyOneStepPolicy = OSHQ.execute . meaning
 
-applyStarOrderedPolicyBounded :: (Ord t, Show t) => Ordered StarPolicy t -> History t -> Set (History t)
+applyStarOrderedPolicyBounded 
+    :: (Ord tag, Show tag) 
+    => Ordered StarPolicy BellPairsPredicate tag -> History tag -> Set (History tag)
 applyStarOrderedPolicyBounded = (handleExecutionError .) . ASHQ.executeWith (ASHQ.EP (Just 100)) OSHQ.execute . meaning
   where
     handleExecutionError :: Maybe a -> a

@@ -52,16 +52,23 @@ drawPolicyTimely p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPo
 drawPolicySteps :: (Ord t, Show t) => Normal Policy (Maybe t) -> ManuallySized (Diagram B)
 drawPolicySteps p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPolicySteps p $ []
 
-drawOrderedPolicySteps :: (Ord t, Show t) => Ordered Policy (Maybe t) -> ManuallySized (Diagram B)
+drawOrderedPolicySteps 
+    :: (Ord t, Show t) => Ordered Policy BellPairsPredicate (Maybe t) -> ManuallySized (Diagram B)
 drawOrderedPolicySteps p = withImgWidth 600 . historiesToDiagram . Set.elems . applyOrderedPolicy p $ []
 
-drawFullOrderedPolicySteps :: (Ord t, Show t) => Ordered FullPolicy (Maybe t) -> ManuallySized (Diagram B)
+drawFullOrderedPolicySteps 
+    :: (Ord t, Show t) 
+    => Ordered FullPolicy BellPairsPredicate (Maybe t) -> ManuallySized (Diagram B)
 drawFullOrderedPolicySteps p = withImgWidth 600 . historiesToDiagram . Set.elems . applyFullOrderedPolicy p $ []
 
-drawStarOrderedPolicySteps :: (Ord t, Show t) => Ordered StarPolicy (Maybe t) -> ManuallySized (Diagram B)
+drawStarOrderedPolicySteps 
+    :: (Ord t, Show t) 
+    => Ordered StarPolicy BellPairsPredicate (Maybe t) -> ManuallySized (Diagram B)
 drawStarOrderedPolicySteps p = withImgWidth 600 . historiesToDiagram . Set.elems . applyStarOrderedPolicy p $ []
 
-drawStarOrderedPolicyStepsBounded :: (Ord t, Show t) => Ordered StarPolicy (Maybe t) -> ManuallySized (Diagram B)
+drawStarOrderedPolicyStepsBounded 
+    :: (Ord t, Show t) 
+    => Ordered StarPolicy BellPairsPredicate (Maybe t) -> ManuallySized (Diagram B)
 drawStarOrderedPolicyStepsBounded p = withImgWidth 600 . historiesToDiagram . Set.elems . applyStarOrderedPolicyBounded p $ []
 
 drawHistoryText :: Show t => History t -> String

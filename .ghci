@@ -1,7 +1,7 @@
-:set -isrc -itest
-:set -XOverloadedStrings -XFlexibleContexts -XOverloadedLists -XDerivingStrategies -XFlexibleInstances -XScopedTypeVariables -XTypeFamilies -XGeneralizedNewtypeDeriving -XFunctionalDependencies
-:load QNKAT.Definitions
-:load QNKAT.DSL
-:load QNKAT.Drawing
-:load QNKAT.Test
+:set -isrc -itest/main
+:set -XFlexibleContexts -XDerivingStrategies -XFlexibleInstances -XScopedTypeVariables -XTypeFamilies -XGeneralizedNewtypeDeriving -XFunctionalDependencies
+:load BellKAT.Definitions
+:load BellKAT.DSL
+:load BellKAT.Drawing
+:load BellKAT.Test
 :load Spec

@@ -16,7 +16,7 @@ import qualified BellKAT.Implementations.Automata as A
 import qualified BellKAT.Implementations.AutomataStepHistoryQuantum    as ASHQ
 import qualified BellKAT.Implementations.OneStepHistoryQuantum as OSHQ
 
-type PaperPolicy = Ordered StarPolicy (Maybe ())
+type PaperPolicy = Ordered StarPolicy FreeTest (Maybe ())
 
 main :: IO ()
 main =
@@ -45,12 +45,12 @@ main =
         pad = _pd <> (mempty <+> _bpd) <> test ("A" ~~? "D")
         -- ped = pd' <> test ("E" ~~? "D")
         p =  (pad <||> ped) <> swap "D" ("A", "E")
-        nfa = ASHQ.getNFA $ meaning @_ @(ASHQ.AutomatonStepHistoryQuantum (Compose OSHQ.OneStepPolicy OSHQ.OneStepFree _)) (pad <||> ped)
+        nfa = ASHQ.getNFA $ meaning @_ @(ASHQ.AutomatonStepHistoryQuantum (Compose OSHQ.OneStepPolicy (OSHQ.OneStepFree _) _)) (pad <||> ped)
         st = AE.evalExecution (AE.EP Nothing) OSHQ.executeFree nfa [] $ 
             AE.executeAutomata >> AE.getAllStates
     in do --putStrLn $ drawHistoriesText $ applyStarOrderedPolicy @(Maybe ()) (pad Def.<.> ped) []
        -- print (pad <||> ped)
-       putStrLn $ drawHistoriesText $ applyStarOrderedPolicy @(Maybe ()) (pad <||> ped) []
+       -- putStrLn $ drawHistoriesText $ applyStarOrderedPolicy @(Maybe ()) (pad <||> ped) []
        case st of 
          Left _ -> putStrLn "error"
          Right states -> do

@@ -98,18 +98,18 @@ instance (Ord a, Monoid a) => Monoid (PartialNDEndo a) where
     mempty = PartialNDEndo $ Set.singleton . chooseNoneOf
 
 
-newtype OneStep t = OneStep
-    { executeOneStep :: PartialNDEndo (History t)
+newtype OneStep tag = OneStep
+    { executeOneStep :: PartialNDEndo (History tag)
     } deriving newtype (Semigroup)
 
 instance Show1 OneStep where
   liftShowsPrec _ _ _ _ = shows "OneStep [\\h -> ..]"
 
-oneStepChoice :: Ord t => OneStep t -> OneStep t -> OneStep t
+oneStepChoice :: Ord tag => OneStep tag -> OneStep tag -> OneStep tag
 oneStepChoice (OneStep p) (OneStep q) = OneStep . PartialNDEndo $
     \h -> applyPartialNDEndo p h <> applyPartialNDEndo q h
 
-instance Ord t => CreatesBellPairs (OneStep t) t where
+instance Ord tag => CreatesBellPairs (OneStep tag) tag where
     tryCreateBellPairFrom (CreateBellPairArgs pt bp bps prob t dk) =
         OneStep . PartialNDEndo $ \h@(History ts) ->
             case findTreeRootsNDP bellPair bps (bellPairTag >$< pt) ts of
@@ -124,27 +124,29 @@ instance Ord t => CreatesBellPairs (OneStep t) t where
                 | partial <- partialNewTs
                 ]
 
-instance Ord t => Tests (OneStep t) t where
-  test p = OneStep . PartialNDEndo $ \h@(History ts) ->
-    if p (Mset.map rootLabel ts) then [ chooseNoneOf h ] else []
+instance Ord tag => Tests (OneStep tag) BellPairsPredicate tag where
+  test t = OneStep . PartialNDEndo $ \h@(History ts) ->
+    if getBPsPredicate t (Mset.map rootLabel ts) then [ chooseNoneOf h ] else []
 
-data OneStepFree t = OSFCreate (CreateBellPairArgs t) | OSFTest (Test t)
+data OneStepFree test tag = OSFCreate (CreateBellPairArgs tag) | OSFTest (test tag)
 
-runOneStepFree :: (Tests a t, CreatesBellPairs a t) => OneStepFree t -> a
+runOneStepFree 
+    :: (Test test, Ord tag, Tests a BellPairsPredicate tag, CreatesBellPairs a tag) 
+    => OneStepFree test tag -> a
 runOneStepFree (OSFCreate args) = tryCreateBellPairFrom args
-runOneStepFree (OSFTest args) = test args
+runOneStepFree (OSFTest args) = test . toBPsPredicate $ args
 
-instance Show1 OneStepFree where
+instance Show1 test => Show1 (OneStepFree test) where
   liftShowsPrec _ _ _ (OSFCreate ca) 
     = showString "create" 
         . (if isJust (cbpProbability ca) then showString "?" else id ) 
         . showString "(" . shows (cbpOutputBP ca). showString ")"
-  liftShowsPrec _ _ _ (OSFTest _) = showString "[..]"
+  liftShowsPrec s sl _ (OSFTest t) = showString "[" . liftShowsPrec s sl 0 t . showString "]"
 
-instance CreatesBellPairs (OneStepFree t) t where
+instance CreatesBellPairs (OneStepFree test t) t where
   tryCreateBellPairFrom = OSFCreate
 
-instance Tests (OneStepFree t) t where
+instance Tests (OneStepFree test t) test t where
   test = OSFTest
 
 instance CreatesBellPairs a t =>  CreatesBellPairs (OneStepPolicy a) t where
@@ -152,10 +154,10 @@ instance CreatesBellPairs a t =>  CreatesBellPairs (OneStepPolicy a) t where
 
 instance (Ord t) => Quantum (OneStepPolicy (OneStep t)) t
 
-instance (Ord t, Show t, Tests a t) => Tests (OneStepPolicy a) t where
+instance (Ord tag, Show tag, Tests a test tag) => Tests (OneStepPolicy a) test tag where
   test = Atomic . test
 
-instance (Ord t, Show t) => TestsQuantum (OneStepPolicy (OneStep t)) t where
+instance (Ord tag, Show tag) => TestsQuantum (OneStepPolicy (OneStep tag)) BellPairsPredicate tag where
 
 instance {-# OVERLAPPING #-} (Show1 f, Show a) => Show (Compose OneStepPolicy f a) where
     showsPrec d  (Compose x) = liftShowsPrec (liftShowsPrec showsPrec showList) (liftShowList showsPrec showList) d x
@@ -174,20 +176,21 @@ instance (Ord t, CreatesBellPairs (a t) t) => CreatesBellPairs (Compose OneStepP
 
 instance (Ord t, CreatesBellPairs (a t) t) => Quantum (Compose OneStepPolicy a t) t where
 
-instance (Show t, Ord t, Tests (a t) t) => Tests (Compose OneStepPolicy a t) t where
+instance (Show t, Ord t, Tests (a t) test t) => Tests (Compose OneStepPolicy a t) test t where
   test = Compose . test
 
-instance (Show t, Ord t, Tests (a t) t, CreatesBellPairs (a t) t) => TestsQuantum (Compose OneStepPolicy a t) t where
+instance (Show t, Ord t, Tests (a t) test t, CreatesBellPairs (a t) t) 
+  => TestsQuantum (Compose OneStepPolicy a t) test t where
 
-executeOneStepPolicy :: (Ord t) => OneStepPolicy (OneStep t) -> OneStep t
+executeOneStepPolicy :: (Ord tag) => OneStepPolicy (OneStep tag) -> OneStep tag
 executeOneStepPolicy (Atomic x) = x
 executeOneStepPolicy (Sequence p q)  = executeOneStepPolicy p <> executeOneStepPolicy q
 executeOneStepPolicy (Choice p q)  = oneStepChoice (executeOneStepPolicy p) (executeOneStepPolicy q)
 
-executePartial :: Ord t => Compose OneStepPolicy OneStep t -> History t -> Set (Partial (History t))
+executePartial :: Ord tag => Compose OneStepPolicy OneStep tag -> History tag -> Set (Partial (History tag))
 executePartial (Compose osp) = applyPartialNDEndo (executeOneStep (executeOneStepPolicy osp))
 
-executeFree :: Ord t => Compose OneStepPolicy OneStepFree t -> History t -> Set (History t)
+executeFree :: (Test test, Ord tag) => Compose OneStepPolicy (OneStepFree test) tag -> History tag -> Set (History tag)
 executeFree = execute . Compose . fmap runOneStepFree . getCompose
 
 execute :: Ord t => Compose OneStepPolicy OneStep t -> History t -> Set (History t)
