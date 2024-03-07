@@ -11,7 +11,6 @@ import           Data.Set                       (Set)
 import           Data.Maybe                     (fromJust)
  
 
-import           BellKAT.Definitions.Core
 import           BellKAT.Definitions.Structures
 import           BellKAT.Implementations.Automata
 import qualified BellKAT.Implementations.AutomataExecution as AE
@@ -41,15 +40,15 @@ instance (Ord tag, ChoiceSemigroup (sq tag), TestsQuantum (sq tag) test tag)
         => TestsOrderedQuantum (AutomatonStepHistoryQuantum (sq tag)) test tag where
     orderedTest = OneStep . test
 
-execute :: (Ord t, Show t)
-    => (a -> History t -> Set (History t))
+execute :: (Ord b, Show b)
+    => (a -> b -> Set b)
     -> AutomatonStepHistoryQuantum a
-    -> History t -> Set (History t)
+    -> b -> Set b
 execute executeStep ahq = fromJust . executeWith (AE.EP Nothing) executeStep ahq
 
-executeWith :: (Ord t, Show t)
+executeWith :: (Ord b, Show b)
     => ExecutionParams
-    -> (a -> History t -> Set (History t))
+    -> (a -> b -> Set b)
     -> AutomatonStepHistoryQuantum a
-    -> History t -> Maybe (Set (History t))
+    -> b -> Maybe (Set b)
 executeWith params executeStep (AutomatonStepHistoryQuantum nfa) = AE.execute params executeStep nfa
