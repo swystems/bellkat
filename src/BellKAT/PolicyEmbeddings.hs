@@ -40,8 +40,19 @@ instance (ChoiceSemigroup a, Monoid a, TestsOrderedQuantum a test tag)
     meaning (FPParallel p q) = meaning p <||> meaning q
     meaning (FPChoice p q) = meaning p <+> meaning q
 
-instance (MonoidStar a, OrderedSemigroup a, TestsOrderedQuantum a test tag) => HasMeaning (Ordered StarPolicy test tag) a where
+instance (MonoidStar a, OrderedSemigroup a, TestsOrderedQuantum a test tag) 
+  => HasMeaning (Ordered StarPolicy test tag) a where
     meaning (SPAtomic ta) = liftLayer $ foldNonEmpty (<.>) $ meaning <$> ta
+    meaning (SPOrdered p q) = meaning p <.> meaning q
+    meaning (SPSequence p q) = meaning p <> meaning q
+    meaning SPOne = mempty
+    meaning (SPStar p) = star (meaning p)
+    meaning (SPParallel p q) = meaning p <||> meaning q
+    meaning (SPChoice p q) = meaning p <+> meaning q
+
+instance (MonoidStar a, OrderedSemigroup a, Quantum a tag) 
+  => HasMeaning (Normal StarPolicy tag) a where
+    meaning (SPAtomic ta) = meaning ta
     meaning (SPOrdered p q) = meaning p <.> meaning q
     meaning (SPSequence p q) = meaning p <> meaning q
     meaning SPOne = mempty
