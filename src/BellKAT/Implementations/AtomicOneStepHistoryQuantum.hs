@@ -59,10 +59,10 @@ instance (Ord tag, Default tag)
           Nothing -> 
             createBasicAction
                 (Mset.fromList $ (`TaggedBellPair` def) <$>  bps) [TaggedBellPair bp t]
-            <> createBasicAction [] []
           Just _ ->
               createBasicAction
                 (Mset.fromList $ (`TaggedBellPair` def) <$> bps) [TaggedBellPair bp t]
+              <> createBasicAction [] []
 
 instance Ord tag => Tests (AtomicOneStepPolicy tag) FreeTest tag where
     test t = 
