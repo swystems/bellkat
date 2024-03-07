@@ -50,7 +50,7 @@ instance Ord tag => OrderedSemigroup (AtomicOneStepPolicy tag) where
 
 instance Ord tag => ParallelSemigroup (AtomicOneStepPolicy tag) where
     (AtomicOneStepPolicy t1 inBps1 outBps1) <||> (AtomicOneStepPolicy t2 inBps2 outBps2)
-      = createAtomicOneStepPolicy (t1 .&&. (t2 .+. inBps1)) (inBps1 <> inBps2) (outBps1 <> outBps2)
+      = createAtomicOneStepPolicy ((t1 .+. inBps2) .&&. (t2 .+. inBps1)) (inBps1 <> inBps2) (outBps1 <> outBps2)
 
 instance (Ord tag, Default tag) 
   => CreatesBellPairs (NonEmpty (AtomicOneStepPolicy tag)) tag where
