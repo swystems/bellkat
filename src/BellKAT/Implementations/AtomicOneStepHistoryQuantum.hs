@@ -46,11 +46,11 @@ instance (Ord tag, Default tag)
         case prob of
           Nothing -> 
             createBasicAction
-                [TaggedBellPair bp t] (Mset.fromList $ (`TaggedBellPair` def) <$>  bps)
+                (Mset.fromList $ (`TaggedBellPair` def) <$>  bps) [TaggedBellPair bp t]
             <> createBasicAction [] []
           Just _ ->
               createBasicAction
-                [TaggedBellPair bp t] (Mset.fromList $ (`TaggedBellPair` def) <$> bps)
+                (Mset.fromList $ (`TaggedBellPair` def) <$> bps) [TaggedBellPair bp t]
 
 createBasicAction 
     :: (Ord tag) 
