@@ -78,7 +78,7 @@ instance (Semigroup (sq t)) => OrderedSemigroup (Layer (AutomatonStepHistoryQuan
    (OneStep s) <.> (OneStep s') = OneStep (s <> s')
 
 instance (Ord tag, ChoiceSemigroup (sq tag), TestsQuantum (sq tag) test tag)
-        => TestsOrderedQuantum (AutomatonStepHistoryQuantum 'ACEmbedded (sq tag)) test tag where
+        => TestsOrderedLayeredQuantum (AutomatonStepHistoryQuantum 'ACEmbedded (sq tag)) test tag where
     orderedTest = OneStep . test
 
 executeE :: (Ord b, Show b)

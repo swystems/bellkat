@@ -5,7 +5,7 @@ module BellKAT.Definitions.Structures
     , CreatesBellPairs(..)
     , Tests(..)
     , TestsQuantum
-    , TestsOrderedQuantum(..)
+    , TestsOrderedLayeredQuantum(..)
     , OrderedQuantum
     , OrderedLayeredQuantum(..)
     , OrderedSemigroup(..)
@@ -64,7 +64,7 @@ class (Semigroup a, ParallelSemigroup a, OrderedSemigroup (Layer a)) => OrderedL
     orderedTryCreateBellPairFrom :: CreateBellPairArgs t -> Layer a
     liftLayer :: Layer a -> a
 
-class OrderedLayeredQuantum a tag => TestsOrderedQuantum a test tag where
+class OrderedLayeredQuantum a tag => TestsOrderedLayeredQuantum a test tag where
     orderedTest :: test tag -> Layer a
 
 -- | Notation for predicate

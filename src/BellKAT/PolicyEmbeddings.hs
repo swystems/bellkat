@@ -13,7 +13,7 @@ class HasMeaning p a where
 instance Quantum a tag => HasMeaning (TaggedAction tag) a where
     meaning = tryCreateBellPairFrom . actionArgs
 
-instance TestsOrderedQuantum a test tag => HasMeaning (NonEmpty (Atomic test tag)) a where
+instance TestsOrderedLayeredQuantum a test tag => HasMeaning (NonEmpty (Atomic test tag)) a where
     meaning ta = liftLayer $ foldNonEmpty (<.>) $ meaning <$> ta
 
 instance (ParallelSemigroup a, Semigroup a, HasMeaning at a) => HasMeaning (Policy at) a where
@@ -21,7 +21,7 @@ instance (ParallelSemigroup a, Semigroup a, HasMeaning at a) => HasMeaning (Poli
     meaning (APSequence p q) = meaning p <> meaning q
     meaning (APParallel p q) = meaning p <||> meaning q
 
-instance (TestsOrderedQuantum a test tag) => HasMeaning (Atomic test tag) (Layer a) where
+instance (TestsOrderedLayeredQuantum a test tag) => HasMeaning (Atomic test tag) (Layer a) where
     meaning (AAction a) = orderedTryCreateBellPairFrom $ actionArgs a
     meaning (ATest t)   = orderedTest t
 
@@ -32,7 +32,7 @@ instance (HasMeaning (TaggedAction at) a, Semigroup a, ParallelSemigroup a, Choi
     meaning (ORPParallel p q) = meaning p <||> meaning q
     meaning (ORPChoice p q) = meaning p <+> meaning q
 
-instance (ChoiceSemigroup a, Monoid a, TestsOrderedQuantum a test tag) 
+instance (ChoiceSemigroup a, Monoid a, TestsOrderedLayeredQuantum a test tag) 
   => HasMeaning (Ordered FullPolicy test tag) a where
     meaning (FPAtomic ta) = liftLayer $ foldNonEmpty (<.>) $ meaning <$> ta
     meaning (FPSequence p q) = meaning p <> meaning q
@@ -40,7 +40,7 @@ instance (ChoiceSemigroup a, Monoid a, TestsOrderedQuantum a test tag)
     meaning (FPParallel p q) = meaning p <||> meaning q
     meaning (FPChoice p q) = meaning p <+> meaning q
 
-instance (MonoidStar a, OrderedSemigroup a, TestsOrderedQuantum a test tag) 
+instance (MonoidStar a, OrderedSemigroup a, TestsOrderedLayeredQuantum a test tag) 
   => HasMeaning (Ordered StarPolicy test tag) a where
     meaning (SPAtomic ta) = liftLayer $ foldNonEmpty (<.>) $ meaning <$> ta
     meaning (SPOrdered p q) = meaning p <.> meaning q
