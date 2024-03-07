@@ -21,6 +21,11 @@ instance (ParallelSemigroup a, Semigroup a, HasMeaning at a) => HasMeaning (Poli
     meaning (APSequence p q) = meaning p <> meaning q
     meaning (APParallel p q) = meaning p <||> meaning q
 
+    
+instance {-# OVERLAPPABLE #-} (TestsOrderedQuantum a test tag) => HasMeaning (Atomic test tag) a where
+    meaning (AAction a) = tryCreateBellPairFrom $ actionArgs a
+    meaning (ATest t)   = test t
+
 instance (TestsOrderedLayeredQuantum a test tag) => HasMeaning (Atomic test tag) (Layer a) where
     meaning (AAction a) = orderedTryCreateBellPairFrom $ actionArgs a
     meaning (ATest t)   = orderedTest t
@@ -52,6 +57,16 @@ instance (MonoidStar a, OrderedSemigroup a, TestsOrderedLayeredQuantum a test ta
 
 instance (MonoidStar a, OrderedSemigroup a, Quantum a tag) 
   => HasMeaning (Normal StarPolicy tag) a where
+    meaning (SPAtomic ta) = meaning ta
+    meaning (SPOrdered p q) = meaning p <.> meaning q
+    meaning (SPSequence p q) = meaning p <> meaning q
+    meaning SPOne = mempty
+    meaning (SPStar p) = star (meaning p)
+    meaning (SPParallel p q) = meaning p <||> meaning q
+    meaning (SPChoice p q) = meaning p <+> meaning q
+
+instance (MonoidStar a, OrderedSemigroup a, TestsOrderedQuantum a test tag) 
+  => HasMeaning (NormalWithTests StarPolicy test tag) a where
     meaning (SPAtomic ta) = meaning ta
     meaning (SPOrdered p q) = meaning p <.> meaning q
     meaning (SPSequence p q) = meaning p <> meaning q

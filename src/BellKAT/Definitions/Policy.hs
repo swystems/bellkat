@@ -118,6 +118,7 @@ data Atomic test tag = AAction (TaggedAction tag) | ATest (test tag)
     deriving stock (Show)
 
 type Normal p tag = p (TaggedAction tag)
+type NormalWithTests p test tag = p (Atomic test tag)
 type Ordered p test tag = p (NonEmpty (Atomic test tag))
 
 -- * Testing definitions

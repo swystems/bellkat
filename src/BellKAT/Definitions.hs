@@ -59,9 +59,9 @@ applyStarOrderedPolicy
 applyStarOrderedPolicy = ASHQ.executeE IOSHQ.execute . meaning
 
 applyStarPolicy 
-    :: (Ord tag, Show tag, Default tag) 
-    => Normal StarPolicy tag -> TaggedBellPairs tag -> Set (TaggedBellPairs tag)
-applyStarPolicy = ASHQ.execute AOSHQ.execute . meaning
+    :: (Ord tag, Show tag, Default tag, Tests (AOSHQ.AtomicOneStepPolicy tag) test tag) 
+    => NormalWithTests StarPolicy test tag -> TaggedBellPairs tag -> Set (TaggedBellPairs tag)
+applyStarPolicy = ASHQ.execute AOSHQ.execute . meaning 
 
 applyOneStepPolicyPartial 
     :: (Ord tag, Show tag) 

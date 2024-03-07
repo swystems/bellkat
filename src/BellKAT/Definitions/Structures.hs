@@ -8,6 +8,7 @@ module BellKAT.Definitions.Structures
     , TestsOrderedLayeredQuantum(..)
     , OrderedQuantum
     , OrderedLayeredQuantum(..)
+    , TestsOrderedQuantum
     , OrderedSemigroup(..)
     , MonoidStar(..)
     , subjectTo
@@ -66,6 +67,8 @@ class (Semigroup a, ParallelSemigroup a, OrderedSemigroup (Layer a)) => OrderedL
 
 class OrderedLayeredQuantum a tag => TestsOrderedLayeredQuantum a test tag where
     orderedTest :: test tag -> Layer a
+
+class (Tests a test tag, OrderedQuantum a tag) => TestsOrderedQuantum a test tag where
 
 -- | Notation for predicate
 subjectTo :: Quantum a t => Predicate t -> (Predicate t -> a) -> a

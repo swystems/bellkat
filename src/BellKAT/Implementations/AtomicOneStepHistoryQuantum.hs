@@ -52,6 +52,18 @@ instance (Ord tag, Default tag)
               createBasicAction
                 (Mset.fromList $ (`TaggedBellPair` def) <$> bps) [TaggedBellPair bp t]
 
+instance Ord tag => Tests (AtomicOneStepPolicy tag) FreeTest tag where
+    test t = 
+        let (s, sig) = getSetAndSign t
+         in if sig then
+                AtomicOneStepPolicy (createRestrictedTest mempty) s s
+            else
+                AtomicOneStepPolicy (createRestrictedTest [s]) mempty mempty
+
+getSetAndSign :: FreeTest tag -> (TaggedBellPairs tag, Bool)
+getSetAndSign (FTSubset s) = (s, True)
+getSetAndSign (FTNot t) = let (s, sig) = getSetAndSign t in (s, not sig)
+
 createBasicAction 
     :: (Ord tag) 
     => TaggedBellPairs tag -> TaggedBellPairs tag -> NonEmpty (AtomicOneStepPolicy tag)

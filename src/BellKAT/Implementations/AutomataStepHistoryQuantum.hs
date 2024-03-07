@@ -77,6 +77,13 @@ instance (Ord t, Ord (sq t), ParallelSemigroup (sq t), OrderedSemigroup (sq t), 
 instance (Semigroup (sq t)) => OrderedSemigroup (Layer (AutomatonStepHistoryQuantum 'ACEmbedded (sq t))) where
    (OneStep s) <.> (OneStep s') = OneStep (s <> s')
 
+instance (Ord tag, Tests (sq tag) test tag)
+        => Tests (AutomatonStepHistoryQuantum 'ACNormal (sq tag)) test tag where
+    test = point . test
+
+instance (Ord t, Ord (sq t), Tests (sq t) test t, ParallelSemigroup (sq t), OrderedSemigroup (sq t), CreatesBellPairs (NonEmpty (sq t)) t) 
+        => TestsOrderedQuantum (AutomatonStepHistoryQuantum 'ACNormal (sq t)) test t where
+
 instance (Ord tag, ChoiceSemigroup (sq tag), TestsQuantum (sq tag) test tag)
         => TestsOrderedLayeredQuantum (AutomatonStepHistoryQuantum 'ACEmbedded (sq tag)) test tag where
     orderedTest = OneStep . test

@@ -61,6 +61,9 @@ instance DSLTestFunctions (Ordered FullPolicy test (Maybe tag)) test tag where
 instance DSLTestFunctions (Ordered StarPolicy test (Maybe tag)) test tag where
     test t = SPAtomic [ ATest t ]
 
+instance DSLTestFunctions (NormalWithTests StarPolicy test (Maybe tag)) test tag where
+    test t = SPAtomic (ATest t)
+
 instance DSLFunctions (Normal Policy (Maybe tag)) where
     defaultTagged a = APAtomic $ TaggedAction mempty a Nothing mempty
 
@@ -71,6 +74,14 @@ instance DSLFunctions (Ordered Policy test (Maybe tag)) where
     defaultTagged a = APAtomic [ AAction (TaggedAction mempty a Nothing mempty) ]
 
     APAtomic (AAction (TaggedAction p a t _) :| []) .% dk = APAtomic [ AAction (TaggedAction p a t dk) ]
+    _ .% _                                = error "cannot attach dup to this thing"
+
+instance DSLFunctions (Normal StarPolicy (Maybe tag)) where
+    defaultTagged a = SPAtomic $ TaggedAction mempty a Nothing mempty
+    _ .% _                                = error "cannot attach dup to this thing"
+
+instance DSLFunctions (NormalWithTests StarPolicy test (Maybe tag)) where
+    defaultTagged a = SPAtomic $ AAction $ TaggedAction mempty a Nothing mempty
     _ .% _                                = error "cannot attach dup to this thing"
 
 instance DSLFunctions (Ordered FullPolicy test (Maybe tag)) where
@@ -107,6 +118,12 @@ instance DSLOrderedSemigroup (Ordered FullPolicy test tag) where
 instance DSLOrderedSemigroup (Ordered StarPolicy test tag) where
     (SPAtomic tas) <.> (SPAtomic tas') = SPAtomic (tas <> tas')
     _ <.> _                            = error "Can only compose atomics with <.>"
+
+instance DSLOrderedSemigroup (NormalWithTests StarPolicy test tag) where
+    (<.>) = SPOrdered
+
+instance DSLOrderedSemigroup (Normal StarPolicy tag) where
+    p <.> p' = SPOrdered p p'
 
 dupA :: DupKind
 dupA = DupKind { dupBefore = False, dupAfter = True }
