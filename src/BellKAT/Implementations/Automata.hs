@@ -208,8 +208,16 @@ newtype HyperAction a = HyperAction (Set a)
 instance Ord a => ChoiceSemigroup (HyperAction a) where
     (HyperAction a) <+> (HyperAction b) = HyperAction (a <> b)
 
+instance (Ord a, OrderedSemigroup a) => OrderedSemigroup (HyperAction a) where
+    (HyperAction xs) <.> (HyperAction ys) = HyperAction $ 
+        Set.fromList [x <.> y | x <- toList xs, y <- toList ys ]
+
 newtype HyperMagicNFA a = HyperMagicNFA (MagicNFA (HyperAction a))
-    deriving newtype (ParallelSemigroup)
+    deriving newtype (ParallelSemigroup, Monoid, ChoiceSemigroup, OrderedSemigroup, MonoidStar)
+
+instance (Ord a, ParallelSemigroup a) => ParallelSemigroup (HyperAction a) where
+    (HyperAction xs) <||> (HyperAction ys) = HyperAction $ 
+        Set.fromList [x <||> y | x <- toList xs, y <- toList ys ]
 
 instance Pointed HyperMagicNFA where
     point = HyperMagicNFA . point . point
@@ -217,10 +225,6 @@ instance Pointed HyperMagicNFA where
 instance Ord a => Semigroup (HyperMagicNFA a) where
     (HyperMagicNFA a) <> (HyperMagicNFA b) = 
         HyperMagicNFA $ enfaToMnfa (mnfaToEnfa a <> mnfaToEnfa b)
-
-instance (Ord a, ParallelSemigroup a) => ParallelSemigroup (HyperAction a) where
-    (HyperAction xs) <||> (HyperAction ys) = HyperAction $ 
-        Set.fromList [x <||> y | x <- toList xs, y <- toList ys ]
 
 instance Show a => Show (HyperMagicNFA a) where
     show (HyperMagicNFA x) = 

@@ -2,6 +2,7 @@
 {-# LANGUAGE StrictData #-}
 module BellKAT.Implementations.AutomataExecution
     ( execute
+    , executeHyper
     , evalExecution
     , runExecution
     , executeAutomata
@@ -16,6 +17,7 @@ import           Data.IntMap.Strict (IntMap)
 import qualified Data.IntMap.Strict as IM
 import           Data.Set           (Set)
 import qualified Data.Set           as Set
+import           Data.Foldable (toList)
 import           Control.Monad.State.Strict
 import           Control.Monad.Reader
 import           Control.Monad.Except
@@ -33,6 +35,15 @@ execute params executeStep mnfa x =
      in case err of
           Left _ -> Nothing
           Right final -> Just final
+
+executeHyper :: (Ord s, Show s)
+    => ExecutionParams
+    -> (a -> s -> Set s)
+    -> HyperMagicNFA a
+    -> s -> Maybe (Set s)
+executeHyper params executeStep (HyperMagicNFA mnfa) = execute params executeStepSet mnfa
+  where 
+      executeStepSet as s = mconcat (map (`executeStep` s) $ toList as)
 
 getAllStates :: Ord s => ExecutionMonad a s (IntMap (Set s))
 getAllStates = gets esProcessed
