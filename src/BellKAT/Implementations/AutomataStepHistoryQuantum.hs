@@ -57,7 +57,7 @@ instance (Ord t, CreatesBellPairs (sq t) t, ChoiceSemigroup (sq t), Pointed (Aut
 
 instance (Ord t, Ord (sq t), CreatesBellPairs (NonEmpty (sq t)) t, Pointed (AutomatonFromChoice 'ACNormal))
         => CreatesBellPairs (AutomatonStepHistoryQuantum 'ACNormal (sq t)) t where
-    tryCreateBellPairFrom = foldNonEmpty (<+>) . point . tryCreateBellPairFrom
+    tryCreateBellPairFrom = foldNonEmpty (<+>) . fmap point . tryCreateBellPairFrom
 
 instance (Ord t, ChoiceSemigroup (sq t), Quantum (sq t) t, CreatesBellPairs (sq t) t)
         => Quantum (AutomatonStepHistoryQuantum 'ACEmbedded (sq t)) t where
