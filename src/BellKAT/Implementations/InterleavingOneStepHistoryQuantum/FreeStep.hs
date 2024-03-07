@@ -1,4 +1,4 @@
-module BellKAT.Implementations.OneStepHistoryQuantum.FreeStep
+module BellKAT.Implementations.InterleavingOneStepHistoryQuantum.FreeStep
     ( FreeStep
     , runFreeStep
     ) where

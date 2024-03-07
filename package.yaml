@@ -40,9 +40,9 @@ library:
     - BellKAT.Definitions.Core
     - BellKAT.Definitions.Structures
     - BellKAT.Definitions.Policy
-    - BellKAT.Implementations.OneStepHistoryQuantum
-    - BellKAT.Implementations.OneStepHistoryQuantum.FunctionStep
-    - BellKAT.Implementations.OneStepHistoryQuantum.FreeStep
+    - BellKAT.Implementations.InterleavingOneStepHistoryQuantum
+    - BellKAT.Implementations.InterleavingOneStepHistoryQuantum.FunctionStep
+    - BellKAT.Implementations.InterleavingOneStepHistoryQuantum.FreeStep
     - BellKAT.Implementations.TimelyHistoryQuantum
     - BellKAT.Implementations.StepHistoryQuantum
     - BellKAT.Implementations.HistoryQuantum

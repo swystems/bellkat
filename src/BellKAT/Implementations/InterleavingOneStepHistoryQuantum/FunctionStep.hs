@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedLists      #-}
 
-module BellKAT.Implementations.OneStepHistoryQuantum.FunctionStep
+module BellKAT.Implementations.InterleavingOneStepHistoryQuantum.FunctionStep
     ( FunctionStep (..)
     , PartialNDEndo (..)
     ) where
