@@ -56,5 +56,5 @@ createBasicAction
     :: (Ord tag) 
     => TaggedBellPairs tag -> TaggedBellPairs tag -> NonEmpty (AtomicOneStepPolicy tag)
 createBasicAction inBPs outBPs =
-    AtomicOneStepPolicy (RestrictedTest mempty) inBPs outBPs
-    :| [AtomicOneStepPolicy (RestrictedTest [inBPs]) mempty mempty]
+    AtomicOneStepPolicy (createRestrictedTest mempty) inBPs outBPs
+    :| [AtomicOneStepPolicy (createRestrictedTest [inBPs]) mempty mempty]

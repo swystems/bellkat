@@ -8,7 +8,8 @@ module BellKAT.Definitions.Core (
     DupKind(..),
     Test(..),
     BellPairsPredicate(..),
-    RestrictedTest(..),  
+    RestrictedTest,  
+    createRestrictedTest,
     (.+.),
     (.&&.),
     Partial(..),
@@ -95,11 +96,29 @@ instance Show t => Show (FreeTest t) where
 newtype RestrictedTest tag = RestrictedTest [TaggedBellPairs tag]
     deriving newtype (Eq, Ord)
 
+createRestrictedTest :: Ord tag => [TaggedBellPairs tag] -> RestrictedTest tag
+createRestrictedTest = RestrictedTest . sort . restrictedTestNormalize
+
+restrictedTestNormalize :: Ord tag => [TaggedBellPairs tag] -> [TaggedBellPairs tag]
+restrictedTestNormalize [] = []
+restrictedTestNormalize (x:xs) = 
+    if any (`Mset.isSubsetOf` x) xs 
+       then restrictedTestNormalize xs
+       else x:restrictedTestNormalize xs
+
+instance (Show tag) => Show (RestrictedTest tag) where
+    showsPrec _ (RestrictedTest []) = showString "TRUE"
+    showsPrec _ (RestrictedTest (x:xs)) = shows (toList x) . showsRest xs
+      where 
+        showsRest [] = id
+        showsRest (y : ys) = showString " /\\ " . shows (toList y) . showsRest ys
+
 (.+.) :: (Ord tag) => RestrictedTest tag -> TaggedBellPairs tag -> RestrictedTest tag
-(RestrictedTest bpss) .+. bps = RestrictedTest (map (<> bps) bpss)
+(RestrictedTest bpss) .+. bps = createRestrictedTest (map (<> bps) bpss)
 
 (.&&.) :: (Ord tag) => RestrictedTest tag -> RestrictedTest tag -> RestrictedTest tag
-(RestrictedTest bpss) .&&. (RestrictedTest bpss') = RestrictedTest (bpss <> bpss')
+(RestrictedTest bpss) .&&. (RestrictedTest bpss') = 
+    createRestrictedTest (bpss <> bpss')
 
 instance Test RestrictedTest where
     toBPsPredicate (RestrictedTest s) = BPsPredicate $ \bps -> not (any (`Mset.isSubsetOf` bps) s)
@@ -126,7 +145,11 @@ type RequiredRoots = [BellPair]
 data TaggedBellPair t = TaggedBellPair
     { bellPair    :: BellPair
     , bellPairTag :: t
-    } deriving stock (Eq, Ord, Show)
+    } deriving stock (Eq, Ord)
+
+instance Show t => Show (TaggedBellPair t) where
+    showsPrec _ (TaggedBellPair bp t) = shows bp . showString "/" . shows t
+
 
 type TaggedRequiredRoots t = (RequiredRoots, Predicate t)
 
