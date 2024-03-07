@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedLists      #-}
 
 module BellKAT.Implementations.AtomicOneStepHistoryQuantum
-    ( AtomicOneStepPolicy(..)
+    ( AtomicOneStepPolicy
     , execute
     ) where
 
@@ -17,10 +17,14 @@ import BellKAT.Definitions.Structures
 import BellKAT.Utils.Choice
 
 data AtomicOneStepPolicy tag = AtomicOneStepPolicy
-    { asTest :: RestrictedTest tag
-    , asOutputBPs :: TaggedBellPairs tag
-    , asInputBPs :: TaggedBellPairs tag
-    } deriving stock (Eq, Ord)
+    (RestrictedTest tag) (TaggedBellPairs tag) (TaggedBellPairs tag)
+    deriving stock (Eq, Ord)
+
+instance Show tag => Show (AtomicOneStepPolicy tag) where
+    showsPrec _ (AtomicOneStepPolicy t inBPs outBPs) = 
+        showString "[" . shows t . showString "] (" 
+        . shows (toList inBPs) . showString "|>" . shows (toList outBPs)
+        . showString ")"
 
 execute
     :: (Ord tag)
