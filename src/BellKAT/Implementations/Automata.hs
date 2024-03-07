@@ -1,6 +1,8 @@
 {-# LANGUAGE StrictData #-}
+{-# LANGUAGE TupleSections #-}
 module BellKAT.Implementations.Automata 
     ( MagicNFA(..)
+    , HyperMagicNFA(..)
     , restrictStates
     , productWith
     , showStateId
@@ -14,6 +16,7 @@ import           Data.List
 import qualified Data.Map.Strict              as Map
 import           Data.Pointed
 import qualified Data.Set                     as Set
+import           Data.Set                     (Set)
 import           Data.These
 import           Data.Foldable (toList)
 import           Data.These.Combinators       (isThat, justThat)
@@ -198,6 +201,36 @@ instance Pointed MagicNFA where
 
 instance Pointed EpsNFA where
     point x = ENFA 0 (IM.fromList [(0, IM.singleton 1 $ That x), (1, IM.empty)]) (IS.singleton 1)
+
+newtype HyperAction a = HyperAction (Set a)
+    deriving newtype (Foldable, Pointed)
+
+instance Ord a => ChoiceSemigroup (HyperAction a) where
+    (HyperAction a) <+> (HyperAction b) = HyperAction (a <> b)
+
+newtype HyperMagicNFA a = HyperMagicNFA (MagicNFA (HyperAction a))
+    deriving newtype (ParallelSemigroup)
+
+instance Pointed HyperMagicNFA where
+    point = HyperMagicNFA . point . point
+
+instance Ord a => Semigroup (HyperMagicNFA a) where
+    (HyperMagicNFA a) <> (HyperMagicNFA b) = 
+        HyperMagicNFA $ enfaToMnfa (mnfaToEnfa a <> mnfaToEnfa b)
+
+instance (Ord a, ParallelSemigroup a) => ParallelSemigroup (HyperAction a) where
+    (HyperAction xs) <||> (HyperAction ys) = HyperAction $ 
+        Set.fromList [x <||> y | x <- toList xs, y <- toList ys ]
+
+instance Show a => Show (HyperMagicNFA a) where
+    show (HyperMagicNFA x) = 
+        concatMap showState $ IM.toList (mnfaTransition x)
+      where
+        showState (s, sTr) = 
+            showStateId x s
+            <> ":\n"
+            <> unlines (map showTransition $ concatMap unfoldHyperAction  $ IM.toList sTr)
+        unfoldHyperAction (k, ha) = map (k,) $ toList ha
 
 stepFinalLeft :: (Int -> Int -> Int) -> Int -> IntSet -> IntSet -> IntMap (IntMap (These Eps a))
 stepFinalLeft encode lFinal lF rS = IM.fromList

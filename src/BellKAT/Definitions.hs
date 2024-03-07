@@ -48,12 +48,12 @@ applyFullOrderedPolicy = SHQ.execute IOSHQ.execute . meaning
 applyFullOrderedPolicyAuto 
     :: (Ord tag, Show tag) 
     => Ordered FullPolicy BellPairsPredicate tag -> History tag -> Set (History tag)
-applyFullOrderedPolicyAuto = ASHQ.execute IOSHQ.execute . meaning
+applyFullOrderedPolicyAuto = ASHQ.executeE IOSHQ.execute . meaning
 
 applyStarOrderedPolicy 
     :: (Ord tag, Show tag) 
     => Ordered StarPolicy BellPairsPredicate tag -> History tag -> Set (History tag)
-applyStarOrderedPolicy = ASHQ.execute IOSHQ.execute . meaning
+applyStarOrderedPolicy = ASHQ.executeE IOSHQ.execute . meaning
 
 applyOneStepPolicyPartial 
     :: (Ord tag, Show tag) 
@@ -68,7 +68,7 @@ applyOneStepPolicy = IOSHQ.execute . meaning
 applyStarOrderedPolicyBounded 
     :: (Ord tag, Show tag) 
     => Ordered StarPolicy BellPairsPredicate tag -> History tag -> Set (History tag)
-applyStarOrderedPolicyBounded = (handleExecutionError .) . ASHQ.executeWith (ASHQ.EP (Just 100)) IOSHQ.execute . meaning
+applyStarOrderedPolicyBounded = (handleExecutionError .) . ASHQ.executeWithE (ASHQ.EP (Just 100)) IOSHQ.execute . meaning
   where
     handleExecutionError :: Maybe a -> a
     handleExecutionError Nothing = error "couldn't execute"
