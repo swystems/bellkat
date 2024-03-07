@@ -20,6 +20,14 @@ data AtomicOneStepPolicy tag = AtomicOneStepPolicy
     (RestrictedTest tag) (TaggedBellPairs tag) (TaggedBellPairs tag)
     deriving stock (Eq, Ord)
 
+createAtomicOneStepPolicy 
+    :: Ord tag
+    => RestrictedTest tag -> TaggedBellPairs tag -> TaggedBellPairs tag -> AtomicOneStepPolicy tag
+createAtomicOneStepPolicy t inBPs outBPs = 
+    if t == createRestrictedTest [mempty]
+       then AtomicOneStepPolicy t mempty mempty
+       else AtomicOneStepPolicy t inBPs outBPs
+
 instance Show tag => Show (AtomicOneStepPolicy tag) where
     showsPrec _ (AtomicOneStepPolicy t inBPs outBPs) = 
         showString "[" . shows t . showString "] (" 
@@ -38,11 +46,11 @@ execute (AtomicOneStepPolicy t inBPs outBPs) bps =
 
 instance Ord tag => OrderedSemigroup (AtomicOneStepPolicy tag) where
     (AtomicOneStepPolicy t1 inBps1 outBps1) <.> (AtomicOneStepPolicy t2 inBps2 outBps2)
-      = AtomicOneStepPolicy (t1 .&&. (t2 .+. inBps1)) (inBps1 <> inBps2) (outBps1 <> outBps2)
+      = createAtomicOneStepPolicy (t1 .&&. (t2 .+. inBps1)) (inBps1 <> inBps2) (outBps1 <> outBps2)
 
 instance Ord tag => ParallelSemigroup (AtomicOneStepPolicy tag) where
     (AtomicOneStepPolicy t1 inBps1 outBps1) <||> (AtomicOneStepPolicy t2 inBps2 outBps2)
-      = AtomicOneStepPolicy (t1 .&&. (t2 .+. inBps1)) (inBps1 <> inBps2) (outBps1 <> outBps2)
+      = createAtomicOneStepPolicy (t1 .&&. (t2 .+. inBps1)) (inBps1 <> inBps2) (outBps1 <> outBps2)
 
 instance (Ord tag, Default tag) 
   => CreatesBellPairs (NonEmpty (AtomicOneStepPolicy tag)) tag where
@@ -72,5 +80,6 @@ createBasicAction
     :: (Ord tag) 
     => TaggedBellPairs tag -> TaggedBellPairs tag -> NonEmpty (AtomicOneStepPolicy tag)
 createBasicAction inBPs outBPs =
-    AtomicOneStepPolicy (createRestrictedTest mempty) inBPs outBPs
-    :| [AtomicOneStepPolicy (createRestrictedTest [inBPs]) mempty mempty]
+    createAtomicOneStepPolicy (createRestrictedTest mempty) inBPs outBPs
+    :| createAtomicOneStepPolicy (createRestrictedTest [inBPs]) mempty mempty
+    : []
