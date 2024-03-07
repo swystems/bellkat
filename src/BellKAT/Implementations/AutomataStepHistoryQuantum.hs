@@ -57,13 +57,13 @@ instance (Ord t, Ord (sq t), Quantum (sq t) t)
         => Quantum (AutomatonStepHistoryQuantum 'ACNormal (sq t)) t where
 
 instance (ChoiceSemigroup (sq t), Quantum (sq t) t) 
-        => OrderedQuantum (AutomatonStepHistoryQuantum 'ACEmbedded (sq t)) t where
+        => OrderedLayeredQuantum (AutomatonStepHistoryQuantum 'ACEmbedded (sq t)) t where
     newtype Layer (AutomatonStepHistoryQuantum 'ACEmbedded (sq t)) = OneStepEmbedded (sq t)
     orderedTryCreateBellPairFrom = OneStepEmbedded . tryCreateBellPairFrom
     liftLayer (OneStepEmbedded s) = point s
 
 instance (Ord (sq t), Quantum (sq t) t) 
-        => OrderedQuantum (AutomatonStepHistoryQuantum 'ACNormal (sq t)) t where
+        => OrderedLayeredQuantum (AutomatonStepHistoryQuantum 'ACNormal (sq t)) t where
     newtype Layer (AutomatonStepHistoryQuantum 'ACNormal (sq t)) = OneStepNormal (sq t)
     orderedTryCreateBellPairFrom = OneStepNormal . tryCreateBellPairFrom
     liftLayer (OneStepNormal s) = point s

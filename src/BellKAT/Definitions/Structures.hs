@@ -6,7 +6,8 @@ module BellKAT.Definitions.Structures
     , Tests(..)
     , TestsQuantum
     , TestsOrderedQuantum(..)
-    , OrderedQuantum(..)
+    , OrderedQuantum
+    , OrderedLayeredQuantum(..)
     , OrderedSemigroup(..)
     , MonoidStar(..)
     , subjectTo
@@ -51,17 +52,19 @@ class Tests a test tag | a -> tag, a -> test where
 
 class (Quantum a tag, Tests a test tag) => TestsQuantum a test tag | a -> test, a -> tag where
 
+class (Quantum a tag, OrderedSemigroup a) => OrderedQuantum a tag
+
 -- | `Quantum` that has two domains: 
 --  * `a` for the top-level behavior having `Semigroup` and `ParallelSemigroup` structures)
 --  * `Layer a` for the one-layer behavior having `OrderedSemigroup` structure
 -- `liftLayer` is an embedding from a Layer
-class (Semigroup a, ParallelSemigroup a, OrderedSemigroup (Layer a)) => OrderedQuantum a t | a -> t where
+class (Semigroup a, ParallelSemigroup a, OrderedSemigroup (Layer a)) => OrderedLayeredQuantum a t | a -> t where
     data Layer a
 
     orderedTryCreateBellPairFrom :: CreateBellPairArgs t -> Layer a
     liftLayer :: Layer a -> a
 
-class OrderedQuantum a tag => TestsOrderedQuantum a test tag where
+class OrderedLayeredQuantum a tag => TestsOrderedQuantum a test tag where
     orderedTest :: test tag -> Layer a
 
 -- | Notation for predicate

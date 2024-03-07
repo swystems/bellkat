@@ -42,7 +42,7 @@ instance (Ord t, CreatesBellPairs (sq t) t) => CreatesBellPairs (StepHistoryQuan
 
 instance (Ord t, Quantum (sq t) t) => Quantum (StepHistoryQuantum (sq t)) t where
 
-instance (Ord t, Quantum (sq t) t) => OrderedQuantum (StepHistoryQuantum (sq t)) t where
+instance (Ord t, Quantum (sq t) t) => OrderedLayeredQuantum (StepHistoryQuantum (sq t)) t where
     newtype Layer (StepHistoryQuantum (sq t)) = OneStep (sq t)
     orderedTryCreateBellPairFrom = OneStep . tryCreateBellPairFrom
     liftLayer (OneStep s) = point s
