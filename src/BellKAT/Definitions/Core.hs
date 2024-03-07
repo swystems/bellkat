@@ -1,15 +1,19 @@
 {-# LANGUAGE OverloadedLists #-}
 module BellKAT.Definitions.Core (
-    Location, 
+    Location,
     TaggedRequiredRoots,
     CreateBellPairArgs(..),
-    BellPair(..), 
+    BellPair(..),
     History(..),
     DupKind(..),
     Test(..),
     BellPairsPredicate(..),
+    RestrictedTest(..),  
+    (.+.),
+    (.&&.),
     Partial(..),
     TaggedBellPair(..),
+    TaggedBellPairs,
     FreeTest(..),
     dupHistory,
     dupHistoryN,
@@ -31,7 +35,7 @@ import qualified GHC.Exts                   (IsList, Item, fromList, toList)
 
 import           Data.Vector.Fixed          (Arity, VecList)
 import qualified Data.Vector.Fixed          as FV
-import           Test.QuickCheck            hiding (choose)
+import           Test.QuickCheck            hiding (choose, (.&&.))
 import           Data.Multiset              (Multiset)
 
 import           BellKAT.Utils.Choice
@@ -75,8 +79,8 @@ data CreateBellPairArgs t = CreateBellPairArgs
 instance Show1 CreateBellPairArgs where
   liftShowsPrec _ _ _ _ = shows "cbp"
 
-data FreeTest t 
-    = FTSubset (Multiset (TaggedBellPair t))
+data FreeTest t
+    = FTSubset (TaggedBellPairs t)
     | FTNot (FreeTest t)
 
 instance Show1 FreeTest where
@@ -88,7 +92,19 @@ instance Show t => Show (FreeTest t) where
     showsPrec d (FTNot x) = showParen (app_prec < d) $ showString "not " . shows x
       where app_prec = 10
 
-newtype BellPairsPredicate t = BPsPredicate { getBPsPredicate :: Multiset (TaggedBellPair t) -> Bool }
+newtype RestrictedTest tag = RestrictedTest [TaggedBellPairs tag]
+    deriving newtype (Eq, Ord)
+
+(.+.) :: (Ord tag) => RestrictedTest tag -> TaggedBellPairs tag -> RestrictedTest tag
+(RestrictedTest bpss) .+. bps = RestrictedTest (map (<> bps) bpss)
+
+(.&&.) :: (Ord tag) => RestrictedTest tag -> RestrictedTest tag -> RestrictedTest tag
+(RestrictedTest bpss) .&&. (RestrictedTest bpss') = RestrictedTest (bpss <> bpss')
+
+instance Test RestrictedTest where
+    toBPsPredicate (RestrictedTest s) = BPsPredicate $ \bps -> not (any (`Mset.isSubsetOf` bps) s)
+
+newtype BellPairsPredicate t = BPsPredicate { getBPsPredicate :: TaggedBellPairs t -> Bool }
 
 class Test test where
     toBPsPredicate :: Ord tag => test tag -> BellPairsPredicate tag
@@ -106,12 +122,16 @@ instance Show (BellPairsPredicate t) where
 -- * History of BellPairs
 
 type RequiredRoots = [BellPair]
+
 data TaggedBellPair t = TaggedBellPair
     { bellPair    :: BellPair
     , bellPairTag :: t
     } deriving stock (Eq, Ord, Show)
 
 type TaggedRequiredRoots t = (RequiredRoots, Predicate t)
+
+-- | `TaggedBellPairs` is a multiset of Bell pairs
+type TaggedBellPairs tag = Multiset (TaggedBellPair tag)
 
 -- | `History` is a forest of `BellPair`s
 newtype History t = History { getForest :: UForest (TaggedBellPair t) }

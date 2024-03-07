@@ -12,9 +12,11 @@ module BellKAT.Definitions
     , applyStarOrderedPolicyBounded
     , applyOneStepPolicy
     , applyOneStepPolicyPartial
+    , applyStarPolicy
     ) where
 
 import           Data.Set                                (Set)
+import           Data.Default
 
 import           BellKAT.Definitions.Structures
 import           BellKAT.Definitions.Core
@@ -24,6 +26,7 @@ import qualified BellKAT.Implementations.HistoryQuantum        as HQ
 import qualified BellKAT.Implementations.InterleavingOneStepHistoryQuantum as IOSHQ
 import qualified BellKAT.Implementations.StepHistoryQuantum    as SHQ
 import qualified BellKAT.Implementations.AutomataStepHistoryQuantum    as ASHQ
+import qualified BellKAT.Implementations.AtomicOneStepHistoryQuantum  as AOSHQ
 import qualified BellKAT.Implementations.TimelyHistoryQuantum  as THQ
 
 applyPolicy :: Ord tag => Normal Policy tag -> History tag -> Set (History tag)
@@ -54,6 +57,11 @@ applyStarOrderedPolicy
     :: (Ord tag, Show tag) 
     => Ordered StarPolicy BellPairsPredicate tag -> History tag -> Set (History tag)
 applyStarOrderedPolicy = ASHQ.executeE IOSHQ.execute . meaning
+
+applyStarPolicy 
+    :: (Ord tag, Show tag, Default tag) 
+    => Normal StarPolicy tag -> TaggedBellPairs tag -> Set (TaggedBellPairs tag)
+applyStarPolicy = ASHQ.execute AOSHQ.execute . meaning
 
 applyOneStepPolicyPartial 
     :: (Ord tag, Show tag) 

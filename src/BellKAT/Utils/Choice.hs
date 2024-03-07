@@ -12,6 +12,7 @@ import           Data.Foldable              (toList)
 import           Data.Functor.Contravariant (Predicate (..))
 import           Data.List                  (elemIndex, partition, permutations)
 import           Data.Maybe                 (fromJust)
+import           Data.Multiset   (Multiset)
 import qualified Data.Multiset              as Mset
 import           Data.Set                   (Set)
 import qualified Data.Set                   as Set
@@ -52,6 +53,17 @@ choose :: (Ord a) => Int -> [a] -> [Partial [a]]
 choose 0 xs = [chooseNoneOf xs]
 choose _ [] = []
 choose n (x:xs) = [chooseAll [x] <> p | p <- choose (n - 1) xs] ++ [chooseNoneOf [x] <> p | p <- choose n xs]
+
+-- TODO: should morally be returning Maybe
+findElemsND :: (Ord a) => [a] -> Multiset a -> [Partial (Multiset a)]
+findElemsND [] ts = [chooseNoneOf ts]
+findElemsND bps@(bp:_) ts =
+    let (curBps, restBps) = partition (== bp) bps
+        curTrees = Mset.filter (== bp) ts
+        restTrees = Mset.filter (/= bp) ts
+     in [fmap Mset.fromList ts' <> ts''
+            | ts' <- choose (length curBps) (toList curTrees)
+            , ts'' <- findElemsND restBps restTrees]
 
 findTreeRootsP :: (Ord a) => Predicate a -> UForest a -> Partial (UForest a)
 findTreeRootsP p ts = 

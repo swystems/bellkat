@@ -25,6 +25,7 @@ dependencies:
   - diagrams-cairo
   - QuickCheck
   - fixed-vector
+  - data-default
   - these
   - pointed
   - base-orphans
@@ -48,6 +49,7 @@ library:
     - BellKAT.Implementations.HistoryQuantum
     - BellKAT.Implementations.AutomataExecution
     - BellKAT.Implementations.AutomataStepHistoryQuantum
+    - BellKAT.Implementations.AtomicOneStepHistoryQuantum
     - BellKAT.Utils.UnorderedTree
     - BellKAT.Utils.NonEmpty
     - BellKAT.Utils.Choice
