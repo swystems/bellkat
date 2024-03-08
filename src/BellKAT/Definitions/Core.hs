@@ -18,6 +18,7 @@ module BellKAT.Definitions.Core (
     TaggedBellPairs,
     FreeTest(..),
     dupHistory,
+    dupForest,
     dupHistoryN,
     processDup,
     chooseKHistories,
@@ -190,7 +191,10 @@ chooseKHistories reqRoots (History ts) =
 
 -- | Duplicating history
 dupHistory :: Ord t => History t -> History t
-dupHistory = History . Mset.map (\t -> Node (rootLabel t) [t]) . getForest
+dupHistory = History . dupForest . getForest
+
+dupForest :: Ord t => UForest t -> UForest t
+dupForest = Mset.map (\t -> Node (rootLabel t) [t])
 
 -- | Duplicating history
 dupHistoryN :: Ord t => Int -> History t -> History t
