@@ -86,12 +86,12 @@ sequenceAfterDecomposition q (Right (x, xs)) = Right (x, Sequence xs q)
 instance CreatesBellPairs a t =>  CreatesBellPairs (InterleavingOneStepPolicy a) t where
     tryCreateBellPairFrom = Atomic . tryCreateBellPairFrom
 
-instance (Ord t) => Quantum (InterleavingOneStepPolicy (FunctionStep t)) t
+instance (Ord t) => Quantum (InterleavingOneStepPolicy (FunctionStep test t)) t
 
 instance (Ord tag, Show tag, Tests a test tag) => Tests (InterleavingOneStepPolicy a) test tag where
   test = Atomic . test
 
-instance (Ord tag, Show tag) => TestsQuantum (InterleavingOneStepPolicy (FunctionStep tag)) BellPairsPredicate tag where
+instance (Ord tag, Show tag) => TestsQuantum (InterleavingOneStepPolicy (FunctionStep test tag)) BellPairsPredicate tag where
 
 instance {-# OVERLAPPING #-} (Show1 f, Show a) => Show (Compose InterleavingOneStepPolicy f a) where
     showsPrec d  (Compose x) = liftShowsPrec (liftShowsPrec showsPrec showList) (liftShowList showsPrec showList) d x
@@ -116,16 +116,16 @@ instance (Show t, Ord t, Tests (a t) test t) => Tests (Compose InterleavingOneSt
 instance (Show t, Ord t, Tests (a t) test t, CreatesBellPairs (a t) t)
   => TestsQuantum (Compose InterleavingOneStepPolicy a t) test t where
 
-executeOneStepPolicy :: (Ord tag) => InterleavingOneStepPolicy (FunctionStep tag) -> FunctionStep tag
+executeOneStepPolicy :: (Ord tag) => InterleavingOneStepPolicy (FunctionStep test tag) -> FunctionStep test tag
 executeOneStepPolicy (Atomic x) = x
 executeOneStepPolicy (Sequence p q)  = executeOneStepPolicy p <> executeOneStepPolicy q
 executeOneStepPolicy (Choice p q)  = executeOneStepPolicy p <+> executeOneStepPolicy q
 
-executePartial :: Ord tag => Compose InterleavingOneStepPolicy FunctionStep tag -> History tag -> Set (Partial (History tag))
+executePartial :: Ord tag => Compose InterleavingOneStepPolicy (FunctionStep step) tag -> History tag -> Set (Partial (History tag))
 executePartial (Compose osp) = applyPartialNDEndo (executeFunctionStep (executeOneStepPolicy osp))
 
 executeFree :: (Test test, Ord tag) => Compose InterleavingOneStepPolicy (FreeStep test) tag -> History tag -> Set (History tag)
 executeFree = execute . Compose . fmap runFreeStep . getCompose
 
-execute :: Ord t => Compose InterleavingOneStepPolicy FunctionStep t -> History t -> Set (History t)
+execute :: Ord t => Compose InterleavingOneStepPolicy (FunctionStep test) t -> History t -> Set (History t)
 execute p = Set.map unchoose . executePartial p
