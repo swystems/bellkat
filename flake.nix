@@ -3,9 +3,8 @@
 
   inputs.nixpkgs.url = "github:pschuprikov/nixpkgs/nixos-23.05";
   inputs.flake-utils.url = "github:numtide/flake-utils";
-  inputs.deploy-rs.url = "github:serokell/deploy-rs";
 
-  outputs = { self, nixpkgs, flake-utils, deploy-rs }:
+  outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         lib = nixpkgs.lib;
@@ -27,7 +26,6 @@
         devShells.default = pkgs.mkShell {
           buildInputs = [
             ihaskell-dev
-            deploy-rs.defaultPackage.${system}
             pkgs.ghcid
             pkgs.cabal-install
             pkgs.haskellPackages.haskell-language-server
@@ -72,24 +70,6 @@
                       sourceRoot = "source/ihaskell-display/ihaskell-diagrams";
                     });
               };
-            };
-          };
-        };
-
-        nixosConfigurations.quantum-server = nixpkgs.lib.nixosSystem {
-          inherit system;
-          specialArgs = { bellkat = self; };
-          modules = [ ./configuration.nix ];
-        };
-
-        deploy = {
-          sshUser = "pschuprikov";
-          nodes.quantum-server = {
-            hostname = "quantum.pschuprikov.me";
-            profiles.system = {
-              user = "root";
-              path = deploy-rs.lib.${system}.activate.nixos
-                self.nixosConfigurations.quantum-server;
             };
           };
         };
