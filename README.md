@@ -62,31 +62,62 @@ stack build
 
 ## Reproducing the results
 
-### Executable container
+### Preparation
 
-Create the container by running
+  * Docker (recommended): change to artifact's root and create the container by running
 
-```bash
-docker build --tag bellkat:latest .
-```
+    ```bash
+    docker build --tag bellkat:latest .
+    ```
+
+  * Stack: change to the artifact root
+  * Nix: change to the artifact root and run `nix develop`
 
 ### Example P1 and history in Fig 3 (a)
 
 The protocols are specified in `examples/P1.hs`, history would be saved in `P1.svg`.
 
-```bash
-docker run --rm --mount type=bind,source=$(pwd),target=/opt/bellkat -it bellkat:latest\
-    examples/P1.hs --width 1000 --output P1.svg
-```
+  * Docker (recommended)
+
+    ```bash
+    docker run --rm --mount type=bind,source=$(pwd),target=/opt/bellkat -it bellkat:latest\
+        examples/P1.hs --width 1000 --output P1.svg
+    ```
+
+  * Stack:
+
+    ```bash
+    stack run p1 --width 1000 --output P1.svg
+    ```
+
+  * Nix:
+
+    ```bash
+    cabal run p1 --width 1000 --output P1.svg
+    ```
 
 ### Example P2 and history in Fig 3 (b)
 
 The protocols are specified in `examples/P2.hs`, history would be saved in `P2.svg`.
 
-```bash
-docker run --rm --mount type=bind,source=$(pwd),target=/opt/bellkat -it bellkat:latest\
-    examples/P2.hs --width 1000 --output P2.svg
-```
+  * Docker (recommended)
+
+    ```bash
+    docker run --rm --mount type=bind,source=$(pwd),target=/opt/bellkat -it bellkat:latest\
+        examples/P2.hs --width 1000 --output P2.svg
+    ```
+
+  * Stack:
+
+    ```bash
+    stack run p2 --width 1000 --output P2.svg
+    ```
+
+  * Nix:
+
+    ```bash
+    cabal run p2 --width 1000 --output P2.svg
+    ```
 
 ### Example P3
 
@@ -97,10 +128,24 @@ Perform four checks using `examples/P3.hs` (uses [HSpec][hspec] library).
   * check that 3 qubits memory at location $A$ are not enough (line 943 of the paper)
   * check that 2 qubits at $A$ and 4 qubits at $D$ are enough (line 943 of the paper)
 
-```bash
-docker run --rm --mount type=bind,source=$(pwd),target=/opt/bellkat -it bellkat:latest\
-    examples/P3.hs
-```
+  * Docker
+
+    ```bash
+    docker run --rm --mount type=bind,source=$(pwd),target=/opt/bellkat -it bellkat:latest\
+        examples/P3.hs
+    ```
+
+  * Stack:
+
+    ```bash
+    stack run p3
+    ```
+
+  * Nix:
+
+    ```bash
+    cabal run p3
+    ```
 
 [nix]: https://nixos.org/download
 [flakes]: https://nixos.wiki/wiki/Flakes
