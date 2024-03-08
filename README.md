@@ -62,6 +62,26 @@ stack build
 
 ## Reproducing the results
 
+## Syntactic differences with the paper:
+
+Basic actions:
+
+  * $cr\langle X \rangle$ is represented by `create "X"`
+  * $tr\langle X \rightarrow Y \sim Z \rangle$ is represented by `trans "X" ("Y", "Z")`
+  * $sw\langle X \sim Y @ Z \rangle$ is represented by `swap "Z" ("X", "Y")`
+  * $di\langle X \sim Y\rangle$ is represented by `distill ("X", "Y")`
+
+Operations:
+
+  * sequential composition is represented by `<>`
+  * parallel composition $||$ is represented by `<||>`
+  * iteration $p^\ast$ is represented by `star p`
+
+Tests:
+
+  * checking absence $[\{\{X \sim Y\}\}]$ is represented by `test ("X" /~? "Y")`
+  * checking presence $\{\{X \sim Y\}\} \blacktriangleright \{\{X \sim Y\}\}$ is represented by `test ("X" ~~? "Y")`
+
 ### Preparation
 
   * Docker (recommended): change to artifact's root and create the container by running
