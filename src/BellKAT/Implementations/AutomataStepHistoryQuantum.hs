@@ -15,6 +15,7 @@ import           Data.Pointed
 import           Data.List.NonEmpty             (NonEmpty)
 import           Data.Set                       (Set)
 import           Data.Maybe                     (fromJust)
+import           Data.Default
  
 
 import           BellKAT.Definitions.Structures
@@ -92,17 +93,17 @@ executeE :: (Ord b, Show b)
     => (a -> b -> Set b)
     -> AutomatonStepHistoryQuantum 'ACEmbedded a
     -> b -> Set b
-executeE executeStep ahq = fromJust . executeWithE (AE.EP Nothing) executeStep ahq
+executeE executeStep ahq = fromJust . executeWithE def executeStep ahq
 
 executeWithE :: (Ord b, Show b)
-    => ExecutionParams
+    => ExecutionParams b
     -> (a -> b -> Set b)
     -> AutomatonStepHistoryQuantum 'ACEmbedded a
     -> b -> Maybe (Set b)
 executeWithE params executeStep (AutomatonStepHistoryQuantum nfa) = AE.execute params executeStep nfa
 
 executeWith :: (Ord b, Show b)
-    => ExecutionParams
+    => ExecutionParams b
     -> (a -> b -> Set b)
     -> AutomatonStepHistoryQuantum 'ACNormal a
     -> b -> Maybe (Set b)
@@ -112,4 +113,4 @@ execute :: (Ord b, Show b)
     => (a -> b -> Set b)
     -> AutomatonStepHistoryQuantum 'ACNormal a
     -> b -> Set b
-execute executeStep ahq = fromJust . executeWith (AE.EP Nothing) executeStep ahq
+execute executeStep ahq = fromJust . executeWith def executeStep ahq

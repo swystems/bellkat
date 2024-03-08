@@ -9,6 +9,7 @@ module BellKAT.Definitions
     , applyFullOrderedPolicy
     , applyFullOrderedPolicyAuto
     , applyStarOrderedPolicy
+    , applyStarPolicyWithValidity
     , applyStarOrderedPolicyBounded
     , applyOneStepPolicy
     , applyOneStepPolicyPartial
@@ -63,6 +64,15 @@ applyStarPolicy
     => NormalWithTests StarPolicy test tag -> TaggedBellPairs tag -> Set (TaggedBellPairs tag)
 applyStarPolicy = ASHQ.execute AOSHQ.execute . meaning 
 
+applyStarPolicyWithValidity
+    :: (Ord tag, Show tag, Default tag, Tests (AOSHQ.AtomicOneStepPolicy tag) test tag) 
+    => (TaggedBellPairs tag -> Bool)
+    -> NormalWithTests StarPolicy test tag 
+    -> TaggedBellPairs tag 
+    -> Maybe (Set (TaggedBellPairs tag))
+applyStarPolicyWithValidity isValid = 
+    ASHQ.executeWith (def { ASHQ.isValidState = isValid }) AOSHQ.execute . meaning 
+
 applyOneStepPolicyPartial 
     :: (Ord tag, Show tag) 
     => Normal OneRoundPolicy tag -> History tag -> Set (Partial (History tag))
@@ -76,7 +86,7 @@ applyOneStepPolicy = IOSHQ.execute . meaning
 applyStarOrderedPolicyBounded 
     :: (Ord tag, Show tag) 
     => Ordered StarPolicy BellPairsPredicate tag -> History tag -> Set (History tag)
-applyStarOrderedPolicyBounded = (handleExecutionError .) . ASHQ.executeWithE (ASHQ.EP (Just 100)) IOSHQ.execute . meaning
+applyStarOrderedPolicyBounded = (handleExecutionError .) . ASHQ.executeWithE (def { ASHQ.maxOptionsPerState = Just 100}) IOSHQ.execute . meaning
   where
     handleExecutionError :: Maybe a -> a
     handleExecutionError Nothing = error "couldn't execute"

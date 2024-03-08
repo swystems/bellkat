@@ -4,6 +4,7 @@ module BellKAT.Definitions.Core (
     TaggedRequiredRoots,
     CreateBellPairArgs(..),
     BellPair(..),
+    hasLocation,
     History(..),
     DupKind(..),
     Test(..),
@@ -59,6 +60,9 @@ instance Eq BellPair where
 
 instance Ord BellPair where
     compare (l1 :~: l2) (l1' :~: l2') = compare (sort [l1, l2]) (sort [l1', l2'])
+
+hasLocation :: Location -> BellPair -> Bool
+hasLocation l (l1 :~: l2) = l == l1 || l == l2
 
 data DupKind = DupKind { dupBefore :: Bool, dupAfter :: Bool }
 

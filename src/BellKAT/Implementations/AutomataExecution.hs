@@ -7,13 +7,13 @@ module BellKAT.Implementations.AutomataExecution
     , runExecution
     , executeAutomata
     , getAllStates
-    , defaultExecutionParams
     , showStates
     , printAutomatonStats
     , ExecutionParams(..)
     ) where
 
 import           Data.IntMap.Strict (IntMap)
+import           Data.Default
 import qualified Data.IntMap.Strict as IM
 import           Data.Set           (Set)
 import qualified Data.Set           as Set
@@ -25,7 +25,7 @@ import           Control.Monad.Except
 import BellKAT.Implementations.Automata
 
 execute :: (Ord s, Show s)
-    => ExecutionParams
+    => ExecutionParams s
     -> (a -> s -> Set s)
     -> MagicNFA a
     -> s -> Maybe (Set s)
@@ -37,7 +37,7 @@ execute params executeStep mnfa x =
           Right final -> Just final
 
 executeHyper :: (Ord s, Show s)
-    => ExecutionParams
+    => ExecutionParams s
     -> (a -> s -> Set s)
     -> HyperMagicNFA a
     -> s -> Maybe (Set s)
@@ -63,7 +63,7 @@ showStates x = concatMap showState . IM.toList
             <> unlines (map (\z -> "  " <> show z) $ Set.toList zs)
 
 evalExecution :: Ord s
-    => ExecutionParams
+    => ExecutionParams s
     -> (a -> s -> Set s)
     -> MagicNFA a
     -> s
@@ -74,7 +74,7 @@ evalExecution params executeStep mnfa x m =
      in (`evalState` initialState mnfa x) . runExceptT . (`runReaderT` env) $ m
 
 runExecution :: Ord s
-    => ExecutionParams
+    => ExecutionParams s
     -> (a -> s -> Set s)
     -> MagicNFA a
     -> s
@@ -95,19 +95,20 @@ data ExecutionState s = ES
     , esProcessed :: IntMap (Set s)
     }
 
-newtype ExecutionParams = EP 
+data ExecutionParams s = EP 
     { maxOptionsPerState :: Maybe Int
+    , isValidState :: s -> Bool
     }
 
-defaultExecutionParams :: ExecutionParams
-defaultExecutionParams = EP Nothing
+instance Default (ExecutionParams s) where
+    def = EP Nothing (const True)
 
-data ExecutionError = TooManyStates
+data ExecutionError = TooManyStates | InvalidStateReached
 
 data ExecutionEnvironment a s = EE
     { eeAutomaton :: MagicNFA a
     , eeStepEvaluation :: a -> s -> Set s
-    , eeExecutionParams :: ExecutionParams
+    , eeExecutionParams :: ExecutionParams s
     }
 
 type ExecutionMonad a s = ReaderT (ExecutionEnvironment a s) (ExceptT ExecutionError (State (ExecutionState s)))
@@ -137,6 +138,8 @@ markProcessed s hs = modify' $ \st ->
 
 appendStates :: (Ord s) => IM.Key -> Set s -> ExecutionMonad a s ()
 appendStates s hs = do
+    checkState <- reader (isValidState . eeExecutionParams)
+    unless (all checkState hs) $ throwError InvalidStateReached
     currentState <- gets ((IM.! s) . esProcessed)
     addPending s $ Set.difference hs currentState
 
@@ -160,7 +163,7 @@ popNextPending = do
 printAutomatonStats :: (Monoid b, Ord b, Show b, Show a) => (a -> b -> Set b) -> MagicNFA a -> IO ()
 printAutomatonStats exec nfa =
     let
-        st = evalExecution (EP Nothing) exec nfa mempty $ 
+        st = evalExecution def exec nfa mempty $ 
             executeAutomata >> getAllStates
     in case st of 
          Left _ -> putStrLn "execution error"
