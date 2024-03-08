@@ -59,6 +59,14 @@ library:
     - BellKAT.Prelude
 
 executables:
+  p1:
+    dependencies: 
+      - bellkat
+    main: examples/P1.hs
+  p2:
+    dependencies: 
+      - bellkat
+    main: examples/P2.hs
   p3:
     dependencies: 
       - hspec

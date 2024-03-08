@@ -8,4 +8,8 @@ cradle:
           component: "test:small"
         - path: "examples/P3.hs"
           component: "exe:p3"
+        - path: "examples/P2.hs"
+          component: "exe:p2"
+        - path: "examples/P1.hs"
+          component: "exe:p1"
 
