@@ -32,6 +32,8 @@ main = hspec $ do
     describe "Example (P3)" $ do
         it "always returns A~E" $
             arePoliciesEquivalent [[]] p (p <> test ("A" ~~? "E")) `shouldBe` True
+        it "not always returns A~B" $
+            arePoliciesEquivalent [[]] p (p <> test ("A" ~~? "B")) `shouldBe` False
         it "uses more than 1 qubit at A" $
             isPolicyValid [[]] (memoryBounds [("A", 1)]) p `shouldBe` False
         it "uses more than 3 qubit at D" $

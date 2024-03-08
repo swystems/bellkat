@@ -123,14 +123,16 @@ The protocols are specified in `examples/P2.hs`, history would be saved in `P2.s
 
 ### Example P3
 
-Perform four checks using `examples/P3.hs` (uses [HSpec][hspec] library), including _reachability
-property_ (discussed on line 942 of the paper) and _memory requirements_ (discussed on line 943 of
-the paper):
+Perform four checks using `examples/P3.hs` (uses [HSpec][hspec] library):
 
   * check that the protocol always creates a $A \sim E$ Bell pair
+  * check that the protocol does not always creates a $A \sim C$ Bell pair
   * check that 1 qubit memory at location $A$ are _not_ enough
   * check that 3 qubits memory at location $A$ are not enough
   * check that 2 qubits at $A$ and 4 qubits at $D$ are enough
+
+The first two are related _reachability property_ (discussed on line 942 of the paper), while the rest are related to  _memory requirements_ (discussed on line 943 of the paper):
+
 
   * Docker (recommended)
 
