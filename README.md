@@ -1,7 +1,11 @@
 # Artifact for "An Algebraic Language for Specifying Quantum Networks"
 
-The artifact provides two packaging options: [Nix][nix]-based, [Stack][stack]-based, and
-[Docker][docker]-based.
+The artifact is a [Haskell][haskell] library `bellkat` plus several examples provided as executables within the same [Haskell][haskell] package.
+We provide two build options: [Nix][nix]-based and [Stack][stack]-based, for each we give a [Docker][docker] file that can simplify the setup of the development environment. 
+Reproducing the results from the paper can be done in two ways:
+
+  * from a respective development environment ([Nix][nix]- or [Stack][stack]-based) 
+  * using an _executable_ [Docker][docker] container providing a [Haskell][haskell] interpreter with `bellkat` already "in scope" (recommended)
 
 ## Preparing development environment
 
@@ -56,6 +60,47 @@ cabal build
 stack build
 ```
 
+## Reproducing the results
+
+### Executable container
+
+Create the container by running
+
+```bash
+docker build --tag bellkat:latest .
+```
+
+### Example P1 and history in Fig 3 (a)
+
+The protocols are specified in `examples/P1.hs`, history would be saved in `P1.svg`.
+
+```bash
+docker run --rm --mount type=bind,source=$(pwd),target=/opt/bellkat -it bellkat:latest\
+    examples/P1.hs --width 1000 --output P1.svg
+```
+
+### Example P2 and history in Fig 3 (b)
+
+The protocols are specified in `examples/P2.hs`, history would be saved in `P2.svg`.
+
+```bash
+docker run --rm --mount type=bind,source=$(pwd),target=/opt/bellkat -it bellkat:latest\
+    examples/P2.hs --width 1000 --output P2.svg
+```
+
+### Example P3
+
+Perform four checks using `examples/P3.hs` (uses [HSpec][hspec] library).
+
+  * check that the protocol always creates a $A \sim E$ Bell pair (line 942 of the paper)
+  * check that 1 qubit memory at location $A$ are _not_ enough (line 943 of the paper)
+  * check that 3 qubits memory at location $A$ are not enough (line 943 of the paper)
+  * check that 2 qubits at $A$ and 4 qubits at $D$ are enough (line 943 of the paper)
+
+```bash
+docker run --rm --mount type=bind,source=$(pwd),target=/opt/bellkat -it bellkat:latest\
+    examples/P3.hs
+```
 
 [nix]: https://nixos.org/download
 [flakes]: https://nixos.wiki/wiki/Flakes
@@ -64,4 +109,7 @@ stack build
 [cairo]: https://www.cairographics.org
 [zlib]: https://www.zlib.net/
 [glib]: https://docs.gtk.org/glib/
-[ncurses]: https://docs.gtk.org/glib/
+[ncurses]: https://invisible-island.net/ncurses/
+[docker]: https://docs.docker.com/
+[haskell]: https://www.haskell.org/
+[HSpec]: https://hspec.github.io/
