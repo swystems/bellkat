@@ -1,21 +1,10 @@
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-import GHC.Exts (toList)
-import BellKAT.DSL
-import BellKAT.Definitions hiding (test, (<.>))
-import Data.Map.Strict (Map)
+import BellKAT.Prelude
 import Test.Hspec
 
-type PaperPolicy = NormalWithTests StarPolicy FreeTest (Maybe ())
-
-countQubitsAtLocation :: Ord tag => Location -> TaggedBellPairs tag -> Int
-countQubitsAtLocation l = length . filter (hasLocation l . bellPair) . toList
-
-memoryBounds :: Ord tag => Map Location Int -> TaggedBellPairs tag -> Bool
-memoryBounds bounds bps = all (\(l,k) -> countQubitsAtLocation l bps <= k) $ toList bounds
-
-p :: PaperPolicy
+p :: BellKATPolicy
 p = 
     let 
         pd =
@@ -42,11 +31,11 @@ main :: IO ()
 main = hspec $ do
     describe "Example (P3)" $ do
         it "always returns A~E" $
-            applyStarPolicy p [] `shouldBe` [["A" ~ "E"]]
+            arePoliciesEquivalent [[]] p (p <> test ("A" ~~? "E")) `shouldBe` True
         it "uses more than 1 qubit at A" $
-            applyStarPolicyWithValidity (memoryBounds [("A", 1)]) p [] `shouldBe` Nothing
+            isPolicyValid [[]] (memoryBounds [("A", 1)]) p `shouldBe` False
         it "uses more than 3 qubit at D" $
-            applyStarPolicyWithValidity (memoryBounds [("D", 3)]) p [] `shouldBe` Nothing
+            isPolicyValid [[]] (memoryBounds [("D", 3)]) p `shouldBe` False
         it "uses no more than 2 qubits at A and no more than 4 at D" $
-            applyStarPolicyWithValidity (memoryBounds [("A", 2), ("D", 4)]) p [] `shouldNotBe` Nothing
+            isPolicyValid [[]] (memoryBounds [("A", 2), ("D", 4)]) p `shouldBe` True
 

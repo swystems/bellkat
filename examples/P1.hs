@@ -1,14 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import Diagrams.Backend.Cairo.CmdLine
+import BellKAT.Prelude
 
-import BellKAT.DSL
-import BellKAT.Drawing
-import BellKAT.Definitions hiding (test, (<.>))
-
-type PaperPolicy = NormalWithTests StarPolicy FreeTest (Maybe ())
-
-p :: PaperPolicy 
+p :: BellKATPolicy 
 p =
     (create "C" <||> create "C" <||> create "C" <||> create "C") 
     <>
@@ -20,4 +14,4 @@ p =
 
 
 main :: IO ()
-main = mainWith $ drawStarPolicySteps p
+main = drawHistory p
