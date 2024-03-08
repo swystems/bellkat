@@ -5,8 +5,6 @@
 
 module BellKAT.Drawing where
 
-import IHaskell.Display.Diagrams
-
 import Diagrams.Prelude
 import Diagrams.Backend.Cairo (B)
 
@@ -43,23 +41,23 @@ historyToDiagram (History ts) = hsep 0.5 . map treeToDiagram  . toForest $ ts
 historiesToDiagram :: (Ord t, Show t) => [History (Maybe t)] -> Diagram B
 historiesToDiagram = vsep 1 . fmap (alignL . frameDiagram . historyToDiagram)
 
-drawPolicy :: (Ord t, Show t) => Normal Policy (Maybe t) -> ManuallySized (Diagram B)
-drawPolicy p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPolicy p $ []
+drawPolicy :: (Ord t, Show t) => Normal Policy (Maybe t) -> Diagram B
+drawPolicy p = historiesToDiagram . Set.elems . applyPolicy p $ []
 
-drawPolicyTimely :: (Ord t, Show t) => Normal Policy (Maybe t) -> ManuallySized (Diagram B)
-drawPolicyTimely p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPolicyTimely p $ []
+drawPolicyTimely :: (Ord t, Show t) => Normal Policy (Maybe t) -> Diagram B
+drawPolicyTimely p = historiesToDiagram . Set.elems . applyPolicyTimely p $ []
 
-drawPolicySteps :: (Ord t, Show t) => Normal Policy (Maybe t) -> ManuallySized (Diagram B)
-drawPolicySteps p = withImgWidth 600 . historiesToDiagram . Set.elems . applyPolicySteps p $ []
+drawPolicySteps :: (Ord t, Show t) => Normal Policy (Maybe t) -> Diagram B
+drawPolicySteps p = historiesToDiagram . Set.elems . applyPolicySteps p $ []
 
 drawOrderedPolicySteps 
-    :: (Ord t, Show t) => Ordered Policy BellPairsPredicate (Maybe t) -> ManuallySized (Diagram B)
-drawOrderedPolicySteps p = withImgWidth 600 . historiesToDiagram . Set.elems . applyOrderedPolicy p $ []
+    :: (Ord t, Show t) => Ordered Policy BellPairsPredicate (Maybe t) -> Diagram B
+drawOrderedPolicySteps p = historiesToDiagram . Set.elems . applyOrderedPolicy p $ []
 
 drawFullOrderedPolicySteps 
     :: (Ord t, Show t) 
-    => Ordered FullPolicy BellPairsPredicate (Maybe t) -> ManuallySized (Diagram B)
-drawFullOrderedPolicySteps p = withImgWidth 600 . historiesToDiagram . Set.elems . applyFullOrderedPolicy p $ []
+    => Ordered FullPolicy BellPairsPredicate (Maybe t) -> Diagram B
+drawFullOrderedPolicySteps p = historiesToDiagram . Set.elems . applyFullOrderedPolicy p $ []
 
 drawStarPolicySteps 
     :: (Ord t, Show t) 
@@ -68,13 +66,13 @@ drawStarPolicySteps p = historiesToDiagram . Set.elems . applyStarPolicyH p $ []
 
 drawStarOrderedPolicySteps 
     :: (Ord t, Show t) 
-    => Ordered StarPolicy BellPairsPredicate (Maybe t) -> ManuallySized (Diagram B)
-drawStarOrderedPolicySteps p = withImgWidth 600 . historiesToDiagram . Set.elems . applyStarOrderedPolicy p $ []
+    => Ordered StarPolicy BellPairsPredicate (Maybe t) -> Diagram B
+drawStarOrderedPolicySteps p = historiesToDiagram . Set.elems . applyStarOrderedPolicy p $ []
 
 drawStarOrderedPolicyStepsBounded 
     :: (Ord t, Show t) 
-    => Ordered StarPolicy BellPairsPredicate (Maybe t) -> ManuallySized (Diagram B)
-drawStarOrderedPolicyStepsBounded p = withImgWidth 600 . historiesToDiagram . Set.elems . applyStarOrderedPolicyBounded p $ []
+    => Ordered StarPolicy BellPairsPredicate (Maybe t) -> Diagram B
+drawStarOrderedPolicyStepsBounded p = historiesToDiagram . Set.elems . applyStarOrderedPolicyBounded p $ []
 
 drawHistoryText :: Show t => History t -> String
 drawHistoryText = drawForest . (fmap . fmap) show . toForest . getForest

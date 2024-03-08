@@ -21,7 +21,6 @@ dependencies:
   - containers
   - more-containers
   - diagrams-lib
-  - ihaskell-diagrams
   - diagrams-cairo
   - QuickCheck
   - fixed-vector
