@@ -1,0 +1,22 @@
+FROM ubuntu:jammy-20240227
+
+
+RUN apt-get update
+RUN apt-get -y install haskell-stack 
+RUN stack upgrade --binary-only
+
+COPY ./stack.yaml /opt/bellkat/stack.yaml
+COPY ./stack.yaml.lock /opt/bellkat/stack.yaml.lock
+COPY ./package.yaml /opt/bellkat/package.yaml
+
+WORKDIR /opt/bellkat
+
+RUN stack setup
+RUN stack update
+RUN apt-get -y install libz-dev libtinfo-dev libcairo-dev libpango1.0
+RUN stack build --only-dependencies
+
+COPY . /opt/bellkat
+
+CMD ["bash"]
+
