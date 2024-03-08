@@ -14,6 +14,7 @@
         };
       in {
         packages.default = pkgs.haskellPackages.bellkat;
+        packages.bellkatGHC = pkgs.haskellPackages.ghcWithPackages (ps : [ ps.bellkat ]);
         devShells.default = pkgs.haskellPackages.shellFor {
           buildInputs = [
             pkgs.ghcid
