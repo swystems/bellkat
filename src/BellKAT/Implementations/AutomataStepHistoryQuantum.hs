@@ -72,14 +72,17 @@ instance (ChoiceSemigroup (sq t), Quantum (sq t) t)
     orderedTryCreateBellPairFrom = OneStep . tryCreateBellPairFrom
     liftLayer (OneStep s) = point s
 
+instance (Ord t, ChoiceSemigroup (sq t), Quantum (sq t) t, OrderedSemigroup (sq t)) 
+        => OrderedQuantum (AutomatonStepHistoryQuantum 'ACEmbedded (sq t)) t where
+
 instance (Ord t, Ord (sq t), ParallelSemigroup (sq t), OrderedSemigroup (sq t), CreatesBellPairs (NonEmpty (sq t)) t) 
         => OrderedQuantum (AutomatonStepHistoryQuantum 'ACNormal (sq t)) t where
 
 instance (Semigroup (sq t)) => OrderedSemigroup (Layer (AutomatonStepHistoryQuantum 'ACEmbedded (sq t))) where
    (OneStep s) <.> (OneStep s') = OneStep (s <> s')
 
-instance (Ord tag, Tests (sq tag) test tag)
-        => Tests (AutomatonStepHistoryQuantum 'ACNormal (sq tag)) test tag where
+instance (Ord tag, Pointed (AutomatonFromChoice ac), Tests (sq tag) test tag)
+        => Tests (AutomatonStepHistoryQuantum ac (sq tag)) test tag where
     test = point . test
 
 instance (Ord t, Ord (sq t), Tests (sq t) test t, ParallelSemigroup (sq t), OrderedSemigroup (sq t), CreatesBellPairs (NonEmpty (sq t)) t) 
@@ -88,6 +91,9 @@ instance (Ord t, Ord (sq t), Tests (sq t) test t, ParallelSemigroup (sq t), Orde
 instance (Ord tag, ChoiceSemigroup (sq tag), TestsQuantum (sq tag) test tag)
         => TestsOrderedLayeredQuantum (AutomatonStepHistoryQuantum 'ACEmbedded (sq tag)) test tag where
     orderedTest = OneStep . test
+
+instance (Ord tag, ChoiceSemigroup (sq tag), OrderedSemigroup (sq tag), TestsQuantum (sq tag) test tag)
+        => TestsOrderedQuantum (AutomatonStepHistoryQuantum 'ACEmbedded (sq tag)) test tag where
 
 executeE :: (Ord b, Show b)
     => (a -> b -> Set b)

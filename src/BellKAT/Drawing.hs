@@ -61,6 +61,11 @@ drawFullOrderedPolicySteps
     => Ordered FullPolicy BellPairsPredicate (Maybe t) -> ManuallySized (Diagram B)
 drawFullOrderedPolicySteps p = withImgWidth 600 . historiesToDiagram . Set.elems . applyFullOrderedPolicy p $ []
 
+drawStarPolicySteps 
+    :: (Ord t, Show t) 
+    => NormalWithTests StarPolicy FreeTest (Maybe t) -> Diagram B
+drawStarPolicySteps p = historiesToDiagram . Set.elems . applyStarPolicyH p $ []
+
 drawStarOrderedPolicySteps 
     :: (Ord t, Show t) 
     => Ordered StarPolicy BellPairsPredicate (Maybe t) -> ManuallySized (Diagram B)
