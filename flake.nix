@@ -24,6 +24,8 @@
             --set FONTCONFIG_PATH "${pkgs.fontconfig.out}/etc/fonts/"
         '';
         devShells.default = pkgs.haskellPackages.shellFor {
+          FONTCONFIG_FILE = "${pkgs.fontconfig.out}/etc/fonts/fonts.conf";
+          FONTCONFIG_PATH = "${pkgs.fontconfig.out}/etc/fonts/";
           buildInputs = [
             pkgs.ghcid
             pkgs.cabal-install
