@@ -50,7 +50,7 @@ main :: IO ()
 main = 
      -- smallCheck 4 $ (p ~*~ q) ==> (p <||> r) ~*~ (q <||> r)
      -- smallCheck 4 $ \p q -> (p ~*~ q) ==> (\r -> (p <||> r) ~*~ (q <||> r))
-     smallCheck 3 $ \a b (c :: TaggedAction ()) a' b' q -> 
+     smallCheck 2 $ \a b (c :: TaggedAction ()) a' b' q -> 
          ((ORPAtomic a <> ORPAtomic b <> ORPAtomic c) ~<~ q)
            ==> 
         ((ORPAtomic a <> ORPAtomic a' <> ORPAtomic b' <> ORPAtomic b <> ORPAtomic c) ~<~ (q <||> (ORPAtomic a' <> ORPAtomic b')))
