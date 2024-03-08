@@ -6,6 +6,6 @@ cradle:
           component: "test:spec"
         - path: "test/small"
           component: "test:small"
-        - path: "test/paper"
-          component: "exe:paper"
+        - path: "examples/P3.hs"
+          component: "exe:p3"
 

@@ -5,6 +5,7 @@
 module BellKAT.DSL where
 
 import           Data.Functor.Contravariant
+import           Data.Default
 import           Data.List.NonEmpty         (NonEmpty (..))
 
 import           BellKAT.Definitions.Core
@@ -25,6 +26,9 @@ create loc = defaultTagged $ Create loc
 
 ucreate :: DSLFunctions p => (Location, Location) -> p
 ucreate loc = defaultTagged $ UnstableCreate loc
+
+(~) :: Default tag => Location -> Location -> TaggedBellPair tag
+l1 ~ l2 = TaggedBellPair (l1 :~: l2) def
 
 class DSLTestNeq t where
     (/~?) :: Location -> Location -> t

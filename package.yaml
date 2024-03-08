@@ -59,13 +59,11 @@ library:
     - BellKAT.Prelude
 
 executables:
-  paper:
-    source-dirs:
-      - test/paper
-      - src
+  p3:
     dependencies: 
       - hspec
-    main: SpecPaper
+      - bellkat
+    main: examples/P3.hs
 
 tests:
   spec: 
