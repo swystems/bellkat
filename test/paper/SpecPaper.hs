@@ -4,15 +4,16 @@
 
 module SpecPaper where
 
-import BellKAT.Drawing
+import Data.Foldable (toList)
 import BellKAT.DSL
 import BellKAT.Definitions hiding (test, (<.>))
 
-type PaperPolicy = Ordered StarPolicy BellPairsPredicate (Maybe ())
+type PaperPolicy = NormalWithTests StarPolicy FreeTest (Maybe ())
 
 main :: IO ()
 main =
-    let pd :: PaperPolicy  =
+    let 
+        pd :: PaperPolicy  =
             (create "C" <||> create "C") <>
                 (trans "C" ("A", "D") <||> trans "C" ("A", "D")) <>
                     distill ("A", "D")
@@ -28,9 +29,9 @@ main =
             (test ("E" /~? "D") <.> create "E" <||> test ("E" /~? "D") <.> create "E") <>
                 (trans "E" ("E", "D") <||> trans "E" ("E", "D")) <>
                     distill ("E", "D")
-        pad = pd <> star bpd <> test ("A" ~~? "D")
+        pad = pd <> star bpd <> test ("A" ~~? "D") 
         ped = pd' <> star bpd' <> test ("E" ~~? "D")
         p =  (pad <||> ped) <> swap "D" ("A", "E")
     in do
-       putStrLn $ drawHistoriesText $ applyStarOrderedPolicy @(Maybe ()) p []
+       mapM_ (print . toList) $ toList $ applyStarPolicy @(Maybe ()) p []
 
