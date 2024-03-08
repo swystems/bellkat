@@ -4,8 +4,10 @@ module BellKAT.Test where
 
 import           Test.QuickCheck
 
+import           GHC.Exts (toList)
 import           Data.List         (intercalate)
 import           Data.Set          (Set)
+import           Data.Map.Strict (Map)
 
 import           BellKAT.Definitions
 import           BellKAT.Drawing
@@ -65,3 +67,9 @@ stepsSequentialCompositionDistributes = distributesOver (~~~) (<>) (<||>)
 
 bellkatQuickCheck :: Testable prop => prop -> IO ()
 bellkatQuickCheck = quickCheckWith (stdArgs { maxSize = 4, maxSuccess = 10000 })
+
+countQubitsAtLocation :: Ord tag => Location -> TaggedBellPairs tag -> Int
+countQubitsAtLocation l = length . filter (hasLocation l . bellPair) . toList
+
+memoryBounds :: Ord tag => Map Location Int -> TaggedBellPairs tag -> Bool
+memoryBounds bounds bps = all (\(l,k) -> countQubitsAtLocation l bps <= k) $ toList bounds
