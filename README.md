@@ -7,7 +7,7 @@ Reproducing the results from the paper can be done in two ways:
   * from a respective development environment ([Nix][nix]- or [Stack][stack]-based) 
   * using an _executable_ [Docker][docker] container providing a [Haskell][haskell] interpreter with `bellkat` already "in scope" (recommended)
 
-## Preparing development environment
+## Preparing development environment (recommended to skip)
 
 ### Nix
 
@@ -46,7 +46,7 @@ docker build --tag bellkat:stackdev --file Dockerfile.stackdev . # build the ima
 docker run --rm --interactive --tty bellkat:stackdev # to enter the environment
 ```
 
-## Building the artifact
+## Building the artifact (recommended to skip)
 
 ### Nix
 
@@ -69,6 +69,8 @@ stack build
     ```bash
     docker build --tag bellkat:latest .
     ```
+
+    **Note** all the docker commands below use bind mount to handle input and output files.
 
   * Stack: change to the artifact root
   * Nix: change to the artifact root and run `nix develop`
@@ -121,14 +123,16 @@ The protocols are specified in `examples/P2.hs`, history would be saved in `P2.s
 
 ### Example P3
 
-Perform four checks using `examples/P3.hs` (uses [HSpec][hspec] library).
+Perform four checks using `examples/P3.hs` (uses [HSpec][hspec] library), including _reachability
+property_ (discussed on line 942 of the paper) and _memory requirements_ (discussed on line 943 of
+the paper):
 
-  * check that the protocol always creates a $A \sim E$ Bell pair (line 942 of the paper)
-  * check that 1 qubit memory at location $A$ are _not_ enough (line 943 of the paper)
-  * check that 3 qubits memory at location $A$ are not enough (line 943 of the paper)
-  * check that 2 qubits at $A$ and 4 qubits at $D$ are enough (line 943 of the paper)
+  * check that the protocol always creates a $A \sim E$ Bell pair
+  * check that 1 qubit memory at location $A$ are _not_ enough
+  * check that 3 qubits memory at location $A$ are not enough
+  * check that 2 qubits at $A$ and 4 qubits at $D$ are enough
 
-  * Docker
+  * Docker (recommended)
 
     ```bash
     docker run --rm --mount type=bind,source=$(pwd),target=/opt/bellkat -it bellkat:latest\
