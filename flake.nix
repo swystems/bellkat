@@ -15,6 +15,14 @@
       in {
         packages.default = pkgs.haskellPackages.bellkat;
         packages.bellkatGHC = pkgs.haskellPackages.ghcWithPackages (ps : [ ps.bellkat ]);
+        packages.bellkatGHCWithFC = pkgs.runCommand "bellkatghc-with-fc" {
+          buildInputs = [ pkgs.makeWrapper ];
+        } ''
+          mkdir -p $out/bin
+          makeWrapper ${self.packages.${system}.bellkatGHC}/bin/runhaskell $out/bin/runhaskell \
+            --set FONTCONFIG_FILE "${pkgs.fontconfig.out}/etc/fonts/fonts.conf" \
+            --set FONTCONFIG_PATH "${pkgs.fontconfig.out}/etc/fonts/"
+        '';
         devShells.default = pkgs.haskellPackages.shellFor {
           buildInputs = [
             pkgs.ghcid

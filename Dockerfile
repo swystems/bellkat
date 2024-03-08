@@ -8,8 +8,12 @@ COPY package.yaml /opt/bellkat/package.yaml
 
 WORKDIR /opt/bellkat
 
+RUN nix develop
+
 COPY . /opt/bellkat
 
-RUN nix profile install .\#bellkatGHC --impure
+RUN nix build
 
-CMD ["runhaskell"]
+RUN nix profile install .\#bellkatGHCWithFC --impure
+
+ENTRYPOINT ["runhaskell"]
