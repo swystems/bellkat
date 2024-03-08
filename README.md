@@ -82,6 +82,15 @@ Tests:
   * checking absence $[\{\{X \sim Y\}\}]$ is represented by `test ("X" /~? "Y")`
   * checking presence $\{\{X \sim Y\}\} \blacktriangleright \{\{X \sim Y\}\}$ is represented by `test ("X" ~~? "Y")`
 
+Features:
+
+  * Deciding validity of a policy $p$ on inputs from $\mathcal{N}_0$ and set of valid states $\mathcal{N}$
+    (definition 4.10) is represented by `isPolicyValid N0 N p`, where `N` is represented as a predicate $\mathcal{M}(BP) \rightarrow \mathbb{B}$.
+  * Deciding equivalence of policies $p$ and $q$ on inputs from $\mathcal{N}_0$ (Theorem 4.4) is
+    represented by `arePoliciesEquivalent N0 p q`.
+
+  * Drawing histories of protocols (Figure 3): `drawHistory p`
+
 ### Preparation
 
   * Docker (recommended): change to artifact's root and create the container by running
