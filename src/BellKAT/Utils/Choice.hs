@@ -38,6 +38,9 @@ chooseNoneOfIfEmpty _ xs = xs
 mapChosen :: (a -> a) -> Partial a -> Partial a
 mapChosen f p = p { chosen = f (chosen p) }
 
+mapRest :: (a -> a) -> Partial a -> Partial a
+mapRest f p = p { rest = f (rest p) }
+
 instance Semigroup a => Semigroup (Partial a) where
     p <> p' = Partial { chosen = chosen p <> chosen p', rest = rest p <> rest p' }
 
