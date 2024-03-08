@@ -1,7 +1,8 @@
-:set -isrc -itest/main
+:set -isrc -itest/main -itest/paper
 :set -XNoPolyKinds -XFlexibleContexts -XDerivingStrategies -XFlexibleInstances -XScopedTypeVariables -XTypeFamilies -XGeneralizedNewtypeDeriving -XFunctionalDependencies 
 :load BellKAT.Definitions
 :load BellKAT.DSL
 :load BellKAT.Drawing
 :load BellKAT.Test
 :load Spec
+:load SpecPaper
