@@ -5,7 +5,7 @@ We provide two build options: [Nix][nix]-based and [Stack][stack]-based, for eac
 Reproducing the results from the paper can be done in two ways:
 
   * from a respective development environment ([Nix][nix]- or [Stack][stack]-based) 
-  * using an _executable_ [Docker][docker] container providing a [Haskell][haskell] interpreter with `bellkat` already "in scope" (recommended)
+  * using an _executable_ [Docker][docker] container providing a [Haskell][haskell] interpreter with `bellkat` already "in scope" (recommended, see "Preparation" section in "Reproducing the results" below)
 
 ## Preparing development environment (recommended to skip)
 
@@ -60,8 +60,6 @@ cabal build
 stack build
 ```
 
-## Reproducing the results
-
 ## Syntactic differences with the paper:
 
 Basic actions:
@@ -90,6 +88,8 @@ Features:
     represented by `arePoliciesEquivalent N0 p q`.
 
   * Drawing histories of protocols (Figure 3): `drawHistory p`
+
+## Reproducing the results
 
 ### Preparation
 
