@@ -73,12 +73,12 @@ instance Semigroup DupKind where
 instance Monoid DupKind where
     mempty = DupKind False False
 
-data CreateBellPairArgs t = CreateBellPairArgs
-    { cbpPredicate   :: Predicate t
-    , cbpOutputBP    :: BellPair
-    , cbpInputBPs    :: [BellPair]
-    , cbpProbability :: Maybe Double
-    , cbtNewTag      :: t
+data CreateBellPairArgs tag = CreateBellPairArgs
+    { cbpPredicate   :: Predicate tag
+    , cbpOutputBP    :: BellPair -- ^ a produced (output) `BellPair`
+    , cbpInputBPs    :: [BellPair] -- ^ a multiset of required (input) `BellPair`s
+    , cbpProbability :: Maybe Double -- ^ probability of failure for operations that may fail
+    , cbtNewTag      :: tag
     , cbtDup         :: DupKind
     }
 

@@ -25,8 +25,12 @@ type BellKATPolicy = NormalWithTests StarPolicy FreeTest BellKATTag
 drawHistory :: BellKATPolicy -> IO ()
 drawHistory = mainWith . drawStarPolicySteps
 
-isPolicyValid ::
-    Set (TaggedBellPairs BellKATTag) -> (TaggedBellPairs BellKATTag -> Bool) -> BellKATPolicy -> Bool
+-- | Checks if a policy is valid w.r.t., to given valid states (N) and initial states (N_0)
+isPolicyValid 
+    :: Set (TaggedBellPairs BellKATTag) -- ^ `Set` of initial states
+    -> (TaggedBellPairs BellKATTag -> Bool) -- ^ Predicate returning `True` on valid states
+    -> BellKATPolicy -- ^ policy `p`
+    -> Bool
 isPolicyValid initialStates isStateValid p =
     all (isJust . applyStarPolicyWithValidity isStateValid p) initialStates
 
@@ -34,7 +38,11 @@ arePoliciesEquivalentOn ::
     TaggedBellPairs BellKATTag -> BellKATPolicy -> BellKATPolicy -> Bool
 arePoliciesEquivalentOn initialState = (==) `on` (`applyStarPolicy` initialState)
 
-arePoliciesEquivalent ::
-    Set (TaggedBellPairs BellKATTag) -> BellKATPolicy -> BellKATPolicy -> Bool
+-- | Checks if two policies are equivalent given a set of initial states (multisets of Bell pairs)
+arePoliciesEquivalent 
+    :: Set (TaggedBellPairs BellKATTag) -- ^ `Set` of initial states (N_0)
+    -> BellKATPolicy -- ^ LHS policy `p`
+    -> BellKATPolicy -- ^ RHS policy `q`
+    -> Bool
 arePoliciesEquivalent initialStates p q =
     all (\is -> arePoliciesEquivalentOn is p q) initialStates

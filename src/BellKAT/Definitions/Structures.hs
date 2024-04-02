@@ -39,10 +39,9 @@ class ChoiceSemigroup a where
 class OrderedSemigroup a where
     (<.>) :: a -> a -> a
 
-class CreatesBellPairs a t | a -> t where
-    -- | is function from `BellPair`, `[BellPair]` to `Maybe Double` Quantum;
-    -- will be used in `meaning` of `Distill`
-    tryCreateBellPairFrom :: CreateBellPairArgs t -> a
+class CreatesBellPairs a tag | a -> tag where
+    -- | embedding Bell pair creation represented by `CreateBellPairArgs` into the structure `a`
+    tryCreateBellPairFrom :: CreateBellPairArgs tag -> a
 
 -- | `Quantum` is a `ParallelSemigroup` with `BellPair` creation
 -- `a` is the type of the carrier and `t` is a tag
@@ -56,8 +55,11 @@ class (Quantum a tag, Tests a test tag) => TestsQuantum a test tag | a -> test, 
 class (Quantum a tag, OrderedSemigroup a) => OrderedQuantum a tag
 
 -- | `Quantum` that has two domains: 
+--
 --  * `a` for the top-level behavior having `Semigroup` and `ParallelSemigroup` structures)
+--
 --  * `Layer a` for the one-layer behavior having `OrderedSemigroup` structure
+--
 -- `liftLayer` is an embedding from a Layer
 class (Semigroup a, ParallelSemigroup a, OrderedSemigroup (Layer a)) => OrderedLayeredQuantum a t | a -> t where
     data Layer a
