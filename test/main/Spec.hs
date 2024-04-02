@@ -9,7 +9,7 @@ import           BellKAT.Utils.Choice
 import           BellKAT.Definitions
 import           BellKAT.Drawing
 import           BellKAT.DSL
-import           BellKAT.Test
+import           BellKAT.Test.QuickCheck
 import           BellKAT.Utils.UnorderedTree
 
 import           Control.Monad              (unless)

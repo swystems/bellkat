@@ -55,6 +55,7 @@ library:
     - BellKAT.Utils.PartialNDEndo
     - BellKAT.DSL
     - BellKAT.Test
+    - BellKAT.Test.QuickCheck
     - BellKAT.Prelude
 
 executables:
