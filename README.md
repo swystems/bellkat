@@ -12,6 +12,8 @@ depending on the docker setup (see details [here][docker-run]).
 
 ## Preparing development environment (recommended to skip)
 
+Please, check [Haskell language server documentation][hls] for editor support (optional).
+
 ### Nix
 
   * install [Nix][nix] package manager
@@ -196,4 +198,5 @@ The first two are related _reachability property_ (discussed on line 942 of the 
 [docker]: https://docs.docker.com/
 [docker-run]: https://docs.docker.com/engine/reference/run/#commands-and-arguments
 [haskell]: https://www.haskell.org/
+[hls]: https://haskell-language-server.readthedocs.io/en/latest/configuration.html#configuring-your-editor
 [HSpec]: https://hspec.github.io/
