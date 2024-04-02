@@ -118,18 +118,25 @@ The protocols are specified in `examples/P1.hs`, history would be saved in `P1.s
     ```bash
     docker run --rm --mount type=bind,source=$(pwd),target=/opt/bellkat -it bellkat:latest\
         examples/P1.hs --width 1000 --output P1.svg
+    # or (for textual version)
+    docker run --rm --mount type=bind,source=$(pwd),target=/opt/bellkat -it bellkat:latest\
+        examples/P1Text.hs
     ```
 
   * Stack:
 
     ```bash
     stack run p1 -- --width 1000 --output P1.svg
+    # or (for textual version)
+    stack run p1text
     ```
 
   * Nix:
 
     ```bash
     cabal run p1 -- --width 1000 --output P1.svg
+    # or (for textual version)
+    cabal run p1text
     ```
 
 ### Example P2 and history in Fig 3 (b)
@@ -141,18 +148,25 @@ The protocols are specified in `examples/P2.hs`, history would be saved in `P2.s
     ```bash
     docker run --rm --mount type=bind,source=$(pwd),target=/opt/bellkat -it bellkat:latest\
         examples/P2.hs --width 1000 --output P2.svg
+    # or (for textual version)
+    docker run --rm --mount type=bind,source=$(pwd),target=/opt/bellkat -it bellkat:latest\
+        examples/P2Text.hs
     ```
 
   * Stack:
 
     ```bash
     stack run p2 -- --width 1000 --output P2.svg
+    # or (for textual version)
+    stack run p2text
     ```
 
   * Nix:
 
     ```bash
     cabal run p2 -- --width 1000 --output P2.svg
+    # or (for textual version)
+    cabal run p2text
     ```
 
 ### Example P3
