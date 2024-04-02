@@ -157,7 +157,7 @@ The protocols are specified in `examples/P2.hs`, history would be saved in `P2.s
 
 ### Example P3
 
-Perform four checks using `examples/P3.hs` (uses [HSpec][hspec] library):
+Perform four checks using `examples/P3.hs` (uses [HSpec][hspec] library, please check its documentation to understand the uses of `describe`, `it` and `shouldBe` within the example):
 
   * check that the protocol always creates a $A \sim E$ Bell pair
   * check that the protocol does not always creates a $A \sim C$ Bell pair
@@ -185,6 +185,62 @@ The first two are related _reachability property_ (discussed on line 942 of the 
 
     ```bash
     cabal run p3
+    ```
+
+## Writing your own examples
+
+If you want to work on your own examples you have multiple options:
+
+  * modify the existing examples without changing the commands
+
+  * create new examples within BellKAT project
+
+    1. Creating a new file (say `MyExample.hs`) inside `examples/` (e.g., by copying `examples/P3.hs`)
+
+    2. Tell `stack` or `cabal` about the example by adding
+
+       ```yaml
+       my-example:
+         dependencies: 
+           - bellkat
+         main: examples/MyExample.hs
+       ```
+
+       to `package.yaml`
+
+    3. Run your example with stack, using `stack run my-example` or `cabal run my-example`
+
+    4. (optional) to enable editor support add
+       ```yaml
+       - path: "examples/MyExample.hs"
+         component: "exe:my-example"
+       ```
+       to `hie.yaml`
+
+    5. Continue editing `examples/MyExample.hs` as you wish.
+
+  * Use `BellKAT` as a library. For [Stack][stack] you can use the following setup (assuming `MyExample.hs`):
+
+    Example `stack.yaml`:
+    ```yaml
+    resolver: lts-20.26
+    extra-deps:
+      - url: https://zenodo.org/records/10804045/files/bellkat-artifact.zip
+    nix:
+      packages: [zlib, cairo, glib, pkg-config, pango]
+    ```
+
+    Example `package.yaml`:
+    ```yaml
+    name: my-example
+
+    dependencies:
+      - base
+      - hspec
+      - bellkat
+
+    executable:
+      main: MyExample.hs
     ```
 
 [nix]: https://nixos.org/download
