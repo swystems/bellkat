@@ -14,12 +14,15 @@
         };
       in {
         packages.default = pkgs.haskellPackages.bellkat;
-        packages.bellkatGHC = pkgs.haskellPackages.ghcWithPackages (ps : [ ps.bellkat ]);
+        packages.bellkatGHC =
+          pkgs.haskellPackages.ghcWithPackages (ps: [ ps.bellkat ]);
         packages.bellkatGHCWithFC = pkgs.runCommand "bellkatghc-with-fc" {
           buildInputs = [ pkgs.makeWrapper ];
         } ''
           mkdir -p $out/bin
-          makeWrapper ${self.packages.${system}.bellkatGHC}/bin/runhaskell $out/bin/runhaskell \
+          makeWrapper ${
+            self.packages.${system}.bellkatGHC
+          }/bin/runhaskell $out/bin/runhaskell \
             --set FONTCONFIG_FILE "${pkgs.fontconfig.out}/etc/fonts/fonts.conf" \
             --set FONTCONFIG_PATH "${pkgs.fontconfig.out}/etc/fonts/"
         '';
@@ -37,12 +40,8 @@
         overlays = {
           default = final: prev: {
             haskellPackages = prev.haskellPackages.extend (hself: hsuper: {
-              bellkat = prev.haskell.lib.overrideCabal
-                (hself.callCabal2nix "bellkat"
-                  (prev.lib.sourceFilesBySuffices ./. [ ".hs" ".yaml" ]) { })
-                (attrs: {
-                  testFlags = [ "--qc-max-size" "4" "--qc-max-success" "100" ];
-                });
+              bellkat = hself.callCabal2nix "bellkat"
+                (prev.lib.sourceFilesBySuffices ./. [ ".hs" ".yaml" ]) { };
             });
           };
         };

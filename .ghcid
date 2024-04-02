@@ -1,1 +1,1 @@
---test=":main --qc-max-size 3 --qc-max-success 100" 
+--test=":main" 

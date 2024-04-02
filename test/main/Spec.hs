@@ -26,7 +26,7 @@ import           Test.Hspec.QuickCheck
 import           Test.QuickCheck            ((===), mapSize)
 
 main :: IO ()
-main = hspec $ do
+main = hspec . modifyMaxSize (const 4) . modifyMaxSuccess (const 100) $ do
     describe "distill" $ do
         it "should drop sometimes" $
             applyPolicy @Tag (distill ("A", "B")) [node ("A" :~: "B"), node ("A" :~: "B")]
