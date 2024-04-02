@@ -6,8 +6,11 @@ import           GHC.Exts (toList)
 import           Data.Map.Strict (Map)
 import           BellKAT.Definitions
 
+countQubitsAtLocationBP :: Ord tag => Location -> TaggedBellPair tag -> Int
+countQubitsAtLocationBP l tbp = let x :~: y = bellPair tbp in length $ filter (== l) [x, y]
+
 countQubitsAtLocation :: Ord tag => Location -> TaggedBellPairs tag -> Int
-countQubitsAtLocation l = length . filter (hasLocation l . bellPair) . toList
+countQubitsAtLocation l = sum . map (countQubitsAtLocationBP l) . toList
 
 -- | produces a predicate over valid states from upper bounds on the number of qubits at certain
 -- locations. The state is valid if and only if /all/ the bounds are satisfied.
