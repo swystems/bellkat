@@ -15,6 +15,7 @@ import           BellKAT.Utils.UnorderedTree
 import           Control.Monad              (unless)
 import           Data.Functor.Contravariant (Predicate (..))
 import           Data.Monoid                (Sum (..))
+import           Data.Default
 import           Data.Set                   (Set)
 import qualified Data.Set                   as Set
 import           Data.Vector.Fixed          (mk2)
@@ -117,6 +118,8 @@ hasBellPair bp = (== bp) . bellPair . rootLabel
 isPartial :: (Eq a, Semigroup a) => a -> Partial a -> Bool
 isPartial x partialX = x == (chosen partialX <> rest partialX)
 
-historiesShouldSatisfy :: Show t => Set (History t) -> (Set (History t) -> Bool) -> Expectation
+historiesShouldSatisfy 
+    :: (Show t, Eq t, Default t) 
+    => Set (History t) -> (Set (History t) -> Bool) -> Expectation
 historiesShouldSatisfy h f =
     unless (f h) $ expectationFailure $ "nope:\n" <> drawHistoriesText h
