@@ -14,4 +14,4 @@ p =
 
 
 main :: IO ()
-main = drawHistoriesSVG p
+main = drawHistoriesText p

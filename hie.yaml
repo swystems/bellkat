@@ -12,4 +12,8 @@ cradle:
           component: "exe:p2"
         - path: "examples/P1.hs"
           component: "exe:p1"
+        - path: "examples/P2Text.hs"
+          component: "exe:p2text"
+        - path: "examples/P1Text.hs"
+          component: "exe:p1text"
 

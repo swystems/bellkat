@@ -8,6 +8,7 @@ import           GHC.Exts (toList)
 import           Data.List         (intercalate)
 import           Data.Set          (Set)
 import           Data.Map.Strict (Map)
+import           Data.Default
 
 import           BellKAT.Definitions
 import           BellKAT.Drawing
@@ -15,7 +16,7 @@ import           BellKAT.Drawing
 type Tag = Maybe Int
 
 testEquality 
-    :: (Show t, Eq t)
+    :: (Show t, Eq t, Default t)
     => (Normal p t -> History t -> Set (History t))
     -> Normal p t -> Normal p t -> History t -> Property
 testEquality apply p q h =

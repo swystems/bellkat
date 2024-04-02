@@ -53,12 +53,12 @@ applyFullOrderedPolicy
 applyFullOrderedPolicy = SHQ.execute (IOSHQ.execute @'IOSHQ.FDUse) . meaning
 
 applyFullOrderedPolicyAuto 
-    :: (Ord tag, Show tag) 
+    :: (Ord tag, Show tag, Default tag) 
     => Ordered FullPolicy BellPairsPredicate tag -> History tag -> Set (History tag)
 applyFullOrderedPolicyAuto = ASHQ.executeE (IOSHQ.execute @'IOSHQ.FDUse) . meaning
 
 applyStarOrderedPolicy 
-    :: (Ord tag, Show tag) 
+    :: (Ord tag, Show tag, Default tag) 
     => Ordered StarPolicy BellPairsPredicate tag -> History tag -> Set (History tag)
 applyStarOrderedPolicy = ASHQ.executeE (IOSHQ.execute @'IOSHQ.FDUse) . meaning
 
@@ -68,7 +68,7 @@ applyStarPolicy
 applyStarPolicy = ASHQ.execute AOSHQ.execute . meaning 
 
 applyStarPolicyH
-    :: (Ord tag, Show tag, Tests (IOSHQ.FunctionStep 'IOSHQ.FDTimely test tag) test tag) 
+    :: (Ord tag, Show tag, Default tag, Tests (IOSHQ.FunctionStep 'IOSHQ.FDTimely test tag) test tag) 
     => NormalWithTests StarPolicy test tag -> History tag -> Set (History tag)
 applyStarPolicyH = ASHQ.executeE (IOSHQ.execute @'IOSHQ.FDTimely) . meaning
 
@@ -92,7 +92,7 @@ applyOneStepPolicy
 applyOneStepPolicy = (IOSHQ.execute @'IOSHQ.FDUse) . meaning
 
 applyStarOrderedPolicyBounded 
-    :: (Ord tag, Show tag) 
+    :: (Ord tag, Show tag, Default tag) 
     => Ordered StarPolicy BellPairsPredicate tag -> History tag -> Set (History tag)
 applyStarOrderedPolicyBounded = 
     (handleExecutionError .) 

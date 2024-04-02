@@ -64,6 +64,11 @@ drawStarPolicySteps
     => NormalWithTests StarPolicy FreeTest (Maybe t) -> Diagram B
 drawStarPolicySteps p = historiesToDiagram . Set.elems . applyStarPolicyH p $ []
 
+drawStarPolicyStepsText
+    :: (Ord t, Show t) 
+    => NormalWithTests StarPolicy FreeTest (Maybe t) -> String
+drawStarPolicyStepsText p = drawHistoriesText . applyStarPolicyH p $ []
+
 drawStarOrderedPolicySteps 
     :: (Ord t, Show t) 
     => Ordered StarPolicy BellPairsPredicate (Maybe t) -> Diagram B
@@ -74,10 +79,10 @@ drawStarOrderedPolicyStepsBounded
     => Ordered StarPolicy BellPairsPredicate (Maybe t) -> Diagram B
 drawStarOrderedPolicyStepsBounded p = historiesToDiagram . Set.elems . applyStarOrderedPolicyBounded p $ []
 
-drawHistoryText :: Show t => History t -> String
+drawHistoryText :: (Default tag, Show tag, Eq tag) => History tag -> String
 drawHistoryText = drawForest . (fmap . fmap) show . toForest . getForest
 
-drawHistoriesText :: Show t => Set (History t) -> String
+drawHistoriesText :: (Default tag, Show tag, Eq tag) => Set (History tag) -> String
 drawHistoriesText hs = 
     intercalate "\n" $ 
            ["========="]

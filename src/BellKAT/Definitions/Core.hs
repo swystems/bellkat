@@ -34,6 +34,7 @@ import qualified Data.Multiset              as Mset
 import           Data.Set                   (Set)
 import qualified Data.Set                   as Set
 import           Data.String                (IsString)
+import           Data.Default
 import qualified GHC.Exts                   (IsList, Item, fromList, toList)
 
 import           Data.Vector.Fixed          (Arity, VecList)
@@ -93,7 +94,7 @@ instance Show1 FreeTest where
     liftShowsPrec s sl i (FTNot t) = showString "~" . liftShowsPrec s sl i t
     liftShowsPrec _ _ _ (FTSubset bps) = shows (map bellPair $ toList bps)
 
-instance Show t => Show (FreeTest t) where
+instance (Default t, Show t, Eq t) => Show (FreeTest t) where
     showsPrec _ (FTSubset x) = shows x
     showsPrec d (FTNot x) = showParen (app_prec < d) $ showString "not " . shows x
       where app_prec = 10
@@ -111,7 +112,7 @@ restrictedTestNormalize (x:xs) =
        then restrictedTestNormalize xs
        else x:restrictedTestNormalize xs
 
-instance (Show tag) => Show (RestrictedTest tag) where
+instance (Show tag, Default tag, Eq tag) => Show (RestrictedTest tag) where
     showsPrec _ (RestrictedTest []) = showString "TRUE"
     showsPrec _ (RestrictedTest (x:xs)) = shows (toList x) . showsRest xs
       where 
@@ -152,9 +153,10 @@ data TaggedBellPair t = TaggedBellPair
     , bellPairTag :: t
     } deriving stock (Eq, Ord)
 
-instance Show t => Show (TaggedBellPair t) where
-    showsPrec _ (TaggedBellPair bp t) = shows bp . showString "/" . shows t
-
+instance (Show t, Eq t, Default t) => Show (TaggedBellPair t) where
+    showsPrec _ (TaggedBellPair bp t) 
+        | t == def = shows bp
+        | otherwise = shows bp . showString "/" . shows t
 
 type TaggedRequiredRoots t = (RequiredRoots, Predicate t)
 
@@ -170,7 +172,7 @@ instance (Ord t) => GHC.Exts.IsList (History t) where
     toList = toList . getForest
     fromList = History . GHC.Exts.fromList
 
-instance (Ord t, Show t) => Show (History t) where
+instance (Ord t, Default t, Show t) => Show (History t) where
     show = show . GHC.Exts.toList
 
 -- ** History choice utilities

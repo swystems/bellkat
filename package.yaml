@@ -66,6 +66,14 @@ executables:
     dependencies: 
       - bellkat
     main: examples/P2.hs
+  p1text:
+    dependencies: 
+      - bellkat
+    main: examples/P1Text.hs
+  p2text:
+    dependencies: 
+      - bellkat
+    main: examples/P2Text.hs
   p3:
     dependencies: 
       - hspec

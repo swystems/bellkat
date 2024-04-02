@@ -2,7 +2,8 @@ module BellKAT.Prelude (
     module BellKAT.DSL,
     module BellKAT.Definitions.Structures,
     BellKATPolicy,
-    drawHistory,
+    drawHistoriesSVG,
+    drawHistoriesText,
     isPolicyValid,
     memoryBounds,
     arePoliciesEquivalent,
@@ -16,14 +17,18 @@ import Diagrams.Backend.Cairo.CmdLine
 import BellKAT.DSL
 import BellKAT.Definitions
 import BellKAT.Definitions.Structures hiding (test, (<.>))
-import BellKAT.Drawing
+import BellKAT.Drawing hiding (drawHistoriesText)
 import BellKAT.Test
 
 type BellKATTag = (Maybe ())
 type BellKATPolicy = NormalWithTests StarPolicy FreeTest BellKATTag
 
-drawHistory :: BellKATPolicy -> IO ()
-drawHistory = mainWith . drawStarPolicySteps
+
+drawHistoriesSVG :: BellKATPolicy -> IO ()
+drawHistoriesSVG = mainWith . drawStarPolicySteps
+
+drawHistoriesText :: BellKATPolicy -> IO ()
+drawHistoriesText = putStrLn . drawStarPolicyStepsText
 
 -- | Checks if a policy is valid w.r.t., to given valid states (N) and initial states (N_0)
 isPolicyValid 

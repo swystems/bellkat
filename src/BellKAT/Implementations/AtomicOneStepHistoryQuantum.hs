@@ -28,7 +28,7 @@ createAtomicOneStepPolicy t inBPs outBPs =
        then AtomicOneStepPolicy t mempty mempty
        else AtomicOneStepPolicy t inBPs outBPs
 
-instance Show tag => Show (AtomicOneStepPolicy tag) where
+instance (Show tag, Default tag, Eq tag) => Show (AtomicOneStepPolicy tag) where
     showsPrec _ (AtomicOneStepPolicy t inBPs outBPs) = 
         showString "[" . shows t . showString "] (" 
         . shows (toList inBPs) . showString "|>" . shows (toList outBPs)
