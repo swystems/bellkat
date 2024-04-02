@@ -7,6 +7,9 @@ Reproducing the results from the paper can be done in two ways:
   * from a respective development environment ([Nix][nix]- or [Stack][stack]-based) 
   * using an _executable_ [Docker][docker] container providing a [Haskell][haskell] interpreter with `bellkat` already "in scope" (recommended, see "Preparation" section in "Reproducing the results" below)
 
+**Docker note:** please, be aware that `docker run` commands may have to be prefixed with `sudo`,
+depending on the docker setup (see details [here][docker-run]).
+
 ## Preparing development environment (recommended to skip)
 
 ### Nix
@@ -191,5 +194,6 @@ The first two are related _reachability property_ (discussed on line 942 of the 
 [glib]: https://docs.gtk.org/glib/
 [ncurses]: https://invisible-island.net/ncurses/
 [docker]: https://docs.docker.com/
+[docker-run]: https://docs.docker.com/engine/reference/run/#commands-and-arguments
 [haskell]: https://www.haskell.org/
 [HSpec]: https://hspec.github.io/
