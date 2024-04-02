@@ -186,7 +186,7 @@ The first two are related _reachability property_ (discussed on line 942 of the 
     ```
 
 [nix]: https://nixos.org/download
-[flakes]: https://nixos.wiki/wiki/Flakes
+[flakes]: https://nixos.wiki/wiki/Flakes#Other_Distros.2C_without_Home-Manager
 [stack]: https://docs.haskellstack.org/en/stable/
 [pango]: https://pango.gnome.org/
 [cairo]: https://www.cairographics.org
