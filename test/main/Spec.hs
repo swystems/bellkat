@@ -26,6 +26,8 @@ import           Test.Hspec
 import           Test.Hspec.QuickCheck
 import           Test.QuickCheck            ((===), mapSize)
 
+import qualified PreludeSpec
+
 main :: IO ()
 main = hspec . modifyMaxSize (const 4) . modifyMaxSuccess (const 100) $ do
     describe "distill" $ do
@@ -108,6 +110,7 @@ main = hspec . modifyMaxSize (const 4) . modifyMaxSuccess (const 100) $ do
     describe "findTreeRootsND" $ do
         prop "should return partial" $
             \ps (h :: UForest BellPair) -> all (isPartial h) (findTreeRootsND ps h)
+    describe "BellKAT.Prelude" PreludeSpec.spec
 
 tags :: [Int] -> [Int]
 tags = id
