@@ -1,7 +1,14 @@
+-- OverloadedLists extension allows to write sets and maps using list notation. For instance:
+--
+--  * [[]] for a set containing an empty multi-set
+--
+--  * [["A" ~ "B"], ["A" ~ "B", "A" ~ "B"]] for a set containing two multisets of Bell pairs
 {-# LANGUAGE OverloadedLists #-}
+-- OverloadedStrings extension allows to write string literals (e.g., "A") in place of Location
 {-# LANGUAGE OverloadedStrings #-}
 
 import BellKAT.Prelude
+-- import testing HSpec testing library
 import Test.Hspec
 
 -- | Definition of a policy, creating A~E Bell pair by swapping Bell pairs A~D and D~E at D. The latter
