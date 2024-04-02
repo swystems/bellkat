@@ -253,7 +253,7 @@ If you want to work with your own protocols or modify existing ones you have mul
     ```yaml
     resolver: lts-20.26
     extra-deps:
-      - url: https://zenodo.org/records/10804045/files/bellkat-artifact.zip
+      - url: https://zenodo.org/records/10909730/files/bellkat-artifact.zip
     nix:
       packages: [zlib, cairo, glib, pkg-config, pango]
     ```
