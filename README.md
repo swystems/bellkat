@@ -121,13 +121,13 @@ The protocols are specified in `examples/P1.hs`, history would be saved in `P1.s
   * Stack:
 
     ```bash
-    stack run p1 --width 1000 --output P1.svg
+    stack run p1 -- --width 1000 --output P1.svg
     ```
 
   * Nix:
 
     ```bash
-    cabal run p1 --width 1000 --output P1.svg
+    cabal run p1 -- --width 1000 --output P1.svg
     ```
 
 ### Example P2 and history in Fig 3 (b)
@@ -144,13 +144,13 @@ The protocols are specified in `examples/P2.hs`, history would be saved in `P2.s
   * Stack:
 
     ```bash
-    stack run p2 --width 1000 --output P2.svg
+    stack run p2 -- --width 1000 --output P2.svg
     ```
 
   * Nix:
 
     ```bash
-    cabal run p2 --width 1000 --output P2.svg
+    cabal run p2 -- --width 1000 --output P2.svg
     ```
 
 ### Example P3
