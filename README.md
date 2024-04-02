@@ -67,6 +67,10 @@ stack build
 
 ## Syntactic differences with the paper:
 
+Bell pairs (e.g., to specify initial states):
+
+ * $A \sim B$ is represented by `"A" ~ "B"`
+
 Basic actions:
 
   * $cr\langle X \rangle$ is represented by `create "X"`
@@ -201,13 +205,23 @@ The first two are related _reachability property_ (discussed on line 942 of the 
     cabal run p3
     ```
 
-## Writing your own examples
+## Writing and testing your own protocols
 
-If you want to work on your own examples you have multiple options:
+Most of the relevant documentation is present in `BellKAT.Prelude` module. To see it nicely
+formatted, you can build documentation using [Haddock][haddock]:
 
-  * modify the existing examples without changing the commands
+ * Stack: `stack haddock`
+ * Nix: `cabal haddock`
 
-  * create new examples within BellKAT project
+In both cases, the output should point to the `index.html` root of the documentation.
+
+### Setting up and running the examples
+
+If you want to work with your own protocols or modify existing ones you have multiple options:
+
+  * modify the existing examples
+
+  * create new examples within BellKAT repository
 
     1. Creating a new file (say `MyExample.hs`) inside `examples/` (e.g., by copying `examples/P3.hs`)
 
@@ -270,3 +284,4 @@ If you want to work on your own examples you have multiple options:
 [haskell]: https://www.haskell.org/
 [hls]: https://haskell-language-server.readthedocs.io/en/latest/configuration.html#configuring-your-editor
 [HSpec]: https://hspec.github.io/
+[haddock]: https://haskell-haddock.readthedocs.io/en/latest/
