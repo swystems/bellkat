@@ -211,12 +211,12 @@ The first two are related _reachability property_ (discussed on line 942 of the 
 ## Writing and testing your own protocols
 
 Most of the relevant documentation is present in `BellKAT.Prelude` module. To see it nicely
-formatted, you can build documentation using [Haddock][haddock]:
+formatted **(not for docker)**, you can build documentation using [Haddock][haddock]:
 
  * Stack: `stack haddock`
  * Nix: `cabal haddock`
 
-In both cases, the output should point to the `index.html` root of the documentation.
+In both cases, the output should display the path to `index.html` root of the documentation
 
 ### Setting up and running the examples
 
@@ -251,7 +251,7 @@ If you want to work with your own protocols or modify existing ones you have mul
     5. Continue editing `examples/MyExample.hs` as you wish.
 
   * Use `BellKAT` as a library:
-    
+
      * **Stack:** see the template in `reuse-templates/stack`
      * **Nix:** see the template in reuse-templates/nix
 
