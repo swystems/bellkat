@@ -96,7 +96,10 @@ Features:
   * Deciding equivalence of policies $p$ and $q$ on inputs from $\mathcal{N}_0$ (Theorem 4.4) is
     represented by `arePoliciesEquivalent N0 p q`.
 
-  * Drawing histories of protocols (Figure 3): `drawHistory p`
+  * Drawing histories of protocols (Figure 3): 
+
+     * `drawHistoriesSVG p` (to create an `.svg` image)
+     * `drawHistoriesText p` (to output a textual representation)
 
 ## Reproducing the results
 
