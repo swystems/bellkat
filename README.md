@@ -260,7 +260,7 @@ If you want to work with your own protocols or modify existing ones you have mul
        stack run
        ```
 
-     * **Nix:** see the template in reuse-templates/nix, then use
+     * **Nix:** see the template in `reuse-templates/nix`, then use
 
        ```bash
        nix develop # to enter the shell
