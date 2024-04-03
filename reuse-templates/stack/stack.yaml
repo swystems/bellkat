@@ -1,0 +1,5 @@
+resolver: lts-20.26
+extra-deps:
+  - url: https://zenodo.org/records/10909730/files/bellkat-artifact.zip
+nix:
+  packages: [zlib, cairo, glib, pkg-config, pango]

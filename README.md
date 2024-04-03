@@ -247,29 +247,10 @@ If you want to work with your own protocols or modify existing ones you have mul
 
     5. Continue editing `examples/MyExample.hs` as you wish.
 
-  * Use `BellKAT` as a library. For [Stack][stack] you can use the following setup (assuming `MyExample.hs`):
-
-    Example `stack.yaml`:
-    ```yaml
-    resolver: lts-20.26
-    extra-deps:
-      - url: https://zenodo.org/records/10909730/files/bellkat-artifact.zip
-    nix:
-      packages: [zlib, cairo, glib, pkg-config, pango]
-    ```
-
-    Example `package.yaml`:
-    ```yaml
-    name: my-example
-
-    dependencies:
-      - base
-      - hspec
-      - bellkat
-
-    executable:
-      main: MyExample.hs
-    ```
+  * Use `BellKAT` as a library:
+    
+     * **Stack:** see the template in `reuse-templates/stack`
+     * **Nix:** see the template in reuse-templates/nix
 
 [nix]: https://nixos.org/download
 [flakes]: https://nixos.wiki/wiki/Flakes#Other_Distros.2C_without_Home-Manager

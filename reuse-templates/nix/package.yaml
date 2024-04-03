@@ -1,0 +1,9 @@
+name: my-example
+
+dependencies:
+  - base
+  - hspec
+  - bellkat
+
+executable:
+  main: MyExample.hs
