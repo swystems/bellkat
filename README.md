@@ -19,6 +19,7 @@ Please, check [Haskell language server documentation][hls] for editor support (o
   * install [Nix][nix] package manager
   * enable [Nix flakes][flakes]
   * **to enter environment run** `nix develop` from the artifact's root
+  * run `hpack` (no arguments) to generate `.cabal` file
 
 For convenience, we provide `Dockerfile.nixdev` with the environment already set up:
 
@@ -252,8 +253,21 @@ If you want to work with your own protocols or modify existing ones you have mul
 
   * Use `BellKAT` as a library:
 
-     * **Stack:** see the template in `reuse-templates/stack`
-     * **Nix:** see the template in reuse-templates/nix
+     * **Stack:** see the template in `reuse-templates/stack`, then use
+
+       ```bash
+       stack build
+       stack run
+       ```
+
+     * **Nix:** see the template in reuse-templates/nix, then use
+
+       ```bash
+       nix develop # to enter the shell
+       hpack # to generate .cabal file
+       cabal build
+       cabal run
+       ```
 
 [nix]: https://nixos.org/download
 [flakes]: https://nixos.wiki/wiki/Flakes#Other_Distros.2C_without_Home-Manager
